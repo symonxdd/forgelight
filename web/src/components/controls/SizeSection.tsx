@@ -1,5 +1,6 @@
 import { ArrowLeftRight } from "lucide-react";
 import { useState } from "react";
+import { HELP } from "../../lib/help";
 import { SIZE_PRESETS, matchPreset, normalizeSize } from "../../lib/sizes";
 import { useSettings } from "../../stores/settings";
 import { Section } from "./Section";
@@ -51,6 +52,7 @@ export function SizeSection() {
   return (
     <Section
       title="Size"
+      help={HELP.size}
       summary={`${width} × ${height}${preset ? ` · ${preset.label}` : ""}`}
       open={open}
       onOpenChange={(o) => setSectionOpen("size", o)}

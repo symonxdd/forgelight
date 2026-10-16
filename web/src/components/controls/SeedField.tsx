@@ -1,7 +1,9 @@
 import { Dices, Recycle } from "lucide-react";
 import { useState } from "react";
+import { HELP } from "../../lib/help";
 import { selectedImage, useSession } from "../../stores/session";
 import { useSettings } from "../../stores/settings";
+import { LabelWithTip } from "../InfoTip";
 
 const iconButton =
   "grid size-8 shrink-0 place-items-center rounded-md text-muted hover:bg-raised hover:text-fg-strong disabled:opacity-40 disabled:hover:bg-transparent";
@@ -22,9 +24,7 @@ export function SeedField() {
 
   return (
     <div className="flex flex-col gap-1.5">
-      <label htmlFor="seed" className="text-[13px] text-fg">
-        Seed
-      </label>
+      <LabelWithTip htmlFor="seed" label="Seed" help={HELP.seed} />
       <div className="flex items-center gap-1">
         <input
           id="seed"

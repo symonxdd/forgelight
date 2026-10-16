@@ -1,4 +1,5 @@
 import { useSamplers, useSchedulers } from "../../api/queries";
+import { HELP } from "../../lib/help";
 import { useSettings } from "../../stores/settings";
 import { NumberSlider } from "./NumberSlider";
 import { SeedField } from "./SeedField";
@@ -20,12 +21,14 @@ export function SamplingSection() {
       <div className="grid grid-cols-2 gap-2">
         <SelectField
           label="Sampler"
+          help={HELP.sampler}
           value={s.sampler}
           options={samplers.data ?? []}
           onChange={(sampler) => s.update({ sampler })}
         />
         <SelectField
           label="Schedule type"
+          help={HELP.scheduleType}
           value={s.scheduler}
           options={schedulers.data ?? []}
           onChange={(scheduler) => s.update({ scheduler })}
@@ -33,6 +36,7 @@ export function SamplingSection() {
       </div>
       <NumberSlider
         label="Steps"
+        help={HELP.steps}
         value={s.steps}
         min={1}
         max={60}
@@ -42,6 +46,7 @@ export function SamplingSection() {
       />
       <NumberSlider
         label="CFG scale"
+        help={HELP.cfgScale}
         value={s.cfgScale}
         min={1}
         max={15}

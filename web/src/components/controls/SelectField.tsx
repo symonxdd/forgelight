@@ -1,5 +1,6 @@
 import { Check, ChevronDown } from "lucide-react";
 import { Select } from "radix-ui";
+import { LabelWithTip } from "../InfoTip";
 
 interface SelectFieldProps {
   label: string;
@@ -7,14 +8,15 @@ interface SelectFieldProps {
   options: readonly string[];
   onChange: (value: string) => void;
   disabled?: boolean;
+  help?: string;
 }
 
-export function SelectField({ label, value, options, onChange, disabled }: SelectFieldProps) {
+export function SelectField({ label, value, options, onChange, disabled, help }: SelectFieldProps) {
   // Keep a value Forge doesn't list (e.g. from an older image) selectable rather than blank.
   const items = options.includes(value) || !value ? options : [value, ...options];
   return (
     <div className="flex flex-col gap-1.5">
-      <span className="text-[13px] text-fg">{label}</span>
+      {help ? <LabelWithTip label={label} help={help} /> : <span className="text-[13px] text-fg">{label}</span>}
       <Select.Root value={value} onValueChange={onChange} disabled={disabled}>
         <Select.Trigger
           aria-label={label}

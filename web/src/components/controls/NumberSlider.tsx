@@ -1,5 +1,6 @@
 import { Slider } from "radix-ui";
 import { useId, useState, type KeyboardEvent } from "react";
+import { LabelWithTip } from "../InfoTip";
 
 interface NumberSliderProps {
   label: string;
@@ -9,6 +10,7 @@ interface NumberSliderProps {
   step: number;
   /** The typed field may go beyond the slider's range, up to this. */
   inputMax?: number;
+  help?: string;
   onChange: (value: number) => void;
 }
 
@@ -17,7 +19,7 @@ function decimals(step: number): number {
 }
 
 /** A slider for quick changes plus a number field for exact values. */
-export function NumberSlider({ label, value, min, max, step, inputMax = max, onChange }: NumberSliderProps) {
+export function NumberSlider({ label, value, min, max, step, inputMax = max, help, onChange }: NumberSliderProps) {
   const id = useId();
   const [draft, setDraft] = useState<string | null>(null);
 
@@ -45,9 +47,13 @@ export function NumberSlider({ label, value, min, max, step, inputMax = max, onC
   return (
     <div className="flex flex-col gap-2">
       <div className="flex items-center justify-between">
-        <label htmlFor={id} className="text-[13px] text-fg">
-          {label}
-        </label>
+        {help ? (
+          <LabelWithTip htmlFor={id} label={label} help={help} />
+        ) : (
+          <label htmlFor={id} className="text-[13px] text-fg">
+            {label}
+          </label>
+        )}
         <input
           id={id}
           inputMode="decimal"

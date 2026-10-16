@@ -1,4 +1,6 @@
 import { Minus, Plus, SkipForward, Square } from "lucide-react";
+import { Tooltip } from "radix-ui";
+import { HELP } from "../../lib/help";
 import { progressLabel } from "../../lib/progress";
 import { generate, interrupt, skip } from "../../stores/generation";
 import { useSession } from "../../stores/session";
@@ -12,29 +14,44 @@ function BatchStepper() {
   const button =
     "grid size-7 place-items-center rounded text-muted hover:bg-raised hover:text-fg-strong disabled:opacity-30 disabled:hover:bg-transparent";
   return (
-    <div role="group" aria-label="Number of images" className="flex items-center rounded-md border border-line">
-      <button
-        type="button"
-        className={button}
-        aria-label="Fewer images"
-        onClick={() => update({ batchCount: batchCount - 1 })}
-        disabled={batchCount <= 1}
-      >
-        <Minus className="size-3.5" aria-hidden />
-      </button>
-      <span className="w-7 text-center text-[13px] text-fg-strong tabular-nums" aria-live="polite">
-        ×{batchCount}
-      </span>
-      <button
-        type="button"
-        className={button}
-        aria-label="More images"
-        onClick={() => update({ batchCount: batchCount + 1 })}
-        disabled={batchCount >= MAX_BATCH}
-      >
-        <Plus className="size-3.5" aria-hidden />
-      </button>
-    </div>
+    <Tooltip.Root>
+      <Tooltip.Trigger asChild>
+        <div role="group" aria-label="Number of images" className="flex items-center rounded-md border border-line">
+          <button
+            type="button"
+            className={button}
+            aria-label="Fewer images"
+            onClick={() => update({ batchCount: batchCount - 1 })}
+            disabled={batchCount <= 1}
+          >
+            <Minus className="size-3.5" aria-hidden />
+          </button>
+          <span className="w-7 text-center text-[13px] text-fg-strong tabular-nums" aria-live="polite">
+            ×{batchCount}
+          </span>
+          <button
+            type="button"
+            className={button}
+            aria-label="More images"
+            onClick={() => update({ batchCount: batchCount + 1 })}
+            disabled={batchCount >= MAX_BATCH}
+          >
+            <Plus className="size-3.5" aria-hidden />
+          </button>
+        </div>
+      </Tooltip.Trigger>
+      <Tooltip.Portal>
+        <Tooltip.Content
+          side="top"
+          sideOffset={6}
+          collisionPadding={12}
+          className="z-50 max-w-64 rounded-lg border border-line bg-surface px-3 py-2.5 text-[12.5px] leading-relaxed text-fg shadow-lg shadow-black/15"
+        >
+          <span className="font-medium text-fg-strong">Images. </span>
+          {HELP.batchCount}
+        </Tooltip.Content>
+      </Tooltip.Portal>
+    </Tooltip.Root>
   );
 }
 
