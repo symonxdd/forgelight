@@ -1,7 +1,7 @@
 import type { ConnectionState } from "../api/queries";
 import { CheckpointPicker } from "./CheckpointPicker";
 import { ConnectionStatus } from "./ConnectionStatus";
-import { SettingsDialog } from "./SettingsDialog";
+import { SettingsMenu } from "./SettingsMenu";
 import { ThemeSwitch } from "./ThemeSwitch";
 
 export function TopBar({ connection }: { connection: ConnectionState }) {
@@ -12,7 +12,7 @@ export function TopBar({ connection }: { connection: ConnectionState }) {
       <div className="ml-auto flex items-center gap-2">
         <ConnectionStatus state={connection} />
         <ThemeSwitch />
-        <SettingsDialog />
+        <SettingsMenu />
       </div>
     </header>
   );

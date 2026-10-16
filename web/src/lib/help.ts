@@ -23,13 +23,15 @@ export const HELP = {
   seed: "The number that sets the starting noise. The same seed with the same settings recreates the same image. An empty field picks a new random seed every time.",
   batchCount: "How many images to make in a row. Each one uses the next seed, so every image is different.",
   livePreview:
-    "A quick, low-detail look at the image while it is being made. Updating every step shows the image sharpening, at no noticeable cost. This is Forge's own setting, so the classic page uses it too.",
+    "How often the quick, low-detail look at the image is refreshed while it is being made. Every step shows the image sharpening, at no noticeable cost. This is Forge's own setting, so the classic page uses it too.",
   oled: "Pure black instead of dark grey. On OLED screens black pixels are switched off, which gives deeper contrast and uses less power.",
   font: "The typeface used throughout Forgelight.",
   openOnStart:
     "When Forge starts, it opens Forgelight in the browser instead of the classic Forge page. Turning this off restores Forge's own behaviour.",
   desktopShortcut:
     "A Forgelight icon on the desktop. Double-clicking it starts Forge with its API switched on and opens Forgelight. If Forge is already running, it just opens Forgelight.",
+  civitaiSite:
+    "Which address Civitai links open on. Both show the same models and pages; civitai.red also shows mature preview images.",
   civitai:
     "Details looked up on Civitai once per model, using only the file name, file size and a short fingerprint of the file. Saved on this computer afterwards.",
 } as const;
