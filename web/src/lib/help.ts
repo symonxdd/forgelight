@@ -9,8 +9,6 @@ export const HELP = {
     "A description of the image to create: subject, style, lighting, details. Words near the start carry the most weight. A word or phrase can be strengthened with (word:1.2) or weakened with (word:0.8).",
   negativePrompt:
     "What the image should avoid, such as blurry, extra fingers or watermark. It steers every step away from these.",
-  applySettings:
-    "Fills in all settings from generation data pasted into the prompt, such as the text copied from an image on Civitai. Without pasted data, it uses the settings of the image currently shown.",
   size: "The width and height of the image in pixels. SDXL-based checkpoints are trained around one megapixel (1024 × 1024), so these presets keep the total close to that for the best results.",
   sampler:
     "The method used to remove noise at each step. Samplers reach slightly different results and suit different step counts. DPM++ 2M is a dependable all-round choice.",

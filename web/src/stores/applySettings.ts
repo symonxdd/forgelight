@@ -2,9 +2,9 @@ import type { Schemas } from "../api/client";
 import { forgePost } from "../api/client";
 import { findCheckpoint } from "../api/checkpoints";
 import { queryClient } from "../api/queryClient";
-import { looksLikeGenerationData, modelFromInfotext, parseInfotext, settingsFromInfotext } from "../lib/infotext";
+import { modelFromInfotext, parseInfotext, settingsFromInfotext } from "../lib/infotext";
 import { matchCheckpoint } from "../lib/matchCheckpoint";
-import { selectedImage, useSession } from "./session";
+import { useSession } from "./session";
 import { useSettings } from "./settings";
 
 /**
@@ -39,16 +39,4 @@ export async function applyGenerationData(text: string): Promise<void> {
   await forgePost("/sdapi/v1/options", { sd_model_checkpoint: match.title });
   await queryClient.invalidateQueries({ queryKey: ["options"] });
   setNotice({ tone: "info", text: `Settings applied and checkpoint switched to ${match.model_name}.` });
-}
-
-/** The "apply settings" button: pasted data in the prompt first, otherwise the image shown. */
-export async function applySettingsFromPromptOrImage(): Promise<void> {
-  const prompt = useSettings.getState().prompt;
-  if (looksLikeGenerationData(prompt)) return applyGenerationData(prompt);
-  const image = selectedImage(useSession.getState());
-  if (image?.infotext) return applyGenerationData(image.infotext);
-  useSession.getState().setNotice({
-    tone: "info",
-    text: "Nothing to read yet. Paste generation data into the prompt, or generate an image first.",
-  });
 }

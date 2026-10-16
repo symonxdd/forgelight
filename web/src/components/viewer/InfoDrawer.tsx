@@ -1,27 +1,30 @@
 import { Check, Copy, X } from "lucide-react";
 import { useState } from "react";
-import { parseInfotext, settingsFromInfotext } from "../../lib/infotext";
+import { parseInfotext } from "../../lib/infotext";
+import { applyGenerationData } from "../../stores/applySettings";
 import type { SessionImage } from "../../stores/session";
 import { useSettings } from "../../stores/settings";
 import { useViewer } from "../../stores/viewer";
+import { Hint } from "../Hint";
 
 function CopyButton({ text, label }: { text: string; label: string }) {
   const [copied, setCopied] = useState(false);
   return (
-    <button
-      type="button"
-      aria-label={label}
-      title={label}
-      onClick={() => {
-        void navigator.clipboard.writeText(text).then(() => {
-          setCopied(true);
-          setTimeout(() => setCopied(false), 1400);
-        });
-      }}
-      className="grid size-6 place-items-center rounded text-muted hover:bg-raised hover:text-fg-strong"
-    >
-      {copied ? <Check className="size-3.5 text-good" aria-hidden /> : <Copy className="size-3.5" aria-hidden />}
-    </button>
+    <Hint label={label}>
+      <button
+        type="button"
+        aria-label={label}
+        onClick={() => {
+          void navigator.clipboard.writeText(text).then(() => {
+            setCopied(true);
+            setTimeout(() => setCopied(false), 1400);
+          });
+        }}
+        className="grid size-6 place-items-center rounded text-muted hover:bg-raised hover:text-fg-strong"
+      >
+        {copied ? <Check className="size-3.5 text-good" aria-hidden /> : <Copy className="size-3.5" aria-hidden />}
+      </button>
+    </Hint>
   );
 }
 
@@ -77,7 +80,7 @@ export function InfoDrawer({ image }: { image: SessionImage }) {
       <div className="flex gap-2 border-t border-line p-4">
         <button
           type="button"
-          onClick={() => update(settingsFromInfotext(parsed))}
+          onClick={() => void applyGenerationData(image.infotext)}
           className="h-9 flex-1 rounded-lg bg-primary text-[13px] font-medium text-on-primary hover:bg-primary-hover"
         >
           Use these settings

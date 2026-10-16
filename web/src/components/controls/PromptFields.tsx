@@ -1,32 +1,16 @@
-import { ArrowDownLeft, ChevronRight, X } from "lucide-react";
+import { ChevronRight, X } from "lucide-react";
 import { Collapsible } from "radix-ui";
 import { useState } from "react";
 import { HELP } from "../../lib/help";
 import { looksLikeGenerationData } from "../../lib/infotext";
-import { applyGenerationData, applySettingsFromPromptOrImage } from "../../stores/applySettings";
+import { applyGenerationData } from "../../stores/applySettings";
 import { useSettings } from "../../stores/settings";
 import { InfoTip } from "../InfoTip";
 
 const textarea =
   "w-full resize-none rounded-lg border border-line bg-surface px-3 py-2.5 text-[14px] leading-relaxed text-fg-strong placeholder:text-faint hover:border-line-strong focus:border-line-strong focus:outline-none [field-sizing:content]";
 
-function ApplySettingsButton() {
-  return (
-    <span className="flex items-center gap-1">
-      <button
-        type="button"
-        onClick={() => void applySettingsFromPromptOrImage()}
-        className="flex h-6 items-center gap-1 rounded-md px-1.5 text-[12px] text-muted hover:bg-raised hover:text-fg-strong"
-      >
-        <ArrowDownLeft className="size-3.5" aria-hidden />
-        Apply settings
-      </button>
-      <InfoTip topic="Apply settings" text={HELP.applySettings} />
-    </span>
-  );
-}
-
-/** Offered right after generation data is pasted into the prompt. */
+/** Offered whenever the prompt holds generation data, such as text copied from an image on Civitai. */
 function PastedDataBanner({ onDone }: { onDone: () => void }) {
   return (
     <div className="flex items-center gap-2 rounded-lg border border-line bg-raised px-3 py-2">
@@ -59,7 +43,9 @@ export function PromptFields() {
   const negativeOpen = useSettings((s) => s.negativeOpen);
   const update = useSettings((s) => s.update);
   const setNegativeOpen = useSettings((s) => s.setNegativeOpen);
-  const [pastedData, setPastedData] = useState(false);
+  // Dismissing hides the offer until the prompt text changes.
+  const [dismissedFor, setDismissedFor] = useState<string | null>(null);
+  const offerApply = looksLikeGenerationData(prompt) && dismissedFor !== prompt;
 
   return (
     <div className="flex flex-col gap-3 px-5 pt-4 pb-4">
@@ -68,20 +54,16 @@ export function PromptFields() {
           Prompt
         </label>
         <InfoTip topic="the prompt" text={HELP.prompt} />
-        <span className="ml-auto">
-          <ApplySettingsButton />
-        </span>
       </div>
       <textarea
         id="prompt"
         value={prompt}
         onChange={(e) => update({ prompt: e.target.value })}
-        onPaste={(e) => setPastedData(looksLikeGenerationData(e.clipboardData.getData("text")))}
         placeholder="Describe the image…"
         spellCheck={false}
         className={`${textarea} -mt-1 max-h-[40vh] min-h-32`}
       />
-      {pastedData && looksLikeGenerationData(prompt) && <PastedDataBanner onDone={() => setPastedData(false)} />}
+      {offerApply && <PastedDataBanner onDone={() => setDismissedFor(prompt)} />}
 
       <Collapsible.Root open={negativeOpen || negativePrompt.length > 0} onOpenChange={setNegativeOpen}>
         <div className="flex items-center gap-1.5">
