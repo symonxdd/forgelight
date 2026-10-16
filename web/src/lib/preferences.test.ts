@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_FONT, fontStack, parseFont, parseTheme, resolveTheme } from "./preferences";
+import { DEFAULT_FONT, fontStack, parseFont, parseOled, parseTheme, resolveOled, resolveTheme } from "./preferences";
 
 describe("theme", () => {
   it("follows the system until the user picks a theme", () => {
@@ -16,6 +16,27 @@ describe("theme", () => {
     expect(parseTheme("system")).toBeNull();
     expect(parseTheme(null)).toBeNull();
     expect(parseTheme("dark")).toBe("dark");
+  });
+});
+
+describe("OLED", () => {
+  it("switches on the first time dark mode is in use", () => {
+    expect(resolveOled(null, "dark")).toBe(true);
+  });
+
+  it("stays undecided while only light mode has been used", () => {
+    expect(resolveOled(null, "light")).toBeNull();
+  });
+
+  it("keeps the user's choice once made", () => {
+    expect(resolveOled(false, "dark")).toBe(false);
+    expect(resolveOled(true, "light")).toBe(true);
+  });
+
+  it("reads only true and false from storage", () => {
+    expect(parseOled("true")).toBe(true);
+    expect(parseOled("false")).toBe(false);
+    expect(parseOled("yes")).toBeNull();
   });
 });
 

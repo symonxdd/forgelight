@@ -12,14 +12,18 @@
       (function () {
         var theme = null;
         var font = null;
+        var oled = null;
         try {
           theme = localStorage.getItem("forgelight.theme");
           font = localStorage.getItem("forgelight.font");
+          oled = localStorage.getItem("forgelight.oled");
         } catch (e) {}
         if (theme !== "light" && theme !== "dark") {
           theme = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
         }
         document.documentElement.dataset.theme = theme;
+        // OLED (pure black) is on the first time dark mode is used, until switched off.
+        if (theme === "dark" && oled !== "false") document.documentElement.dataset.oled = "";
         if (font) document.documentElement.dataset.font = font;
       })();
     </script>

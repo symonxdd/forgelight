@@ -26,6 +26,24 @@
 }
 
 :root[data-theme="dark"] {
+  --canvas: #141416;
+  --surface: #1b1b1e;
+  --raised: #26262a;
+  --line: #2b2c31;
+  --line-strong: #3a3b41;
+  --fg: #d7d8db;
+  --fg-strong: #f2f2f3;
+  --muted: #8f939a;
+  --faint: #63676e;
+  --accent: #8ea6c4;
+  --good: #8fb5a0;
+  --bad: #d29a8f;
+  --viewer: #0f0f11;
+  color-scheme: dark;
+}
+
+/* OLED: pure black surfaces, so an OLED screen switches those pixels off. Dark theme only. */
+:root[data-theme="dark"][data-oled] {
   --canvas: #000000;
   --surface: #0a0a0b;
   --raised: #141416;
@@ -35,11 +53,7 @@
   --fg-strong: #f0f0f1;
   --muted: #8a8e95;
   --faint: #5c6067;
-  --accent: #8ea6c4;
-  --good: #8fb5a0;
-  --bad: #d29a8f;
   --viewer: #000000;
-  color-scheme: dark;
 }
 
 /* Font choice, applied before first paint by the script in index.html. Stacks match src/lib/preferences.ts. */

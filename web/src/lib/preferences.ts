@@ -16,6 +16,17 @@ export const FALLBACK_STACK = 'system-ui, -apple-system, "Segoe UI", Roboto, san
 // Storage keys are also read by the inline script in index.html.
 export const THEME_KEY = "forgelight.theme";
 export const FONT_KEY = "forgelight.font";
+export const OLED_KEY = "forgelight.oled";
+
+/** null means OLED has never been decided: it switches on the first time dark mode is in use. */
+export function parseOled(value: string | null): boolean | null {
+  return value === "true" ? true : value === "false" ? false : null;
+}
+
+/** OLED is on the first time dark mode is used, then stays whatever the user leaves it at. */
+export function resolveOled(stored: boolean | null, theme: Theme): boolean | null {
+  return stored === null && theme === "dark" ? true : stored;
+}
 
 export function parseTheme(value: string | null): Theme | null {
   return value === "light" || value === "dark" ? value : null;
