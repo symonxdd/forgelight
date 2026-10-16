@@ -14,7 +14,7 @@ export const HELP = {
   loraStrength:
     "How strongly the LoRA shapes the image. 1 is its full designed effect; lower values blend it in more gently, higher values exaggerate it. Most LoRAs work best between 0.6 and 1.",
   triggerWords:
-    "Special words this LoRA was trained together with, taken from its Civitai page. Putting them in the prompt switches the LoRA's effect on; without them it often stays weak or does not show. Click a word to add it to the prompt.",
+    "Words this LoRA was trained together with, taken from its Civitai page. An added LoRA always has an effect, but for characters and concepts it often stays weak or partial unless its trigger words are in the prompt. Style LoRAs usually need none. Click a word to add it to the prompt.",
   size: "The width and height of the image in pixels. SDXL-based checkpoints are trained around one megapixel (1024 × 1024), so these presets keep the total close to that for the best results.",
   sampler:
     "The method used to remove noise at each step. Samplers reach slightly different results and suit different step counts. DPM++ 2M is a dependable all-round choice.",
