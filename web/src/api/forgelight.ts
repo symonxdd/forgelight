@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ForgeError } from "./client";
+import { ForgeError, forgePost } from "./client";
 
 export interface CivitaiInfo {
   status: "found" | "not_found" | "pending" | "error";
@@ -99,5 +99,27 @@ export function useCreateDesktopShortcut() {
   return useMutation({
     mutationFn: () => request<StartupState>("startup/desktop-shortcut", {}),
     onSuccess: (state) => queryClient.setQueryData(["forgelight-startup"], state),
+  });
+}
+
+/** Asks Forge to rescan its Lora folder (new downloads), then reloads the list shown here. */
+export function useRefreshLoras() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => forgePost("/sdapi/v1/refresh-loras"),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ["forgelight-models"] }),
+  });
+}
+
+/** Asks Forge to rescan its checkpoint folder, then reloads the lists shown here. */
+export function useRefreshCheckpoints() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () => forgePost("/sdapi/v1/refresh-checkpoints"),
+    onSettled: () =>
+      Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["sd-models"] }),
+        queryClient.invalidateQueries({ queryKey: ["forgelight-models"] }),
+      ]),
   });
 }

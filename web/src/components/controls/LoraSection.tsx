@@ -1,7 +1,7 @@
 import { Check, Layers, Plus, Search, TriangleAlert, X } from "lucide-react";
 import { Popover } from "radix-ui";
 import { useMemo, useState } from "react";
-import { useModels, type ModelEntry } from "../../api/forgelight";
+import { useModels, useRefreshLoras, type ModelEntry } from "../../api/forgelight";
 import { useCurrentCheckpoint } from "../../api/queries";
 import { HELP } from "../../lib/help";
 import { ARCH_LABEL, addTriggerWord, compatibility, hasTriggerWord, type Arch, type LoraSlot } from "../../lib/loras";
@@ -10,6 +10,7 @@ import { useSettings } from "../../stores/settings";
 import { CivitaiLink } from "../CivitaiLink";
 import { Hint } from "../Hint";
 import { InfoTip } from "../InfoTip";
+import { RefreshButton } from "../RefreshButton";
 import { NumberSlider } from "./NumberSlider";
 import { Section } from "./Section";
 
@@ -103,7 +104,7 @@ function LoraCard({
   const words = entry?.civitai.trainedWords?.filter((w) => w.trim()) ?? [];
 
   return (
-    <li className="flex flex-col gap-3 rounded-lg border border-line bg-surface p-3">
+    <li className="flex flex-col gap-3 rounded-lg border border-line bg-canvas p-3">
       <div className="flex items-start gap-2">
         <Layers className="mt-0.5 size-4 shrink-0 text-faint" aria-hidden />
         <div className="flex min-w-0 flex-1 flex-col">
@@ -174,7 +175,7 @@ function LoraPicker({
         if (!next) setQuery("");
       }}
     >
-      <Popover.Trigger className="flex h-9 items-center justify-center gap-1.5 rounded-lg border border-dashed border-line-strong text-[13px] text-muted hover:border-fg/40 hover:text-fg-strong data-[state=open]:text-fg-strong">
+      <Popover.Trigger className="flex h-9 flex-1 items-center justify-center gap-1.5 rounded-lg border border-dashed border-line-strong text-[13px] text-muted hover:border-fg/40 hover:text-fg-strong data-[state=open]:text-fg-strong">
         <Plus className="size-3.5" aria-hidden />
         Add LoRA
       </Popover.Trigger>
@@ -254,6 +255,7 @@ export function LoraSection() {
   const models = useModels();
   const installed = models.data?.loras ?? [];
   const checkpointArch = useCheckpointArch();
+  const refresh = useRefreshLoras();
 
   const setWeight = (index: number, weight: number) =>
     update({ loras: loras.map((l, i) => (i === index ? { ...l, weight } : l)) });
@@ -284,7 +286,15 @@ export function LoraSection() {
           ))}
         </ul>
       )}
-      <LoraPicker loras={installed} added={loras} checkpointArch={checkpointArch} onAdd={add} />
+      <div className="flex gap-2">
+        <LoraPicker loras={installed} added={loras} checkpointArch={checkpointArch} onAdd={add} />
+        <RefreshButton
+          label="Reload LoRA list"
+          busy={refresh.isPending}
+          onClick={() => refresh.mutate()}
+          className="size-9 border border-line"
+        />
+      </div>
     </Section>
   );
 }

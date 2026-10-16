@@ -1,7 +1,7 @@
 import { Box, Check, ChevronDown, LoaderCircle } from "lucide-react";
 import { Popover } from "radix-ui";
 import { useState } from "react";
-import { useModels, type ModelEntry } from "../api/forgelight";
+import { useModels, useRefreshCheckpoints, type ModelEntry } from "../api/forgelight";
 import { useCheckpoints, useCurrentCheckpoint, useSetCheckpoint } from "../api/queries";
 import { HELP } from "../lib/help";
 import { baseModelLabel, displayName, tidyName } from "../lib/modelNames";
@@ -9,6 +9,7 @@ import { useSession } from "../stores/session";
 import { Hint } from "./Hint";
 import { CivitaiLink } from "./CivitaiLink";
 import { InfoTip } from "./InfoTip";
+import { RefreshButton } from "./RefreshButton";
 
 interface Row {
   title: string;
@@ -50,6 +51,7 @@ export function CheckpointPicker({ enabled }: { enabled: boolean }) {
   const rows = useRows(enabled);
   const { checkpoint, setting, isLoading } = useCurrentCheckpoint(enabled);
   const setCheckpoint = useSetCheckpoint();
+  const refresh = useRefreshCheckpoints();
   const running = useSession((s) => s.job.status === "running");
   if (!enabled) return null;
 
@@ -98,6 +100,12 @@ export function CheckpointPicker({ enabled }: { enabled: boolean }) {
             <div className="flex items-center gap-1.5 px-3.5 pt-3 pb-1.5">
               <span className="text-xs font-medium tracking-wide text-muted uppercase">Checkpoints</span>
               <InfoTip topic="checkpoints" text={HELP.checkpoint} side="right" />
+              <RefreshButton
+                label="Reload checkpoint list"
+                busy={refresh.isPending}
+                onClick={() => refresh.mutate()}
+                className="ml-auto size-7"
+              />
             </div>
             <ul role="listbox" aria-label="Checkpoints" className="flex flex-col overflow-y-auto px-1.5 pb-1.5">
               {rows.map((row) => {
