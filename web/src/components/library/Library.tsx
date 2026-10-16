@@ -1,10 +1,13 @@
-import { Check, ChevronDown, ImageIcon, LoaderCircle, Search, X } from "lucide-react";
+import { Check, ChevronDown, ImageIcon, LoaderCircle, Search, Trash2, X } from "lucide-react";
 import { Select } from "radix-ui";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useModels } from "../../api/forgelight";
 import { useLibrary } from "../../api/library";
 import { fileName, groupByDay, thumbUrl, type LibraryItem } from "../../lib/library";
 import { displayName, tidyName } from "../../lib/modelNames";
+import { looksNsfw } from "../../lib/nsfw";
+import { usePreferences } from "../../stores/preferences";
+import { DeleteDialog } from "./DeleteDialog";
 import { LibraryViewer } from "./LibraryViewer";
 
 const ALL = "__all";
@@ -117,24 +120,65 @@ function LoadMore({ onVisible, watch }: { onVisible: () => void; watch: number }
   return <div ref={ref} className="h-px" aria-hidden />;
 }
 
-function Tile({ item, onOpen }: { item: LibraryItem; onOpen: () => void }) {
+interface TileProps {
+  item: LibraryItem;
+  selected: boolean;
+  /** Once anything is selected, a click selects instead of opening. */
+  selecting: boolean;
+  onOpen: () => void;
+  /** `range` is true with Shift held: select everything from the last clicked image. */
+  onToggle: (range: boolean) => void;
+}
+
+function Tile({ item, selected, selecting, onOpen, onToggle }: TileProps) {
+  const blurMode = usePreferences((s) => s.libraryBlur);
+  const blurred = useMemo(
+    () => blurMode === "all" || (blurMode === "nsfw" && looksNsfw(item.infotext)),
+    [blurMode, item.infotext],
+  );
   return (
-    <button
-      type="button"
-      onClick={onOpen}
-      data-library-id={item.id}
-      aria-label={`Open ${fileName(item)}`}
-      className="group aspect-[3/4] overflow-hidden rounded-lg bg-raised outline-offset-2 focus-visible:outline-2 focus-visible:outline-accent"
-    >
-      <img
-        src={thumbUrl(item)}
-        alt=""
-        loading="lazy"
-        decoding="async"
-        draggable={false}
-        className="size-full object-cover object-top group-hover:brightness-110 motion-safe:transition-[filter] motion-safe:duration-150"
-      />
-    </button>
+    <div className="group relative aspect-[3/4]">
+      <button
+        type="button"
+        onClick={(e) => (selecting ? onToggle(e.shiftKey) : onOpen())}
+        data-library-id={item.id}
+        aria-label={`Open ${fileName(item)}`}
+        className={`block size-full overflow-hidden rounded-lg outline-offset-2 focus-visible:outline-2 focus-visible:outline-accent ${
+          selected ? "bg-accent/25 ring-2 ring-accent" : "bg-raised"
+        }`}
+      >
+        <img
+          src={thumbUrl(item)}
+          alt=""
+          loading="lazy"
+          decoding="async"
+          draggable={false}
+          className={`size-full object-cover object-top motion-safe:transition-[filter,scale,border-radius] motion-safe:duration-200 ${
+            selected
+              ? `scale-[0.86] rounded-md ${blurred ? "blur-lg" : ""}`
+              : blurred
+                ? "scale-110 blur-xl group-focus-within:scale-100 group-focus-within:blur-none group-hover:scale-100 group-hover:blur-none"
+                : "group-hover:brightness-110"
+          }`}
+        />
+      </button>
+      <button
+        type="button"
+        role="checkbox"
+        aria-checked={selected}
+        aria-label={`Select ${fileName(item)}`}
+        onClick={(e) => onToggle(e.shiftKey)}
+        className={`absolute top-2 left-2 grid size-5 place-items-center rounded-md border-[1.5px] shadow-sm motion-safe:transition-opacity motion-safe:duration-150 ${
+          selected
+            ? "border-accent bg-accent text-canvas"
+            : `border-white/90 bg-black/30 text-transparent hover:bg-black/45 ${
+                selecting ? "" : "opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
+              }`
+        }`}
+      >
+        <Check className="size-3.5" strokeWidth={3} aria-hidden />
+      </button>
+    </div>
   );
 }
 
@@ -157,6 +201,21 @@ export function Library() {
   const [query, setQuery] = useState("");
   const [model, setModel] = useState("");
   const [openId, setOpenId] = useState<string | null>(null);
+  const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
+  const [anchor, setAnchor] = useState<string | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<{ ids: string[]; next: string | null } | null>(null);
+  // Deleted images leave the grid at once, before the Library has reloaded.
+  const [removed, setRemoved] = useState<ReadonlySet<string>>(new Set());
+
+  // A new search starts a new selection: nothing hidden by it stays selected.
+  const changeInput = (value: string) => {
+    setInput(value);
+    setSelected(new Set());
+  };
+  const changeModel = (value: string) => {
+    setModel(value);
+    setSelected(new Set());
+  };
 
   // Search once typing pauses, not on every key.
   useEffect(() => {
@@ -169,8 +228,10 @@ export function Library() {
   const items = useMemo(() => {
     // New images shift later pages by a few places; drop the repeats that causes.
     const seen = new Set<string>();
-    return pages.flatMap((page) => page.items).filter((item) => !seen.has(item.id) && seen.add(item.id));
-  }, [pages]);
+    return pages
+      .flatMap((page) => page.items)
+      .filter((item) => !removed.has(item.id) && !seen.has(item.id) && seen.add(item.id));
+  }, [pages, removed]);
   const groups = useMemo(() => groupByDay(items), [items]);
   const latest = pages[pages.length - 1];
   const total = latest?.total ?? 0;
@@ -191,6 +252,51 @@ export function Library() {
     );
   }, [openId]);
 
+  const toggle = (id: string, range: boolean) => {
+    const next = new Set(selected);
+    const from = anchor ? items.findIndex((item) => item.id === anchor) : -1;
+    const to = items.findIndex((item) => item.id === id);
+    if (range && from !== -1 && to !== -1) {
+      for (const item of items.slice(Math.min(from, to), Math.max(from, to) + 1)) next.add(item.id);
+    } else if (next.has(id)) {
+      next.delete(id);
+    } else {
+      next.add(id);
+    }
+    setSelected(next);
+    setAnchor(id);
+  };
+  const clearSelection = useCallback(() => {
+    setSelected(new Set());
+    setAnchor(null);
+  }, []);
+  const selectedCount = selected.size;
+
+  // Escape clears the selection, before the app-wide shortcuts see the key.
+  useEffect(() => {
+    if (selectedCount === 0 || openId) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== "Escape" || document.querySelector("[role='alertdialog'], [role='listbox']")) return;
+      event.preventDefault();
+      clearSelection();
+    };
+    window.addEventListener("keydown", onKeyDown, true);
+    return () => window.removeEventListener("keydown", onKeyDown, true);
+  }, [selectedCount, openId, clearSelection]);
+
+  const deleteOpen = () => {
+    const current = items[openIndex];
+    if (!current) return;
+    const next = items[openIndex + 1] ?? items[openIndex - 1];
+    setPendingDelete({ ids: [current.id], next: next?.id ?? null });
+  };
+  const onDeleted = (ids: string[]) => {
+    setRemoved((current) => new Set([...current, ...ids]));
+    setSelected((current) => new Set([...current].filter((id) => !ids.includes(id))));
+    if (openId && ids.includes(openId)) setOpenId(pendingDelete?.next ?? null);
+    setPendingDelete(null);
+  };
+
   const filtered = Boolean(query || model);
   let body;
   if (library.isPending) {
@@ -209,8 +315,8 @@ export function Library() {
           <button
             type="button"
             onClick={() => {
-              setInput("");
-              setModel("");
+              changeInput("");
+              changeModel("");
             }}
             className="h-8 rounded-md border border-line px-3 text-[13px] text-fg hover:bg-raised"
           >
@@ -239,7 +345,14 @@ export function Library() {
             </h2>
             <div className="grid grid-cols-[repeat(auto-fill,minmax(10rem,1fr))] gap-2">
               {group.items.map((item) => (
-                <Tile key={item.id} item={item} onOpen={() => setOpenId(item.id)} />
+                <Tile
+                  key={item.id}
+                  item={item}
+                  selected={selected.has(item.id)}
+                  selecting={selectedCount > 0}
+                  onOpen={() => setOpenId(item.id)}
+                  onToggle={(range) => toggle(item.id, range)}
+                />
               ))}
             </div>
           </section>
@@ -253,12 +366,35 @@ export function Library() {
   return (
     <main aria-label="Library" className="relative flex min-h-0 flex-1 flex-col bg-canvas">
       <div className="flex flex-wrap items-center gap-2 border-b border-line px-4 py-3">
-        <SearchBox value={input} onChange={setInput} />
-        <ModelFilter value={model} models={models} onChange={setModel} />
-        {!library.isPending && (
-          <span className="ml-auto text-[12.5px] text-muted tabular-nums">
-            {total === 1 ? "1 image" : `${total.toLocaleString("en-US")} images`}
-          </span>
+        <SearchBox value={input} onChange={changeInput} />
+        <ModelFilter value={model} models={models} onChange={changeModel} />
+        {selectedCount > 0 ? (
+          <div className="ml-auto flex items-center gap-1.5">
+            <span className="mr-1 text-[13px] text-fg-strong tabular-nums">
+              {selectedCount.toLocaleString("en-US")} selected
+            </span>
+            <button
+              type="button"
+              onClick={clearSelection}
+              className="h-8 rounded-md px-2.5 text-[13px] text-muted hover:bg-raised hover:text-fg-strong"
+            >
+              Clear
+            </button>
+            <button
+              type="button"
+              onClick={() => setPendingDelete({ ids: [...selected], next: null })}
+              className="flex h-8 items-center gap-1.5 rounded-md border border-bad/40 px-3 text-[13px] text-bad hover:bg-bad/10"
+            >
+              <Trash2 className="size-3.5" aria-hidden />
+              Delete
+            </button>
+          </div>
+        ) : (
+          !library.isPending && (
+            <span className="ml-auto text-[12.5px] text-muted tabular-nums">
+              {total === 1 ? "1 image" : `${total.toLocaleString("en-US")} images`}
+            </span>
+          )
         )}
       </div>
       <div className="min-h-0 flex-1 overflow-y-auto">{body}</div>
@@ -269,8 +405,10 @@ export function Library() {
           onIndex={(index) => setOpenId(items[index]?.id ?? null)}
           onClose={close}
           onNearEnd={loadMore}
+          onDelete={deleteOpen}
         />
       )}
+      <DeleteDialog ids={pendingDelete?.ids ?? null} onClose={() => setPendingDelete(null)} onDeleted={onDeleted} />
     </main>
   );
 }

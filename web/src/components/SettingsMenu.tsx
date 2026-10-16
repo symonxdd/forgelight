@@ -10,7 +10,15 @@ import {
   livePreviewSettings,
   type LivePreviewChoice,
 } from "../lib/livePreview";
-import { CIVITAI_SITES, FONTS, fontStack, parseCivitaiSite, parseFont } from "../lib/preferences";
+import {
+  CIVITAI_SITES,
+  FONTS,
+  LIBRARY_BLUR_CHOICES,
+  fontStack,
+  parseCivitaiSite,
+  parseFont,
+  parseLibraryBlur,
+} from "../lib/preferences";
 import { usePreferences } from "../stores/preferences";
 import { useSettings, type SectionId } from "../stores/settings";
 import { IconButton } from "./IconButton";
@@ -194,6 +202,24 @@ function PanelSections() {
   );
 }
 
+function Library() {
+  const blur = usePreferences((s) => s.libraryBlur);
+  const setBlur = usePreferences((s) => s.setLibraryBlur);
+  return (
+    <>
+      <Heading>Library</Heading>
+      <Row id="library-blur-label" label="Blur previews" help={HELP.libraryBlur}>
+        <Dropdown
+          value={blur}
+          options={LIBRARY_BLUR_CHOICES.map(({ id, label }) => ({ value: id, label }))}
+          onChange={(v) => setBlur(parseLibraryBlur(v))}
+          labelledBy="library-blur-label"
+        />
+      </Row>
+    </>
+  );
+}
+
 function LivePreview() {
   const options = useOptions();
   const setOptions = useSetOptions();
@@ -304,6 +330,8 @@ export function SettingsMenu() {
           <Appearance />
           <Divider />
           <PanelSections />
+          <Divider />
+          <Library />
           <Divider />
           <LivePreview />
           <Divider />

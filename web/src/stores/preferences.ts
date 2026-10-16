@@ -2,10 +2,12 @@ import { create } from "zustand";
 import {
   CIVITAI_SITE_KEY,
   FONT_KEY,
+  LIBRARY_BLUR_KEY,
   OLED_KEY,
   THEME_KEY,
   parseCivitaiSite,
   parseFont,
+  parseLibraryBlur,
   parseOled,
   parseTheme,
   readStored,
@@ -14,6 +16,7 @@ import {
   writeStored,
   type CivitaiSite,
   type FontId,
+  type LibraryBlur,
   type Theme,
 } from "../lib/preferences";
 
@@ -25,10 +28,12 @@ interface PreferencesState {
   oled: boolean | null;
   font: FontId;
   civitaiSite: CivitaiSite;
+  libraryBlur: LibraryBlur;
   setTheme: (theme: Theme) => void;
   setOled: (oled: boolean) => void;
   setFont: (font: FontId) => void;
   setCivitaiSite: (site: CivitaiSite) => void;
+  setLibraryBlur: (blur: LibraryBlur) => void;
 }
 
 const systemDark = window.matchMedia("(prefers-color-scheme: dark)");
@@ -41,6 +46,7 @@ export const usePreferences = create<PreferencesState>((set) => ({
   oled: parseOled(readStored(OLED_KEY)),
   font: parseFont(readStored(FONT_KEY)),
   civitaiSite: parseCivitaiSite(readStored(CIVITAI_SITE_KEY)),
+  libraryBlur: parseLibraryBlur(readStored(LIBRARY_BLUR_KEY)),
   setTheme: (theme) => {
     writeStored(THEME_KEY, theme);
     set({ theme, themeChosen: true });
@@ -56,6 +62,10 @@ export const usePreferences = create<PreferencesState>((set) => ({
   setCivitaiSite: (civitaiSite) => {
     writeStored(CIVITAI_SITE_KEY, civitaiSite);
     set({ civitaiSite });
+  },
+  setLibraryBlur: (libraryBlur) => {
+    writeStored(LIBRARY_BLUR_KEY, libraryBlur);
+    set({ libraryBlur });
   },
 }));
 

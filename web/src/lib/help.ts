@@ -28,6 +28,8 @@ export const HELP = {
   batchCount: "How many images to make in a row. Each one uses the next seed, so every image is different.",
   livePreview:
     "How often the quick, low-detail look at the image is refreshed while it is being made. Every step shows the image sharpening, at no noticeable cost. This is Forge's own setting, so the classic page uses it too.",
+  libraryBlur:
+    "Blurs previews in the Library until you point at them. Likely NSFW is a guess from words in each image's prompt, so it can miss some.",
   panelSections:
     "Hide the sections you rarely change to keep the panel tidy. Hidden sections still apply their settings to every image.",
   oled: "Pure black instead of dark gray. On OLED screens black pixels are switched off, which gives deeper contrast and uses less power.",

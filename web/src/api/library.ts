@@ -1,4 +1,4 @@
-import { useInfiniteQuery, useMutation } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { LibraryItem } from "../lib/library";
 import { request } from "./forgelight";
 
@@ -37,4 +37,13 @@ export function useLibrary(query: string, model: string) {
 /** Opens the image's folder in File Explorer, with the image selected. */
 export function useRevealImage() {
   return useMutation({ mutationFn: (id: string) => request<{ ok: boolean }>("library/reveal", { id }) });
+}
+
+/** Moves images to the Windows Recycle Bin, then reloads the Library. */
+export function useDeleteImages() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (ids: string[]) => request<{ deleted: number; failed: number }>("library/delete", { ids }),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ["library"] }),
+  });
 }

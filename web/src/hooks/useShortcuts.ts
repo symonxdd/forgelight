@@ -16,9 +16,9 @@ function viewerHasKeyboard(target: EventTarget | null): boolean {
   );
 }
 
-/** A Radix menu or dropdown is open; Escape belongs to it. */
+/** A Radix menu, dropdown or confirmation dialog is open; Escape belongs to it. */
 function menuOpen(): boolean {
-  return document.querySelector("[data-radix-popper-content-wrapper]") !== null;
+  return document.querySelector("[data-radix-popper-content-wrapper], [role='alertdialog']") !== null;
 }
 
 /**

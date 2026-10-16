@@ -1,4 +1,4 @@
-import { ArrowLeft, ChevronLeft, ChevronRight, FolderOpen } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, FolderOpen, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useRevealImage } from "../../api/library";
 import { imageUrl, seedOf, type LibraryItem } from "../../lib/library";
@@ -52,10 +52,11 @@ interface LibraryViewerProps {
   onClose: () => void;
   /** Called near the end of what's loaded, so stepping on never runs dry. */
   onNearEnd: () => void;
+  onDelete: () => void;
 }
 
 /** One Library image over the grid, with the same zoom, info and settings reuse as the Generate screen. */
-export function LibraryViewer({ items, index, onIndex, onClose, onNearEnd }: LibraryViewerProps) {
+export function LibraryViewer({ items, index, onIndex, onClose, onNearEnd, onDelete }: LibraryViewerProps) {
   const ref = useRef<HTMLDivElement>(null);
   const item = items[index]!;
   const infoOpen = useViewer((s) => s.infoOpen);
@@ -95,7 +96,8 @@ export function LibraryViewer({ items, index, onIndex, onClose, onNearEnd }: Lib
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.ctrlKey || event.metaKey || event.altKey || isTyping(event.target)) return;
-      if (document.querySelector("[data-radix-popper-content-wrapper] [role='listbox']")) return;
+      // An open dropdown or the delete dialog handles its own keys.
+      if (document.querySelector("[role='listbox'], [role='alertdialog']")) return;
       const viewer = useViewer.getState();
       const actions: Record<string, () => void> = {
         Escape: () => (viewer.infoOpen ? viewer.setInfoOpen(false) : onClose()),
@@ -151,9 +153,14 @@ export function LibraryViewer({ items, index, onIndex, onClose, onNearEnd }: Lib
         <ViewerToolbar
           image={image}
           extra={
-            <IconButton label="Show in folder" onClick={() => reveal.mutate(item.id)}>
-              <FolderOpen className="size-4" aria-hidden />
-            </IconButton>
+            <>
+              <IconButton label="Show in folder" onClick={() => reveal.mutate(item.id)}>
+                <FolderOpen className="size-4" aria-hidden />
+              </IconButton>
+              <IconButton label="Delete" onClick={onDelete}>
+                <Trash2 className="size-4" aria-hidden />
+              </IconButton>
+            </>
           }
         />
       </div>

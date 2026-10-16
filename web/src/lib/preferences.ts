@@ -18,6 +18,20 @@ export const THEME_KEY = "forgelight.theme";
 export const FONT_KEY = "forgelight.font";
 export const OLED_KEY = "forgelight.oled";
 export const CIVITAI_SITE_KEY = "forgelight.civitaiSite";
+export const LIBRARY_BLUR_KEY = "forgelight.libraryBlur";
+
+/** Which Library previews are blurred until pointed at. */
+export const LIBRARY_BLUR_CHOICES = [
+  { id: "off", label: "Off" },
+  { id: "nsfw", label: "Likely NSFW" },
+  { id: "all", label: "All images" },
+] as const;
+
+export type LibraryBlur = (typeof LIBRARY_BLUR_CHOICES)[number]["id"];
+
+export function parseLibraryBlur(value: string | null): LibraryBlur {
+  return value === "nsfw" || value === "all" ? value : "off";
+}
 
 /** Civitai runs the same site on two addresses; .red also shows mature preview images. */
 export const CIVITAI_SITES = [
