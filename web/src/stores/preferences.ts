@@ -69,7 +69,7 @@ function apply({ theme, oled, font }: PreferencesState) {
   const oledOn = theme === "dark" && oled === true;
   const themeChanges = root.dataset.theme !== theme || "oled" in root.dataset !== oledOn;
   if (themeChanges) {
-    // Switch instantly: suspend all transitions for the frame the colours change in.
+    // Switch instantly: suspend all transitions for the frame the colors change in.
     root.dataset.switching = "";
     root.dataset.theme = theme;
     if (oledOn) root.dataset.oled = "";

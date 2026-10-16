@@ -24,10 +24,10 @@ export const HELP = {
   batchCount: "How many images to make in a row. Each one uses the next seed, so every image is different.",
   livePreview:
     "How often the quick, low-detail look at the image is refreshed while it is being made. Every step shows the image sharpening, at no noticeable cost. This is Forge's own setting, so the classic page uses it too.",
-  oled: "Pure black instead of dark grey. On OLED screens black pixels are switched off, which gives deeper contrast and uses less power.",
+  oled: "Pure black instead of dark gray. On OLED screens black pixels are switched off, which gives deeper contrast and uses less power.",
   font: "The typeface used throughout Forgelight.",
   openOnStart:
-    "When Forge starts, it opens Forgelight in the browser instead of the classic Forge page. Turning this off restores Forge's own behaviour.",
+    "When Forge starts, it opens Forgelight in the browser instead of the classic Forge page. Turning this off restores Forge's own behavior.",
   desktopShortcut:
     "A Forgelight icon on the desktop. Double-clicking it starts Forge with its API switched on and opens Forgelight. If Forge is already running, it just opens Forgelight.",
   civitaiSite:

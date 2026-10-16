@@ -33,8 +33,8 @@ The interface and Forge share one address, so the browser allows the interface t
 |---|---|---|
 | Framework | React + TypeScript (strict) | Mature ecosystem for the hard parts: accessible controls, resizable panels, virtualized grids |
 | Build | Vite | Fast builds; its dev server forwards API calls to Forge, so development needs no CORS either |
-| Styling | Tailwind CSS with CSS variables | One set of colour tokens per theme keeps light and dark consistent |
-| Controls | Radix UI primitives | Keyboard, focus and screen-reader behaviour for menus, sliders and dialogs, with no built-in look |
+| Styling | Tailwind CSS with CSS variables | One set of color tokens per theme keeps light and dark consistent |
+| Controls | Radix UI primitives | Keyboard, focus and screen-reader behavior for menus, sliders and dialogs, with no built-in look |
 | Layout | react-resizable-panels | Draggable, collapsible panels |
 | Server data | TanStack Query | Caching and refreshing data from Forge |
 | UI state | Zustand | Small store for settings and view state |

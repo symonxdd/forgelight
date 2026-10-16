@@ -6,7 +6,7 @@
 
 @custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
 
-/* Colour tokens. Light is the base; dark redefines the same names. */
+/* Color tokens. Light is the base; dark redefines the same names. */
 :root {
   --canvas: #f5f5f6;
   --surface: #ffffff;
@@ -89,7 +89,7 @@
   }
 }
 
-/* Theme switches are instant: no transitions while colours change. */
+/* Theme switches are instant: no transitions while colors change. */
 :root[data-switching] *,
 :root[data-switching] *::before,
 :root[data-switching] *::after {

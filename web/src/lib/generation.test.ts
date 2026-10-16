@@ -99,7 +99,7 @@ describe("sizes", () => {
     expect(normalizeSize(99999)).toBe(2048);
   });
 
-  it("recognises presets", () => {
+  it("recognizes presets", () => {
     expect(matchPreset(832, 1216)?.label).toBe("2:3");
     expect(matchPreset(800, 800)).toBeUndefined();
   });
@@ -120,7 +120,7 @@ describe("zoom", () => {
 });
 
 describe("live preview setting", () => {
-  it("recognises Forge's current setting", () => {
+  it("recognizes Forge's current setting", () => {
     expect(currentLivePreview(true, 10)).toBe("10");
     expect(currentLivePreview(true, 1.0)).toBe("1");
     expect(currentLivePreview(false, 1)).toBe("off");
@@ -145,7 +145,7 @@ describe("messages", () => {
 });
 
 describe("pasted generation data", () => {
-  it("recognises settings copied from an image", () => {
+  it("recognizes settings copied from an image", () => {
     expect(looksLikeGenerationData("a cat\nNegative prompt: dog\nSteps: 30, Sampler: Euler a, Seed: 5")).toBe(true);
   });
 

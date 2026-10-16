@@ -1,6 +1,6 @@
 export interface View {
   scale: number;
-  /** Offset of the image centre from the viewport centre, in screen pixels. */
+  /** Offset of the image center from the viewport center, in screen pixels. */
   x: number;
   y: number;
 }
@@ -22,7 +22,7 @@ export function clampScale(scale: number): number {
 
 /**
  * Zooms to `nextScale` keeping the image point under the cursor fixed.
- * `px`/`py` are the cursor position relative to the viewport centre.
+ * `px`/`py` are the cursor position relative to the viewport center.
  */
 export function zoomAt(view: View, nextScale: number, px: number, py: number): View {
   const scale = clampScale(nextScale);
