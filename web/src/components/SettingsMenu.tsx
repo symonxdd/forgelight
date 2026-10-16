@@ -12,6 +12,7 @@ import {
 } from "../lib/livePreview";
 import { CIVITAI_SITES, FONTS, fontStack, parseCivitaiSite, parseFont } from "../lib/preferences";
 import { usePreferences } from "../stores/preferences";
+import { useSettings, type SectionId } from "../stores/settings";
 import { IconButton } from "./IconButton";
 import { InfoTip } from "./InfoTip";
 
@@ -100,18 +101,37 @@ function Toggle({
   );
 }
 
-function Heading({ children }: { children: ReactNode }) {
-  return <h3 className="px-1 pt-1 text-[11px] font-medium tracking-wide text-faint uppercase">{children}</h3>;
+function Heading({ children, help }: { children: string; help?: string }) {
+  return (
+    <h3 className="flex items-center gap-1.5 px-1 pt-1 text-[11px] font-medium tracking-wide text-faint uppercase">
+      {children}
+      {help && <InfoTip topic={children.toLowerCase()} text={help} side="left" />}
+    </h3>
+  );
 }
 
-function Row({ id, label, help, children }: { id: string; label: string; help: string; children: ReactNode }) {
+function Row({
+  id,
+  label,
+  help,
+  note,
+  children,
+}: {
+  id: string;
+  label: string;
+  help?: string;
+  /** Faint text after the label, e.g. "2 active". */
+  note?: string;
+  children: ReactNode;
+}) {
   return (
     <div className="flex min-h-9 items-center justify-between gap-3 px-1">
       <span className="flex items-center gap-1.5">
         <span id={id} className="text-[13.5px] text-fg">
           {label}
         </span>
-        <InfoTip topic={label} text={help} side="left" />
+        {help && <InfoTip topic={label} text={help} side="left" />}
+        {note && <span className="text-[12px] text-faint">{note}</span>}
       </span>
       {children}
     </div>
@@ -141,6 +161,35 @@ function Appearance() {
           <Toggle checked={oled === true} onChange={setOled} labelledBy="oled-label" />
         </Row>
       )}
+    </>
+  );
+}
+
+const SECTIONS: { id: SectionId; label: string }[] = [
+  { id: "loras", label: "LoRAs" },
+  { id: "size", label: "Size" },
+  { id: "sampling", label: "Sampling" },
+];
+
+/** Shows or hides the panel's sections. The prompt is always shown. */
+function PanelSections() {
+  const hidden = useSettings((s) => s.hiddenSections);
+  const toggle = useSettings((s) => s.toggleSectionHidden);
+  const loraCount = useSettings((s) => s.loras.length);
+
+  return (
+    <>
+      <Heading help={HELP.panelSections}>Panel sections</Heading>
+      {SECTIONS.map(({ id, label }) => (
+        <Row
+          key={id}
+          id={`section-${id}-label`}
+          label={label}
+          note={id === "loras" && loraCount > 0 ? `${loraCount} active` : undefined}
+        >
+          <Toggle checked={!hidden.includes(id)} onChange={() => toggle(id)} labelledBy={`section-${id}-label`} />
+        </Row>
+      ))}
     </>
   );
 }
@@ -244,7 +293,17 @@ export function SettingsMenu() {
           aria-label="Settings"
           className="z-40 flex max-h-[var(--radix-popover-content-available-height)] w-80 flex-col overflow-y-auto rounded-lg border border-line bg-surface p-2 text-fg shadow-lg shadow-black/15"
         >
+          <div className="flex items-center gap-2.5 px-1 pt-0.5 pb-1.5">
+            <img src={`${import.meta.env.BASE_URL}favicon.svg`} alt="" className="size-8 rounded-lg ring-1 ring-line" />
+            <div className="flex flex-col">
+              <span className="text-[14px] font-semibold tracking-tight text-fg-strong">Forgelight</span>
+              <span className="text-[11.5px] text-faint">Version {__APP_VERSION__}</span>
+            </div>
+          </div>
+          <Divider />
           <Appearance />
+          <Divider />
+          <PanelSections />
           <Divider />
           <LivePreview />
           <Divider />
@@ -252,7 +311,7 @@ export function SettingsMenu() {
           <Divider />
           <Startup />
           <Divider />
-          <div className="flex items-center justify-between px-1 py-1">
+          <div className="flex items-center px-1 py-1">
             <a
               href="/"
               target="_blank"
@@ -262,7 +321,6 @@ export function SettingsMenu() {
               Open classic Forge
               <ExternalLink className="size-3.5" aria-hidden />
             </a>
-            <span className="text-xs text-faint">Forgelight {__APP_VERSION__}</span>
           </div>
         </Popover.Content>
       </Popover.Portal>

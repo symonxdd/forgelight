@@ -2,7 +2,6 @@ import { useSettings } from "../stores/settings";
 import { LoraSection } from "./controls/LoraSection";
 import { PromptFields } from "./controls/PromptFields";
 import { SamplingSection } from "./controls/SamplingSection";
-import { SectionPills } from "./controls/SectionPills";
 import { SizeSection } from "./controls/SizeSection";
 
 /**
@@ -20,20 +19,17 @@ export function ControlsPanel({ connected }: { connected: boolean }) {
   return (
     <aside aria-label="Generation settings" className="flex h-full flex-col bg-canvas">
       <div className="@container min-h-0 flex-1 overflow-y-auto p-3">
-        <div className="flex flex-col gap-3">
-          <SectionPills />
-          <div className={`grid grid-cols-1 items-start gap-3 ${twoColumns ? "@min-[40rem]:grid-cols-2" : ""}`}>
-            <div className="flex min-w-0 flex-col gap-3">
-              <PromptFields connected={connected} />
-              {showLoras && <LoraSection />}
-            </div>
-            {twoColumns && (
-              <div className="flex min-w-0 flex-col gap-3">
-                {showSize && <SizeSection />}
-                {showSampling && <SamplingSection />}
-              </div>
-            )}
+        <div className={`grid grid-cols-1 items-start gap-3 ${twoColumns ? "@min-[40rem]:grid-cols-2" : ""}`}>
+          <div className="flex min-w-0 flex-col gap-3">
+            <PromptFields connected={connected} />
+            {showLoras && <LoraSection />}
           </div>
+          {twoColumns && (
+            <div className="flex min-w-0 flex-col gap-3">
+              {showSize && <SizeSection />}
+              {showSampling && <SamplingSection />}
+            </div>
+          )}
         </div>
       </div>
     </aside>
