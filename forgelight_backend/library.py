@@ -124,6 +124,10 @@ def scan() -> list[dict]:
             changed = True
         if changed:
             store.write(INDEX_FILE, index)
+        # Other programs leave small copies without settings (e.g. in a "miniatures"
+        # folder); a settings-less image named like one with settings is such a copy.
+        named = {Path(image["path"]).name for image in images if image["infotext"]}
+        images = [image for image in images if image["infotext"] or Path(image["path"]).name not in named]
         images.sort(key=lambda image: image["mtime"], reverse=True)
         _scan = (time.monotonic(), images)
         return images
@@ -188,12 +192,16 @@ def resolve(image_id: str) -> Path:
     return target
 
 
+def _thumb_path(source: Path) -> Path:
+    stat = source.stat()
+    return THUMBS / f"{hashlib.sha1(f'{source}|{stat.st_mtime}|{stat.st_size}'.encode()).hexdigest()}.webp"
+
+
 def thumbnail(image_id: str) -> Path:
     """A small WebP copy for the grid, made once per version of the image."""
     source = resolve(image_id)
-    stat = source.stat()
-    digest = hashlib.sha1(f"{source}|{stat.st_mtime}|{stat.st_size}".encode()).hexdigest()
-    target = THUMBS / f"{digest}.webp"
+    target = _thumb_path(source)
+    digest = target.stem
     if target.is_file():
         return target
     THUMBS.mkdir(parents=True, exist_ok=True)
@@ -211,6 +219,60 @@ def thumbnail(image_id: str) -> Path:
         if not target.is_file():
             raise
     return target
+
+
+def _recycle(paths: list[Path]) -> None:
+    """Moves files to the Windows Recycle Bin, where they can still be restored."""
+    import ctypes
+    from ctypes import wintypes
+
+    class SHFILEOPSTRUCTW(ctypes.Structure):
+        _fields_ = [
+            ("hwnd", wintypes.HWND),
+            ("wFunc", wintypes.UINT),
+            ("pFrom", wintypes.LPCWSTR),
+            ("pTo", wintypes.LPCWSTR),
+            ("fFlags", ctypes.c_ushort),
+            ("fAnyOperationsAborted", wintypes.BOOL),
+            ("hNameMappings", ctypes.c_void_p),
+            ("lpszProgressTitle", wintypes.LPCWSTR),
+        ]
+
+    FO_DELETE = 0x3
+    # Undoable (Recycle Bin), no prompts or progress window; but if a file can't be
+    # recycled, Windows asks before deleting it for good instead of doing so silently.
+    FLAGS = 0x40 | 0x10 | 0x4 | 0x400 | 0x4000
+    # The list is a run of null-terminated paths, ended by an extra null.
+    buffer = ctypes.create_unicode_buffer("\0".join(str(p) for p in paths) + "\0")
+    operation = SHFILEOPSTRUCTW(wFunc=FO_DELETE, pFrom=ctypes.cast(buffer, wintypes.LPCWSTR), fFlags=FLAGS)
+    result = ctypes.windll.shell32.SHFileOperationW(ctypes.byref(operation))
+    if result != 0:
+        raise OSError(f"Windows couldn't move the images to the Recycle Bin (code {result}).")
+
+
+MAX_DELETE = 2000
+
+
+def delete(image_ids: list[str]) -> dict:
+    """Moves images to the Recycle Bin. Ids outside the output folders are skipped."""
+    global _scan
+    paths = []
+    for image_id in image_ids[:MAX_DELETE]:
+        try:
+            paths.append(resolve(image_id))
+        except FileNotFoundError:
+            continue
+    thumbs = [_thumb_path(path) for path in paths]
+    if paths:
+        try:
+            _recycle(paths)
+        finally:
+            with _lock:
+                _scan = None
+    for thumb in thumbs:
+        thumb.unlink(missing_ok=True)
+    deleted = sum(1 for path in paths if not path.exists())
+    return {"deleted": deleted, "failed": len(image_ids) - deleted}
 
 
 def reveal(image_id: str) -> None:

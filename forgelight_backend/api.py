@@ -111,6 +111,16 @@ def library_reveal(_request: Request, body: Any) -> dict:
     return {"ok": True}
 
 
+def library_delete(_request: Request, body: Any) -> dict:
+    ids = (body or {}).get("ids")
+    if not isinstance(ids, list) or not all(isinstance(i, str) for i in ids):
+        raise HTTPException(status_code=400, detail="Send the image ids to delete.")
+    try:
+        return library.delete(ids)
+    except OSError as error:
+        raise HTTPException(status_code=500, detail=str(error)) from error
+
+
 ROUTES: dict[tuple[str, str], Handler] = {
     ("GET", "status"): status,
     ("GET", "models"): list_models,
@@ -121,6 +131,7 @@ ROUTES: dict[tuple[str, str], Handler] = {
     ("GET", "library/image"): library_image,
     ("GET", "library/thumb"): library_thumb,
     ("POST", "library/reveal"): library_reveal,
+    ("POST", "library/delete"): library_delete,
 }
 
 
