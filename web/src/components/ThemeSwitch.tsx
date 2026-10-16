@@ -1,42 +1,17 @@
 import { Moon, Sun } from "lucide-react";
-import { ToggleGroup } from "radix-ui";
-import { parseTheme } from "../lib/preferences";
 import { usePreferences } from "../stores/preferences";
-import { Hint } from "./Hint";
+import { IconButton } from "./IconButton";
 
-const OPTIONS = [
-  { value: "light", label: "Light theme", Icon: Sun },
-  { value: "dark", label: "Dark theme", Icon: Moon },
-] as const;
-
-/** Exactly two choices. Until one is picked the theme follows Windows. */
+/** One button showing the current theme. Until it's clicked the theme follows Windows. */
 export function ThemeSwitch() {
   const theme = usePreferences((s) => s.theme);
   const setTheme = usePreferences((s) => s.setTheme);
+  const next = theme === "dark" ? "light" : "dark";
+  const Icon = theme === "dark" ? Moon : Sun;
 
   return (
-    <ToggleGroup.Root
-      type="single"
-      value={theme}
-      onValueChange={(value) => {
-        const next = parseTheme(value);
-        if (next) setTheme(next);
-      }}
-      aria-label="Theme"
-      className="flex rounded-md border border-line p-0.5"
-    >
-      {OPTIONS.map(({ value, label, Icon }) => (
-        <Hint label={label}>
-          <ToggleGroup.Item
-            key={value}
-            value={value}
-            aria-label={label}
-            className="grid size-7 place-items-center rounded-[5px] text-faint hover:text-fg data-[state=on]:bg-raised data-[state=on]:text-fg-strong"
-          >
-            <Icon className="size-3.5" aria-hidden />
-          </ToggleGroup.Item>
-        </Hint>
-      ))}
-    </ToggleGroup.Root>
+    <IconButton label={`Switch to ${next} theme`} onClick={() => setTheme(next)}>
+      <Icon className="size-4" aria-hidden />
+    </IconButton>
   );
 }
