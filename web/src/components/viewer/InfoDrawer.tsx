@@ -42,8 +42,11 @@ function TextBlock({ title, text }: { title: string; text: string }) {
   );
 }
 
-/** The settings an image was made with, and buttons to reuse them. */
-export function InfoDrawer({ image }: { image: SessionImage }) {
+/**
+ * The settings an image was made with, and buttons to reuse them.
+ * `onApplied` runs after either button, e.g. to return to the Generate screen.
+ */
+export function InfoDrawer({ image, onApplied }: { image: SessionImage; onApplied?: () => void }) {
   const setInfoOpen = useViewer((s) => s.setInfoOpen);
   const update = useSettings((s) => s.update);
   const parsed = parseInfotext(image.infotext);
@@ -80,14 +83,17 @@ export function InfoDrawer({ image }: { image: SessionImage }) {
       <div className="flex gap-2 border-t border-line p-4">
         <button
           type="button"
-          onClick={() => void applyGenerationData(image.infotext)}
+          onClick={() => void applyGenerationData(image.infotext).then(onApplied)}
           className="h-9 flex-1 rounded-lg bg-primary text-[13px] font-medium text-on-primary hover:bg-primary-hover"
         >
           Use these settings
         </button>
         <button
           type="button"
-          onClick={() => update({ seed: image.seed })}
+          onClick={() => {
+            update({ seed: image.seed });
+            onApplied?.();
+          }}
           disabled={image.seed < 0}
           className="h-9 rounded-lg border border-line px-3 text-[13px] text-fg hover:bg-raised disabled:opacity-40"
         >

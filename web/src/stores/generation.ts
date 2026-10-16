@@ -109,6 +109,8 @@ export async function generate(): Promise<void> {
     }));
     // Results arrive in generation order; the session lists newest first.
     addImages(images.reverse());
+    // Forge saved them to its outputs folder too, so the Library has news.
+    void queryClient.invalidateQueries({ queryKey: ["library"] });
     setJob({ status: "idle" });
   } catch (error) {
     setJob({ status: "error", message: friendlyError(error instanceof Error ? error.message : String(error)) });

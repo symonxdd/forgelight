@@ -1,5 +1,5 @@
 import { Download, Info, Maximize, Minimize } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import type { SessionImage } from "../../stores/session";
 import { currentScale, toggleFullscreen, useViewer } from "../../stores/viewer";
 import { Hint } from "../Hint";
@@ -42,7 +42,8 @@ function TextButton({
   );
 }
 
-export function ViewerToolbar({ image }: { image: SessionImage | undefined }) {
+/** `extra` holds more buttons, placed before fullscreen. */
+export function ViewerToolbar({ image, extra }: { image: SessionImage | undefined; extra?: ReactNode }) {
   const viewer = useViewer();
   const fullscreen = useIsFullscreen();
   const percent = Math.round(currentScale(viewer) * 100);
@@ -84,6 +85,7 @@ export function ViewerToolbar({ image }: { image: SessionImage | undefined }) {
           </a>
         </Hint>
       )}
+      {extra}
       <IconButton label={fullscreen ? "Exit fullscreen (F)" : "Fullscreen (F)"} onClick={toggleFullscreen}>
         {fullscreen ? <Minimize className="size-4" aria-hidden /> : <Maximize className="size-4" aria-hidden />}
       </IconButton>

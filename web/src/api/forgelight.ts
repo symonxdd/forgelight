@@ -29,7 +29,8 @@ export interface StartupState {
   desktopShortcut: boolean;
 }
 
-async function request<T>(path: string, body?: unknown): Promise<T> {
+/** Calls one of the extension's own endpoints under /forgelight/api/. */
+export async function request<T>(path: string, body?: unknown): Promise<T> {
   const response = await fetch(`/forgelight/api/${path}`, {
     method: body === undefined ? "GET" : "POST",
     headers: { Accept: "application/json", ...(body === undefined ? {} : { "Content-Type": "application/json" }) },
