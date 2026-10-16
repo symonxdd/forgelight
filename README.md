@@ -1,3 +1,5 @@
+<img src="assets/forgelight.png" alt="" width="88" height="88">
+
 # Forgelight
 
 A clean, minimal interface for [Stable Diffusion WebUI Forge](https://github.com/lllyasviel/stable-diffusion-webui-forge), built around a large image viewer.
