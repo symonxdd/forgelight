@@ -2,7 +2,7 @@ import { Group, Panel, Separator, useDefaultLayout, type LayoutStorage } from "r
 import type { ConnectionState } from "../api/queries";
 import { ControlsPanel } from "./ControlsPanel";
 import { HistoryRail } from "./HistoryRail";
-import { Viewer } from "./Viewer";
+import { Viewer } from "./viewer/Viewer";
 
 // Panel sizes are remembered between visits; storage failures just mean defaults next time.
 const storage: LayoutStorage = {
@@ -39,7 +39,7 @@ export function Workspace({ connection }: { connection: ConnectionState }) {
       className="min-h-0 flex-1"
     >
       <Panel id="controls" defaultSize="24" minSize={260} maxSize="40">
-        <ControlsPanel />
+        <ControlsPanel connected={connection === "connected"} />
       </Panel>
       <ResizeHandle />
       <Panel id="viewer" minSize="40">
