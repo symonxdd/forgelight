@@ -3,12 +3,8 @@ import { useId } from "react";
 const FLAME =
   "M12 2.8c1.8 3.7 6.3 6 6.3 11a6.3 6.3 0 0 1-12.6 0c0-2.7 1.4-4.2 2.7-5.8.3 2 1.3 3.1 2.6 3.4-.4-3.3.1-6 1-8.6Z";
 const CORE = "M12 14.3c1.7 2.2 3.4 3.6 3.4 6a3.4 3.4 0 0 1-6.8 0c0-2.4 1.7-3.8 3.4-6Z";
-const SPARKS =
-  "M18.6 4.3Q18.6 6.4 20.7 6.4Q18.6 6.4 18.6 8.5Q18.6 6.4 16.5 6.4Q18.6 6.4 18.6 4.3Z" +
-  "M20.6 10.05Q20.6 11.2 21.75 11.2Q20.6 11.2 20.6 12.35Q20.6 11.2 19.45 11.2Q20.6 11.2 20.6 10.05Z" +
-  "M15.4 2.5Q15.4 3.4 16.3 3.4Q15.4 3.4 15.4 4.3Q15.4 3.4 14.5 3.4Q15.4 3.4 15.4 2.5Z";
 
-/** The Forgelight mark (flame with an open core and three sparks), same as assets/forgelight-mark.svg. */
+/** The Forgelight mark (a flame with an open core), same as assets/forgelight-mark.svg. */
 export function LogoMark({ className = "" }: { className?: string }) {
   const maskId = `core-${useId()}`;
   return (
@@ -19,10 +15,9 @@ export function LogoMark({ className = "" }: { className?: string }) {
           <path fill="#000" d={CORE} />
         </mask>
       </defs>
-      <g transform="translate(2.8 4.2) scale(.66)">
+      <g transform="translate(0 .55)">
         <path mask={`url(#${maskId})`} d={FLAME} />
       </g>
-      <path d={SPARKS} />
     </svg>
   );
 }
