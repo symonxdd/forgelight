@@ -3,7 +3,7 @@ import type { ConnectionState } from "../api/queries";
 
 const MESSAGES: Record<ConnectionState, { title: string; detail: string }> = {
   connecting: { title: "Connecting to Forge…", detail: "" },
-  connected: { title: "No image yet", detail: "Your images will appear here, as large as the screen allows." },
+  connected: { title: "No image yet", detail: "Your images will appear here." },
   "api-off": {
     title: "Forge's API is switched off",
     detail: "Restart Forge with the --api option so Forgelight can talk to it.",
