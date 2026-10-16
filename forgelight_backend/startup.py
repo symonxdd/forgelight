@@ -5,6 +5,7 @@ Both only act when the user switches them on in Forgelight's settings.
 
 from __future__ import annotations
 
+import functools
 import os
 import re
 import subprocess
@@ -154,10 +155,16 @@ def _powershell(script: str, env: dict[str, str]) -> str:
     return result.stdout.strip()
 
 
+@functools.lru_cache(maxsize=1)
+def _desktop_folder() -> str:
+    # Asked once per run: starting PowerShell takes a noticeable moment.
+    return _powershell("[Environment]::GetFolderPath('Desktop')", {})
+
+
 def desktop_shortcut_path() -> Path | None:
     if os.name != "nt":
         return None
-    desktop = _powershell("[Environment]::GetFolderPath('Desktop')", {})
+    desktop = _desktop_folder()
     return Path(desktop) / SHORTCUT_NAME if desktop else None
 
 

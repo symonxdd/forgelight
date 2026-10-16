@@ -2,8 +2,9 @@
 
 It never generates images or touches models, samplers, precision or memory
 management; image generation goes through Forge's own /sdapi/v1 API, called by
-the interface. Besides serving files it reads model lists, looks models up on
-Civitai once each, and manages two startup conveniences the user switches on.
+the interface. This entry script stays small and stable: it serves the page
+files and forwards /forgelight/api/ requests to forgelight_backend, which
+reloads itself when changed, so updating it needs no Forge restart.
 """
 
 from __future__ import annotations
@@ -12,8 +13,9 @@ import json
 import sys
 from pathlib import Path
 
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
+from starlette.concurrency import run_in_threadpool
 
 from modules import script_callbacks
 
@@ -24,8 +26,8 @@ BASE = "/forgelight"
 if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
-from forgelight_backend import models, startup  # noqa: E402
-from forgelight_backend.security import require_same_origin  # noqa: E402
+import forgelight_backend.api  # noqa: E402,F401  (loads the whole backend)
+from forgelight_backend import reloader, startup  # noqa: E402
 
 # Scripts load before Forge starts its web server, in time to catch its browser opening.
 startup.redirect_forge_browser_launch()
@@ -38,31 +40,12 @@ Run <code>npm run build</code> in its <code>web</code> folder, then reload this 
 </body>"""
 
 
-def _version() -> str:
-    try:
-        return json.loads((ROOT / "web" / "package.json").read_text(encoding="utf-8"))["version"]
-    except (OSError, ValueError, KeyError):
-        return "unknown"
-
-
 def _page_file(relative: str) -> Path:
     """Resolves a file inside page/, refusing anything that escapes it."""
     target = (PAGE / relative).resolve()
     if not target.is_relative_to(PAGE.resolve()) or not target.is_file():
         raise HTTPException(status_code=404)
     return target
-
-
-def _startup_state() -> dict:
-    prefs = startup.preferences()
-    try:
-        shortcut = startup.desktop_shortcut_path()
-    except (RuntimeError, OSError):
-        shortcut = None
-    return {
-        "openOnStart": bool(prefs.get("open_on_start")),
-        "desktopShortcut": bool(shortcut and shortcut.exists()),
-    }
 
 
 def on_app_started(demo, app: FastAPI) -> None:
@@ -77,37 +60,17 @@ def on_app_started(demo, app: FastAPI) -> None:
             return HTMLResponse(NOT_BUILT, status_code=503)
         return FileResponse(index, headers={"Cache-Control": "no-cache"})
 
-    @app.get(f"{BASE}/api/status")
-    def forgelight_status():
-        from modules.shared_cmd_options import cmd_opts
-
-        return {
-            "name": "forgelight",
-            "version": _version(),
-            "built": (PAGE / "index.html").is_file(),
-            "api_enabled": bool(cmd_opts.api),
-        }
-
-    @app.get(f"{BASE}/api/models")
-    def forgelight_models():
-        return {"checkpoints": models.checkpoints(), "loras": models.loras()}
-
-    @app.get(f"{BASE}/api/startup")
-    def forgelight_startup():
-        return _startup_state()
-
-    @app.post(f"{BASE}/api/startup/open-on-start", dependencies=[Depends(require_same_origin)])
-    def forgelight_open_on_start(body: dict):
-        startup.set_open_on_start(bool(body.get("enabled")))
-        return _startup_state()
-
-    @app.post(f"{BASE}/api/startup/desktop-shortcut", dependencies=[Depends(require_same_origin)])
-    def forgelight_desktop_shortcut(body: dict):
-        try:
-            startup.create_desktop_shortcut()
-        except (RuntimeError, OSError) as error:
-            raise HTTPException(status_code=500, detail=str(error)) from error
-        return _startup_state()
+    @app.api_route(f"{BASE}/api/{{path:path}}", methods=["GET", "POST"])
+    async def forgelight_api(path: str, request: Request):
+        body = None
+        if request.method == "POST":
+            try:
+                body = json.loads(await request.body() or b"{}")
+            except ValueError as error:
+                raise HTTPException(status_code=400, detail="Send JSON.") from error
+        reloader.maybe_reload()
+        api = sys.modules["forgelight_backend.api"]
+        return await run_in_threadpool(api.handle, request.method, path, request, body)
 
     @app.get(f"{BASE}/{{path:path}}", include_in_schema=False)
     def forgelight_file(path: str):
