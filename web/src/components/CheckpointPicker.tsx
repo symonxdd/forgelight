@@ -1,64 +1,152 @@
-import { Box, Check, ChevronDown, LoaderCircle } from "lucide-react";
-import { Select } from "radix-ui";
-import { checkpointLabel } from "../api/checkpoints";
+import { Box, Check, ChevronDown, ExternalLink, LoaderCircle } from "lucide-react";
+import { Popover } from "radix-ui";
+import { useState } from "react";
+import { useModels, type ModelEntry } from "../api/forgelight";
 import { useCheckpoints, useCurrentCheckpoint, useSetCheckpoint } from "../api/queries";
+import { HELP } from "../lib/help";
+import { baseModelLabel, displayName, tidyName } from "../lib/modelNames";
 import { useSession } from "../stores/session";
+import { InfoTip } from "./InfoTip";
+
+interface Row {
+  title: string;
+  name: string;
+  detail?: string;
+  base?: string;
+  url?: string;
+  file: string;
+  lookingUp: boolean;
+}
+
+/** Forge's checkpoint list, enriched with Civitai details where the extension has them. */
+function useRows(enabled: boolean): Row[] {
+  const checkpoints = useCheckpoints(enabled);
+  const models = useModels(enabled);
+  const byTitle = new Map<string, ModelEntry>((models.data?.checkpoints ?? []).map((m) => [m.title ?? "", m]));
+  return (checkpoints.data ?? []).map((c) => {
+    const entry = byTitle.get(c.title);
+    const stem = entry?.stem ?? c.model_name;
+    const { name, detail } = displayName(stem, entry?.civitai);
+    return {
+      title: c.title,
+      name,
+      detail,
+      base: baseModelLabel(entry?.civitai.baseModel),
+      url: entry?.civitai.url,
+      file: entry?.file ?? c.title,
+      lookingUp: entry?.civitai.status === "pending",
+    };
+  });
+}
+
+function CivitaiLink({ url, name }: { url: string; name: string }) {
+  return (
+    <a
+      href={url}
+      target="_blank"
+      rel="noopener"
+      aria-label={`Open ${name} on Civitai`}
+      title="Open on Civitai"
+      className="grid size-7 shrink-0 place-items-center rounded-md text-faint hover:bg-surface hover:text-fg-strong"
+    >
+      <ExternalLink className="size-3.5" aria-hidden />
+    </a>
+  );
+}
 
 /**
  * Chooses the checkpoint Forge uses, like the dropdown in the classic page.
  * Forge loads the new file at the next generation, which then takes longer.
  */
 export function CheckpointPicker({ enabled }: { enabled: boolean }) {
-  const checkpoints = useCheckpoints(enabled);
+  const [open, setOpen] = useState(false);
+  const rows = useRows(enabled);
   const { checkpoint, setting, isLoading } = useCurrentCheckpoint(enabled);
   const setCheckpoint = useSetCheckpoint();
   const running = useSession((s) => s.job.status === "running");
   if (!enabled) return null;
 
-  const label = setCheckpoint.isPending ? "Switching…" : isLoading ? "Loading…" : checkpointLabel(checkpoint, setting);
+  const current = rows.find((r) => r.title === checkpoint?.title);
+  const label = setCheckpoint.isPending
+    ? "Switching…"
+    : isLoading
+      ? "Loading…"
+      : (current?.name ?? (setting ? tidyName(setting.replace(/\.(safetensors|ckpt).*$/i, "")) : "None"));
+  const disabled = running || setCheckpoint.isPending;
 
   return (
-    <Select.Root
-      value={checkpoint?.title ?? ""}
-      onValueChange={(title) => setCheckpoint.mutate(title)}
-      disabled={running || setCheckpoint.isPending}
-    >
-      <Select.Trigger
-        aria-label="Checkpoint"
-        title={running ? "Checkpoints can be changed once the current generation finishes" : undefined}
-        className="flex max-w-[22rem] min-w-0 items-center gap-2 rounded-md border border-line px-2.5 py-1 text-[13px] text-fg hover:border-line-strong disabled:opacity-60 disabled:hover:border-line"
-      >
-        {setCheckpoint.isPending ? (
-          <LoaderCircle className="size-3.5 shrink-0 animate-spin text-muted" aria-hidden />
-        ) : (
-          <Box className="size-3.5 shrink-0 text-muted" aria-hidden />
-        )}
-        <span className="truncate">{label}</span>
-        <ChevronDown className="size-3.5 shrink-0 text-muted" aria-hidden />
-      </Select.Trigger>
-      <Select.Portal>
-        <Select.Content
-          position="popper"
-          sideOffset={6}
-          align="start"
-          className="z-50 max-h-[min(28rem,var(--radix-select-content-available-height))] min-w-[var(--radix-select-trigger-width)] overflow-hidden rounded-lg border border-line bg-surface p-1 text-fg shadow-lg shadow-black/10"
+    <div className="flex min-w-0 items-center gap-1.5">
+      <Popover.Root open={open} onOpenChange={setOpen}>
+        <Popover.Trigger
+          disabled={disabled}
+          title={running ? "The checkpoint can be changed once the current generation finishes" : undefined}
+          className="group flex max-w-[26rem] min-w-0 items-center gap-2 rounded-md border border-line py-1 pr-2 pl-2.5 text-left hover:border-line-strong disabled:opacity-60 disabled:hover:border-line data-[state=open]:border-line-strong"
         >
-          <Select.Viewport>
-            {(checkpoints.data ?? []).map((c) => (
-              <Select.Item
-                key={c.title}
-                value={c.title}
-                className="flex cursor-default items-center justify-between gap-4 rounded-md px-2.5 py-1.5 text-[13px] outline-none data-[highlighted]:bg-raised data-[state=checked]:text-fg-strong"
-              >
-                <Select.ItemText>{c.model_name}</Select.ItemText>
-                <Select.ItemIndicator>
-                  <Check className="size-3.5 text-accent" aria-hidden />
-                </Select.ItemIndicator>
-              </Select.Item>
-            ))}
-          </Select.Viewport>
-        </Select.Content>
-      </Select.Portal>
-    </Select.Root>
+          {setCheckpoint.isPending ? (
+            <LoaderCircle className="size-3.5 shrink-0 animate-spin text-muted" aria-hidden />
+          ) : (
+            <Box className="size-3.5 shrink-0 text-muted" aria-hidden />
+          )}
+          <span className="text-[12px] text-muted">Checkpoint</span>
+          <span className="truncate text-[13px] font-medium text-fg-strong">{label}</span>
+          {current?.base && (
+            <span className="shrink-0 rounded border border-line px-1.5 text-[11px] text-muted">{current.base}</span>
+          )}
+          <ChevronDown className="size-3.5 shrink-0 text-muted group-data-[state=open]:rotate-180" aria-hidden />
+        </Popover.Trigger>
+        <Popover.Portal>
+          <Popover.Content
+            align="start"
+            sideOffset={6}
+            collisionPadding={12}
+            className="z-50 flex max-h-[min(30rem,var(--radix-popover-content-available-height))] w-[min(26rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-lg border border-line bg-surface text-fg shadow-lg shadow-black/15"
+          >
+            <p className="px-3.5 pt-3 pb-1.5 text-xs font-medium tracking-wide text-muted uppercase">Checkpoints</p>
+            <ul role="listbox" aria-label="Checkpoints" className="flex flex-col overflow-y-auto px-1.5 pb-1.5">
+              {rows.map((row) => {
+                const selected = row.title === checkpoint?.title;
+                return (
+                  <li key={row.title} className="group flex items-center gap-1 rounded-md hover:bg-raised">
+                    <button
+                      type="button"
+                      role="option"
+                      aria-selected={selected}
+                      onClick={() => {
+                        setOpen(false);
+                        if (!selected) setCheckpoint.mutate(row.title);
+                      }}
+                      title={row.file}
+                      className="flex min-w-0 flex-1 items-center gap-2.5 px-2 py-2 text-left"
+                    >
+                      <Box className="size-4 shrink-0 text-faint" aria-hidden />
+                      <span className="flex min-w-0 flex-1 flex-col">
+                        <span
+                          className={`truncate text-[13.5px] ${selected ? "font-medium text-fg-strong" : "text-fg"}`}
+                        >
+                          {row.name}
+                        </span>
+                        <span className="truncate text-[12px] text-muted">
+                          {[row.detail, row.lookingUp ? "Looking up on Civitai…" : undefined]
+                            .filter(Boolean)
+                            .join(" · ") || row.file}
+                        </span>
+                      </span>
+                      {row.base && (
+                        <span className="shrink-0 rounded border border-line px-1.5 text-[11px] text-muted">
+                          {row.base}
+                        </span>
+                      )}
+                      <Check className={`size-3.5 shrink-0 text-accent ${selected ? "" : "invisible"}`} aria-hidden />
+                    </button>
+                    {row.url && <CivitaiLink url={row.url} name={row.name} />}
+                  </li>
+                );
+              })}
+            </ul>
+          </Popover.Content>
+        </Popover.Portal>
+      </Popover.Root>
+      <InfoTip topic="the checkpoint" text={HELP.checkpoint} side="bottom" />
+    </div>
   );
 }
