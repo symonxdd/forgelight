@@ -4,6 +4,7 @@ import { HELP } from "../../lib/help";
 import { selectedImage, useSession } from "../../stores/session";
 import { useSettings } from "../../stores/settings";
 import { LabelWithTip } from "../InfoTip";
+import { Hint } from "../Hint";
 
 const iconButton =
   "grid size-8 shrink-0 place-items-center rounded-md text-muted hover:bg-raised hover:text-fg-strong disabled:opacity-40 disabled:hover:bg-transparent";
@@ -36,26 +37,28 @@ export function SeedField() {
           onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
           className="h-8 min-w-0 flex-1 rounded-md border border-line bg-surface px-2.5 text-[13px] text-fg-strong tabular-nums placeholder:text-faint hover:border-line-strong focus:border-line-strong focus:outline-none"
         />
-        <button
-          type="button"
-          className={iconButton}
-          aria-label="Random seed"
-          title="Random seed"
-          onClick={() => update({ seed: -1 })}
-          disabled={seed === -1}
-        >
-          <Dices className="size-4" aria-hidden />
-        </button>
-        <button
-          type="button"
-          className={iconButton}
-          aria-label="Use the shown image's seed"
-          title="Use the shown image's seed"
-          onClick={() => shownImage && update({ seed: shownImage.seed })}
-          disabled={!shownImage || shownImage.seed < 0}
-        >
-          <Recycle className="size-4" aria-hidden />
-        </button>
+        <Hint label={"Random seed"}>
+          <button
+            type="button"
+            className={iconButton}
+            aria-label="Random seed"
+            onClick={() => update({ seed: -1 })}
+            disabled={seed === -1}
+          >
+            <Dices className="size-4" aria-hidden />
+          </button>
+        </Hint>
+        <Hint label={"Use the shown image's seed"}>
+          <button
+            type="button"
+            className={iconButton}
+            aria-label="Use the shown image's seed"
+            onClick={() => shownImage && update({ seed: shownImage.seed })}
+            disabled={!shownImage || shownImage.seed < 0}
+          >
+            <Recycle className="size-4" aria-hidden />
+          </button>
+        </Hint>
       </div>
     </div>
   );

@@ -2,6 +2,7 @@ import { Download, Info, Maximize, Minimize } from "lucide-react";
 import { useEffect, useState } from "react";
 import type { SessionImage } from "../../stores/session";
 import { currentScale, toggleFullscreen, useViewer } from "../../stores/viewer";
+import { Hint } from "../Hint";
 import { IconButton } from "../IconButton";
 
 function useIsFullscreen(): boolean {
@@ -26,17 +27,18 @@ function TextButton({
   children: string;
 }) {
   return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-pressed={pressed}
-      title={label}
-      className={`h-8 rounded-md px-2.5 text-[12px] font-medium ${
-        pressed ? "bg-raised text-fg-strong" : "text-muted hover:bg-raised hover:text-fg-strong"
-      }`}
-    >
-      {children}
-    </button>
+    <Hint label={label}>
+      <button
+        type="button"
+        onClick={onClick}
+        aria-pressed={pressed}
+        className={`h-8 rounded-md px-2.5 text-[12px] font-medium ${
+          pressed ? "bg-raised text-fg-strong" : "text-muted hover:bg-raised hover:text-fg-strong"
+        }`}
+      >
+        {children}
+      </button>
+    </Hint>
   );
 }
 
@@ -71,15 +73,16 @@ export function ViewerToolbar({ image }: { image: SessionImage | undefined }) {
         <Info className="size-4" aria-hidden />
       </IconButton>
       {image && (
-        <a
-          href={image.url}
-          download={`forgelight-${image.seed}.png`}
-          aria-label="Download"
-          title="Download"
-          className="grid size-8 place-items-center rounded-md text-muted hover:bg-raised hover:text-fg-strong"
-        >
-          <Download className="size-4" aria-hidden />
-        </a>
+        <Hint label={"Download"}>
+          <a
+            href={image.url}
+            download={`forgelight-${image.seed}.png`}
+            aria-label="Download"
+            className="grid size-8 place-items-center rounded-md text-muted hover:bg-raised hover:text-fg-strong"
+          >
+            <Download className="size-4" aria-hidden />
+          </a>
+        </Hint>
       )}
       <IconButton label={fullscreen ? "Exit fullscreen (F)" : "Fullscreen (F)"} onClick={toggleFullscreen}>
         {fullscreen ? <Minimize className="size-4" aria-hidden /> : <Maximize className="size-4" aria-hidden />}

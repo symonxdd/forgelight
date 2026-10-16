@@ -2,6 +2,7 @@ import { Moon, Sun } from "lucide-react";
 import { ToggleGroup } from "radix-ui";
 import { parseTheme } from "../lib/preferences";
 import { usePreferences } from "../stores/preferences";
+import { Hint } from "./Hint";
 
 const OPTIONS = [
   { value: "light", label: "Light theme", Icon: Sun },
@@ -25,15 +26,16 @@ export function ThemeSwitch() {
       className="flex rounded-md border border-line p-0.5"
     >
       {OPTIONS.map(({ value, label, Icon }) => (
-        <ToggleGroup.Item
-          key={value}
-          value={value}
-          aria-label={label}
-          title={label}
-          className="grid size-7 place-items-center rounded-[5px] text-faint hover:text-fg data-[state=on]:bg-raised data-[state=on]:text-fg-strong"
-        >
-          <Icon className="size-3.5" aria-hidden />
-        </ToggleGroup.Item>
+        <Hint label={label}>
+          <ToggleGroup.Item
+            key={value}
+            value={value}
+            aria-label={label}
+            className="grid size-7 place-items-center rounded-[5px] text-faint hover:text-fg data-[state=on]:bg-raised data-[state=on]:text-fg-strong"
+          >
+            <Icon className="size-3.5" aria-hidden />
+          </ToggleGroup.Item>
+        </Hint>
       ))}
     </ToggleGroup.Root>
   );

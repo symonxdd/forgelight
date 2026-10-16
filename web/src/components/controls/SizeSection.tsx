@@ -4,6 +4,7 @@ import { HELP } from "../../lib/help";
 import { SIZE_PRESETS, matchPreset, normalizeSize } from "../../lib/sizes";
 import { useSettings } from "../../stores/settings";
 import { Section } from "./Section";
+import { Hint } from "../Hint";
 
 /** A small rectangle in the preset's proportions. */
 function RatioShape({ width, height }: { width: number; height: number }) {
@@ -61,38 +62,40 @@ export function SizeSection() {
         {SIZE_PRESETS.map((p) => {
           const active = p === preset;
           return (
-            <button
-              key={p.label}
-              type="button"
-              role="radio"
-              aria-checked={active}
-              title={`${p.width} × ${p.height}`}
-              onClick={() => update({ width: p.width, height: p.height })}
-              className={`flex h-12 flex-col items-center justify-center gap-1 rounded-md border text-[11px] ${
-                active
-                  ? "border-fg-strong/40 bg-raised text-fg-strong"
-                  : "border-line text-muted hover:border-line-strong hover:text-fg"
-              }`}
-            >
-              <span className="grid h-5 place-items-center">
-                <RatioShape width={p.width} height={p.height} />
-              </span>
-              {p.label}
-            </button>
+            <Hint label={`${p.width} × ${p.height}`}>
+              <button
+                key={p.label}
+                type="button"
+                role="radio"
+                aria-checked={active}
+                onClick={() => update({ width: p.width, height: p.height })}
+                className={`flex h-12 flex-col items-center justify-center gap-1 rounded-md border text-[11px] ${
+                  active
+                    ? "border-fg-strong/40 bg-raised text-fg-strong"
+                    : "border-line text-muted hover:border-line-strong hover:text-fg"
+                }`}
+              >
+                <span className="grid h-5 place-items-center">
+                  <RatioShape width={p.width} height={p.height} />
+                </span>
+                {p.label}
+              </button>
+            </Hint>
           );
         })}
       </div>
       <div className="flex items-center gap-2">
         <SizeInput label="W" value={width} onChange={(v) => update({ width: v })} />
-        <button
-          type="button"
-          aria-label="Swap width and height"
-          title="Swap width and height"
-          onClick={() => update({ width: height, height: width })}
-          className="grid size-8 shrink-0 place-items-center rounded-md text-muted hover:bg-raised hover:text-fg-strong"
-        >
-          <ArrowLeftRight className="size-3.5" aria-hidden />
-        </button>
+        <Hint label={"Swap width and height"}>
+          <button
+            type="button"
+            aria-label="Swap width and height"
+            onClick={() => update({ width: height, height: width })}
+            className="grid size-8 shrink-0 place-items-center rounded-md text-muted hover:bg-raised hover:text-fg-strong"
+          >
+            <ArrowLeftRight className="size-3.5" aria-hidden />
+          </button>
+        </Hint>
         <SizeInput label="H" value={height} onChange={(v) => update({ height: v })} />
       </div>
     </Section>

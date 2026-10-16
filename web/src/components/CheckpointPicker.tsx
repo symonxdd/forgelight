@@ -8,6 +8,7 @@ import { baseModelLabel, displayName, tidyName } from "../lib/modelNames";
 import { civitaiLink } from "../lib/preferences";
 import { usePreferences } from "../stores/preferences";
 import { useSession } from "../stores/session";
+import { Hint } from "./Hint";
 import { InfoTip } from "./InfoTip";
 
 interface Row {
@@ -44,16 +45,17 @@ function useRows(enabled: boolean): Row[] {
 function CivitaiLink({ url, name }: { url: string; name: string }) {
   const site = usePreferences((s) => s.civitaiSite);
   return (
-    <a
-      href={civitaiLink(url, site)}
-      target="_blank"
-      rel="noopener"
-      aria-label={`Open ${name} on Civitai`}
-      title={`Open on civitai.${site}`}
-      className="grid size-7 shrink-0 place-items-center rounded-md text-faint hover:bg-surface hover:text-fg-strong"
-    >
-      <ExternalLink className="size-3.5" aria-hidden />
-    </a>
+    <Hint label={`Open on civitai.${site}`} side="left">
+      <a
+        href={civitaiLink(url, site)}
+        target="_blank"
+        rel="noopener"
+        aria-label={`Open ${name} on Civitai`}
+        className="grid size-7 shrink-0 place-items-center rounded-md text-faint hover:bg-surface hover:text-fg-strong"
+      >
+        <ExternalLink className="size-3.5" aria-hidden />
+      </a>
+    </Hint>
   );
 }
 
@@ -80,23 +82,28 @@ export function CheckpointPicker({ enabled }: { enabled: boolean }) {
   return (
     <div className="flex min-w-0 items-center gap-1.5">
       <Popover.Root open={open} onOpenChange={setOpen}>
-        <Popover.Trigger
-          disabled={disabled}
-          title={running ? "The checkpoint can be changed once the current generation finishes" : undefined}
-          className="group flex max-w-[26rem] min-w-0 items-center gap-2 rounded-md border border-line py-1 pr-2 pl-2.5 text-left hover:border-line-strong disabled:opacity-60 disabled:hover:border-line data-[state=open]:border-line-strong"
-        >
-          {setCheckpoint.isPending ? (
-            <LoaderCircle className="size-3.5 shrink-0 animate-spin text-muted" aria-hidden />
-          ) : (
-            <Box className="size-3.5 shrink-0 text-muted" aria-hidden />
-          )}
-          <span className="text-[12px] text-muted">Checkpoint</span>
-          <span className="truncate text-[13px] font-medium text-fg-strong">{label}</span>
-          {current?.base && (
-            <span className="shrink-0 rounded border border-line px-1.5 text-[11px] text-muted">{current.base}</span>
-          )}
-          <ChevronDown className="size-3.5 shrink-0 text-muted group-data-[state=open]:rotate-180" aria-hidden />
-        </Popover.Trigger>
+        <Hint label={running ? "The checkpoint can be changed once the current generation finishes" : null}>
+          <span className="flex min-w-0" tabIndex={running ? 0 : -1}>
+            <Popover.Trigger
+              disabled={disabled}
+              className="group flex max-w-[26rem] min-w-0 items-center gap-2 rounded-md border border-line py-1 pr-2 pl-2.5 text-left hover:border-line-strong disabled:opacity-60 disabled:hover:border-line data-[state=open]:border-line-strong"
+            >
+              {setCheckpoint.isPending ? (
+                <LoaderCircle className="size-3.5 shrink-0 animate-spin text-muted" aria-hidden />
+              ) : (
+                <Box className="size-3.5 shrink-0 text-muted" aria-hidden />
+              )}
+              <span className="text-[12px] text-muted">Checkpoint</span>
+              <span className="truncate text-[13px] font-medium text-fg-strong">{label}</span>
+              {current?.base && (
+                <span className="shrink-0 rounded border border-line px-1.5 text-[11px] text-muted">
+                  {current.base}
+                </span>
+              )}
+              <ChevronDown className="size-3.5 shrink-0 text-muted group-data-[state=open]:rotate-180" aria-hidden />
+            </Popover.Trigger>
+          </span>
+        </Hint>
         <Popover.Portal>
           <Popover.Content
             // Opening with focus on an info icon would pop its tooltip up uninvited.
@@ -123,7 +130,6 @@ export function CheckpointPicker({ enabled }: { enabled: boolean }) {
                         setOpen(false);
                         if (!selected) setCheckpoint.mutate(row.title);
                       }}
-                      title={row.file}
                       className="flex min-w-0 flex-1 items-center gap-2.5 px-2 py-2 text-left"
                     >
                       <Box className="size-4 shrink-0 text-faint" aria-hidden />

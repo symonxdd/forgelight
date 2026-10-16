@@ -5,6 +5,7 @@ import { progressLabel } from "../../lib/progress";
 import { generate, interrupt, skip } from "../../stores/generation";
 import { useSession } from "../../stores/session";
 import { useSettings } from "../../stores/settings";
+import { Hint } from "../Hint";
 
 const MAX_BATCH = 8;
 
@@ -73,26 +74,28 @@ export function GenerateBar({ connected }: { connected: boolean }) {
           <span className="relative px-3.5 text-[13px] text-fg-strong tabular-nums">{progressLabel(job)}</span>
         </div>
         {job.batchCount > 1 && (
+          <Hint label={"Skip this image (Alt+Enter)"}>
+            <button
+              type="button"
+              onClick={() => void skip()}
+              aria-label="Skip this image (Alt+Enter)"
+              className="grid size-10 place-items-center rounded-lg border border-line text-muted hover:bg-raised hover:text-fg-strong"
+            >
+              <SkipForward className="size-4" aria-hidden />
+            </button>
+          </Hint>
+        )}
+        <Hint label={"Stop (Esc)"}>
           <button
             type="button"
-            onClick={() => void skip()}
-            aria-label="Skip this image (Alt+Enter)"
-            title="Skip this image (Alt+Enter)"
-            className="grid size-10 place-items-center rounded-lg border border-line text-muted hover:bg-raised hover:text-fg-strong"
+            onClick={() => void interrupt()}
+            disabled={job.stopping}
+            aria-label="Stop (Esc)"
+            className="grid size-10 place-items-center rounded-lg border border-line text-muted hover:bg-raised hover:text-fg-strong disabled:opacity-40"
           >
-            <SkipForward className="size-4" aria-hidden />
+            <Square className="size-3.5 fill-current" aria-hidden />
           </button>
-        )}
-        <button
-          type="button"
-          onClick={() => void interrupt()}
-          disabled={job.stopping}
-          aria-label="Stop (Esc)"
-          title="Stop (Esc)"
-          className="grid size-10 place-items-center rounded-lg border border-line text-muted hover:bg-raised hover:text-fg-strong disabled:opacity-40"
-        >
-          <Square className="size-3.5 fill-current" aria-hidden />
-        </button>
+        </Hint>
       </div>
     );
   }
