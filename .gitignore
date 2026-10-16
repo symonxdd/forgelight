@@ -1,0 +1,20 @@
+# Claude Code project instructions (internal, never tracked)
+CLAUDE.md
+.claude/
+
+# Dependencies and build output
+node_modules/
+page/
+*.tsbuildinfo
+.eslintcache
+coverage/
+
+# Python
+__pycache__/
+*.pyc
+
+# Logs and OS files
+*.log
+.DS_Store
+Thumbs.db
+desktop.ini
