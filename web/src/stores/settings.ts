@@ -3,7 +3,7 @@ import { createJSONStorage, persist } from "zustand/middleware";
 import { safeStorage } from "../lib/storage";
 import { DEFAULT_SETTINGS, type GenerationSettings } from "../lib/txt2img";
 
-export type SectionId = "size" | "sampling";
+export type SectionId = "loras" | "size" | "sampling";
 
 interface SettingsState extends GenerationSettings {
   negativeOpen: boolean;
@@ -19,7 +19,7 @@ export const useSettings = create<SettingsState>()(
     (set) => ({
       ...DEFAULT_SETTINGS,
       negativeOpen: false,
-      openSections: { size: true, sampling: true },
+      openSections: { loras: true, size: true, sampling: true },
       update: (changes) => set(changes),
       setNegativeOpen: (negativeOpen) => set({ negativeOpen }),
       setSectionOpen: (id, open) => set((s) => ({ openSections: { ...s.openSections, [id]: open } })),
@@ -58,5 +58,6 @@ function pickSettings(s: GenerationSettings): GenerationSettings {
     scheduler: s.scheduler,
     seed: s.seed,
     batchCount: s.batchCount,
+    loras: s.loras,
   };
 }

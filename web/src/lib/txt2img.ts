@@ -1,3 +1,4 @@
+import { promptWithLoras, type LoraSlot } from "./loras";
 import { normalizeSize } from "./sizes";
 
 export interface GenerationSettings {
@@ -12,6 +13,8 @@ export interface GenerationSettings {
   /** -1 means a new random seed for every generation. */
   seed: number;
   batchCount: number;
+  /** Added to the prompt as <lora:name:weight> tags only when the request is built. */
+  loras: LoraSlot[];
 }
 
 export const DEFAULT_SETTINGS: GenerationSettings = {
@@ -25,6 +28,7 @@ export const DEFAULT_SETTINGS: GenerationSettings = {
   scheduler: "Karras",
   seed: -1,
   batchCount: 1,
+  loras: [],
 };
 
 /**
@@ -34,7 +38,7 @@ export const DEFAULT_SETTINGS: GenerationSettings = {
  */
 export function buildTxt2imgRequest(settings: GenerationSettings, taskId: string) {
   return {
-    prompt: settings.prompt,
+    prompt: promptWithLoras(settings.prompt, settings.loras),
     negative_prompt: settings.negativePrompt,
     width: normalizeSize(settings.width),
     height: normalizeSize(settings.height),

@@ -19,6 +19,8 @@ export interface ModelEntry {
   file: string;
   stem: string;
   size: number;
+  /** Model family read from the file itself: "sd1", "sdxl", "flux" or "unknown". */
+  arch: "sd1" | "sdxl" | "flux" | "unknown";
   civitai: CivitaiInfo;
 }
 

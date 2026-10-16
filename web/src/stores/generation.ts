@@ -1,4 +1,6 @@
 import { forgePost } from "../api/client";
+import type { ModelEntry } from "../api/forgelight";
+import { queryClient } from "../api/queryClient";
 import { randomTaskId } from "../lib/format";
 import { buildTxt2imgRequest, friendlyError, parseTxt2imgResult } from "../lib/txt2img";
 import { useSession, type Job, type JobPhase, type SessionImage } from "./session";
@@ -55,13 +57,27 @@ function pollProgress(taskId: string) {
   };
 }
 
+/**
+ * Keeps only LoRAs that are installed, using their exact file name. Pasted settings can
+ * name LoRAs this computer doesn't have; those stay visible in the panel but aren't sent.
+ */
+function withInstalledLoras<T extends { loras: { name: string; weight: number }[] }>(settings: T): T {
+  const installed = queryClient.getQueryData<{ loras: ModelEntry[] }>(["forgelight-models"])?.loras;
+  if (!installed) return settings;
+  const loras = settings.loras.flatMap((lora) => {
+    const match = installed.find((m) => m.stem.toLowerCase() === lora.name.toLowerCase());
+    return match ? [{ name: match.stem, weight: lora.weight }] : [];
+  });
+  return { ...settings, loras };
+}
+
 export function isRunning(): boolean {
   return useSession.getState().job.status === "running";
 }
 
 export async function generate(): Promise<void> {
   if (isRunning()) return;
-  const settings = currentSettings();
+  const settings = withInstalledLoras(currentSettings());
   const taskId = randomTaskId();
   const { setJob, addImages } = useSession.getState();
 

@@ -27,6 +27,14 @@ describe("buildTxt2imgRequest", () => {
     expect(request.width).toBe(832);
   });
 
+  it("adds LoRAs to the prompt Forge receives", () => {
+    const withLora = buildTxt2imgRequest(
+      { ...DEFAULT_SETTINGS, prompt: "a cat", loras: [{ name: "x", weight: 0.6 }] },
+      "t",
+    );
+    expect(withLora.prompt).toBe("a cat <lora:x:0.6>");
+  });
+
   it("never asks Forge to change settings temporarily, since Forge doesn't always restore them", () => {
     expect(request).not.toHaveProperty("override_settings");
   });
@@ -82,7 +90,14 @@ describe("parseInfotext", () => {
       seed: 7,
       width: 832,
       height: 1216,
+      loras: [],
     });
+  });
+
+  it("turns LoRA tags in an image's prompt into LoRA entries", () => {
+    const settings = settingsFromInfotext(parseInfotext("1boy, <lora:Eren-yeager:0.8>, smiling\nSteps: 20, Seed: 1"));
+    expect(settings.prompt).toBe("1boy, smiling");
+    expect(settings.loras).toEqual([{ name: "Eren-yeager", weight: 0.8 }]);
   });
 
   it("handles a prompt with no negative prompt", () => {

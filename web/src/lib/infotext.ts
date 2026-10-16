@@ -1,3 +1,4 @@
+import { extractLoras } from "./loras";
 import type { GenerationSettings } from "./txt2img";
 
 export interface ParsedInfotext {
@@ -62,7 +63,9 @@ function toNumber(value: string | undefined): number | undefined {
  * Only fields present in the text are returned; the checkpoint is left to the user.
  */
 export function settingsFromInfotext(parsed: ParsedInfotext): Partial<GenerationSettings> {
-  const result: Partial<GenerationSettings> = { prompt: parsed.prompt, negativePrompt: parsed.negativePrompt };
+  // LoRA tags in the prompt become separate LoRA entries, keeping the prompt text clean.
+  const { prompt, loras } = extractLoras(parsed.prompt);
+  const result: Partial<GenerationSettings> = { prompt, loras, negativePrompt: parsed.negativePrompt };
   const size = paramValue(parsed, "Size")?.match(/^(\d+)x(\d+)$/);
   const fields: Partial<GenerationSettings> = {
     steps: toNumber(paramValue(parsed, "Steps")),
