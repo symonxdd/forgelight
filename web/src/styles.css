@@ -89,6 +89,58 @@
   }
 }
 
+/* Folding sections open and close over a fifth of a second instead of jumping. */
+@keyframes collapsible-open {
+  from {
+    height: 0;
+  }
+  to {
+    height: var(--radix-collapsible-content-height);
+  }
+}
+@keyframes collapsible-close {
+  from {
+    height: var(--radix-collapsible-content-height);
+  }
+  to {
+    height: 0;
+  }
+}
+.collapsible[data-state="open"] {
+  animation: collapsible-open 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.collapsible[data-state="closed"] {
+  animation: collapsible-close 180ms cubic-bezier(0.4, 0, 1, 1);
+}
+
+/* Thin, quiet scrollbars: a slim rounded thumb, no track or arrows. */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track,
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: var(--line-strong);
+  border: 2px solid transparent;
+  border-radius: 999px;
+  background-clip: padding-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--faint);
+}
+::-webkit-scrollbar-button {
+  display: none;
+}
+@supports not selector(::-webkit-scrollbar) {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--line-strong) transparent;
+  }
+}
+
 /* Theme switches are instant: no transitions while colors change. */
 :root[data-switching] *,
 :root[data-switching] *::before,
