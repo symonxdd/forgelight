@@ -13,6 +13,16 @@ from urllib.parse import urlparse
 from fastapi import HTTPException, Request
 
 
+def require_own_page(request: Request) -> None:
+    """For reads of private data such as images: other websites may not even embed them.
+
+    Browsers mark every request with Sec-Fetch-Site; typing the address in counts as "none".
+    """
+    site = request.headers.get("sec-fetch-site")
+    if site and site not in ("same-origin", "none"):
+        raise HTTPException(status_code=403, detail="Requests must come from the Forgelight page.")
+
+
 def require_same_origin(request: Request) -> None:
     source = request.headers.get("origin") or request.headers.get("referer")
     if source and urlparse(source).netloc != request.headers.get("host"):

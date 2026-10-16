@@ -10,9 +10,10 @@ import json
 from typing import Any, Callable
 
 from fastapi import HTTPException, Request
+from fastapi.responses import FileResponse
 
-from . import models, startup
-from .security import require_same_origin
+from . import library, models, startup
+from .security import require_own_page, require_same_origin
 from .store import ROOT
 
 PAGE = ROOT / "page"
@@ -68,12 +69,58 @@ def desktop_shortcut(_request: Request, _body: Any) -> dict:
     return _startup_state()
 
 
+def _int(value: str | None, default: int, low: int, high: int) -> int:
+    try:
+        return max(low, min(high, int(value or default)))
+    except ValueError:
+        return default
+
+
+def library_list(request: Request, _body: Any) -> dict:
+    params = request.query_params
+    return library.listing(
+        query=params.get("q", ""),
+        model=params.get("model", ""),
+        offset=_int(params.get("offset"), 0, 0, 10_000_000),
+        limit=_int(params.get("limit"), 100, 1, 500),
+    )
+
+
+def _image_file(request: Request, make) -> FileResponse:
+    try:
+        path = make(request.query_params.get("id", ""))
+    except (FileNotFoundError, OSError) as error:
+        raise HTTPException(status_code=404, detail="That image isn't in Forge's output folders.") from error
+    # The address carries the file's date, so a changed file gets a new address.
+    return FileResponse(path, headers={"Cache-Control": "private, max-age=31536000, immutable"})
+
+
+def library_image(request: Request, _body: Any) -> FileResponse:
+    return _image_file(request, library.resolve)
+
+
+def library_thumb(request: Request, _body: Any) -> FileResponse:
+    return _image_file(request, library.thumbnail)
+
+
+def library_reveal(_request: Request, body: Any) -> dict:
+    try:
+        library.reveal(str((body or {}).get("id", "")))
+    except (FileNotFoundError, OSError) as error:
+        raise HTTPException(status_code=404, detail="That image isn't in Forge's output folders.") from error
+    return {"ok": True}
+
+
 ROUTES: dict[tuple[str, str], Handler] = {
     ("GET", "status"): status,
     ("GET", "models"): list_models,
     ("GET", "startup"): startup_state,
     ("POST", "startup/open-on-start"): open_on_start,
     ("POST", "startup/desktop-shortcut"): desktop_shortcut,
+    ("GET", "library"): library_list,
+    ("GET", "library/image"): library_image,
+    ("GET", "library/thumb"): library_thumb,
+    ("POST", "library/reveal"): library_reveal,
 }
 
 
@@ -81,6 +128,8 @@ def handle(method: str, path: str, request: Request, body: Any) -> Any:
     handler = ROUTES.get((method, path.strip("/")))
     if handler is None:
         raise HTTPException(status_code=404)
-    if method != "GET":
+    if method == "GET":
+        require_own_page(request)
+    else:
         require_same_origin(request)
     return handler(request, body)
