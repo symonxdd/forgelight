@@ -10,7 +10,7 @@ const STATES: Record<ConnectionState, { label: string; dot: string; explain: str
   connected: {
     label: "Forge connected",
     dot: "bg-good",
-    explain: "Forge is running on this computer and ready. Forgelight sends it each generation and shows the result.",
+    explain: "Forge is running on this computer and ready.",
   },
   "api-off": {
     label: "Forge API is off",
