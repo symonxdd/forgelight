@@ -10,6 +10,8 @@ interface NumberSliderProps {
   step: number;
   /** The typed field may go beyond the slider's range, up to this. */
   inputMax?: number;
+  /** The typed field may go below the slider's range, down to this. */
+  inputMin?: number;
   help?: string;
   onChange: (value: number) => void;
 }
@@ -19,7 +21,17 @@ function decimals(step: number): number {
 }
 
 /** A slider for quick changes plus a number field for exact values. */
-export function NumberSlider({ label, value, min, max, step, inputMax = max, help, onChange }: NumberSliderProps) {
+export function NumberSlider({
+  label,
+  value,
+  min,
+  max,
+  step,
+  inputMax = max,
+  inputMin = min,
+  help,
+  onChange,
+}: NumberSliderProps) {
   const id = useId();
   const [draft, setDraft] = useState<string | null>(null);
 
@@ -28,7 +40,7 @@ export function NumberSlider({ label, value, min, max, step, inputMax = max, hel
     const n = Number(text.replace(",", "."));
     if (!Number.isFinite(n)) return;
     const rounded = Number((Math.round(n / step) * step).toFixed(decimals(step)));
-    onChange(Math.min(inputMax, Math.max(min, rounded)));
+    onChange(Math.min(inputMax, Math.max(inputMin, rounded)));
   };
 
   const onKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
@@ -40,7 +52,7 @@ export function NumberSlider({ label, value, min, max, step, inputMax = max, hel
     if (event.key === "ArrowUp" || event.key === "ArrowDown") {
       event.preventDefault();
       const delta = event.key === "ArrowUp" ? step : -step;
-      onChange(Math.min(inputMax, Math.max(min, Number((value + delta).toFixed(decimals(step))))));
+      onChange(Math.min(inputMax, Math.max(inputMin, Number((value + delta).toFixed(decimals(step))))));
     }
   };
 
@@ -65,7 +77,7 @@ export function NumberSlider({ label, value, min, max, step, inputMax = max, hel
         />
       </div>
       <Slider.Root
-        value={[Math.min(max, value)]}
+        value={[Math.min(max, Math.max(min, value))]}
         min={min}
         max={max}
         step={step}

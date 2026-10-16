@@ -1,14 +1,13 @@
-import { Box, Check, ChevronDown, ExternalLink, LoaderCircle } from "lucide-react";
+import { Box, Check, ChevronDown, LoaderCircle } from "lucide-react";
 import { Popover } from "radix-ui";
 import { useState } from "react";
 import { useModels, type ModelEntry } from "../api/forgelight";
 import { useCheckpoints, useCurrentCheckpoint, useSetCheckpoint } from "../api/queries";
 import { HELP } from "../lib/help";
 import { baseModelLabel, displayName, tidyName } from "../lib/modelNames";
-import { civitaiLink } from "../lib/preferences";
-import { usePreferences } from "../stores/preferences";
 import { useSession } from "../stores/session";
 import { Hint } from "./Hint";
+import { CivitaiLink } from "./CivitaiLink";
 import { InfoTip } from "./InfoTip";
 
 interface Row {
@@ -40,23 +39,6 @@ function useRows(enabled: boolean): Row[] {
       lookingUp: entry?.civitai.status === "pending",
     };
   });
-}
-
-function CivitaiLink({ url, name }: { url: string; name: string }) {
-  const site = usePreferences((s) => s.civitaiSite);
-  return (
-    <Hint label={`Open on civitai.${site}`} side="left">
-      <a
-        href={civitaiLink(url, site)}
-        target="_blank"
-        rel="noopener"
-        aria-label={`Open ${name} on Civitai`}
-        className="grid size-7 shrink-0 place-items-center rounded-md text-faint hover:bg-surface hover:text-fg-strong"
-      >
-        <ExternalLink className="size-3.5" aria-hidden />
-      </a>
-    </Hint>
-  );
 }
 
 /**

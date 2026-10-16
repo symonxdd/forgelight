@@ -9,6 +9,12 @@ export const HELP = {
     "A description of the image to create: subject, style, lighting, details. Words near the start carry the most weight. A word or phrase can be strengthened with (word:1.2) or weakened with (word:0.8).",
   negativePrompt:
     "What the image should avoid, such as blurry, extra fingers or watermark. It steers every step away from these.",
+  loras:
+    "Small add-on files that teach a checkpoint a character, style or concept. Several can be combined. Each one only works with checkpoints of the same model type, such as SDXL.",
+  loraStrength:
+    "How strongly the LoRA shapes the image. 1 is its full designed effect; lower values blend it in more gently, higher values exaggerate it. Most LoRAs work best between 0.6 and 1.",
+  triggerWords:
+    "Words the LoRA was trained to respond to, from its Civitai page. Adding them to the prompt usually makes its effect show up reliably.",
   size: "The width and height of the image in pixels. SDXL-based checkpoints are trained around one megapixel (1024 × 1024), so these presets keep the total close to that for the best results.",
   sampler:
     "The method used to remove noise at each step. Samplers reach slightly different results and suit different step counts. DPM++ 2M is a dependable all-round choice.",

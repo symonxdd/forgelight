@@ -3,6 +3,7 @@ import { useEffect } from "react";
 import { dismissError } from "../stores/generation";
 import { useSession } from "../stores/session";
 import { GenerateBar } from "./controls/GenerateBar";
+import { LoraSection } from "./controls/LoraSection";
 import { PromptFields } from "./controls/PromptFields";
 import { SamplingSection } from "./controls/SamplingSection";
 import { SizeSection } from "./controls/SizeSection";
@@ -64,6 +65,7 @@ export function ControlsPanel({ connected }: { connected: boolean }) {
     <aside aria-label="Generation settings" className="flex h-full flex-col bg-canvas">
       <div className="min-h-0 flex-1 overflow-y-auto">
         <PromptFields />
+        <LoraSection />
         <SizeSection />
         <SamplingSection />
       </div>
