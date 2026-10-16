@@ -1,7 +1,14 @@
 import { describe, expect, it } from "vitest";
 import { formatSeconds } from "./format";
 import { currentLivePreview, livePreviewSettings } from "./livePreview";
-import { paramValue, parseInfotext, settingsFromInfotext } from "./infotext";
+import {
+  looksLikeGenerationData,
+  modelFromInfotext,
+  paramValue,
+  parseInfotext,
+  settingsFromInfotext,
+} from "./infotext";
+import { matchCheckpoint } from "./matchCheckpoint";
 import { matchPreset, normalizeSize } from "./sizes";
 import { DEFAULT_SETTINGS, buildTxt2imgRequest, friendlyError, parseTxt2imgResult } from "./txt2img";
 import { fitScale, zoomAt } from "./zoom";
@@ -134,5 +141,31 @@ describe("messages", () => {
   it("formats remaining time", () => {
     expect(formatSeconds(6.4)).toBe("6 s");
     expect(formatSeconds(72)).toBe("1 min 12 s");
+  });
+});
+
+describe("pasted generation data", () => {
+  it("recognises settings copied from an image", () => {
+    expect(looksLikeGenerationData("a cat\nNegative prompt: dog\nSteps: 30, Sampler: Euler a, Seed: 5")).toBe(true);
+  });
+
+  it("ignores ordinary prompts, even ones mentioning steps", () => {
+    expect(looksLikeGenerationData("steps of a temple, 1girl, sitting")).toBe(false);
+    expect(looksLikeGenerationData("a staircase\nSteps: many")).toBe(false);
+  });
+
+  it("finds the checkpoint by hash first, then by name", () => {
+    const installed = [
+      { title: "a.safetensors [aaa]", model_name: "animeMix_v2", hash: "f116b0c78f", sha256: null, filename: "a" },
+      { title: "b.safetensors", model_name: "photoReal_v1", hash: null, sha256: null, filename: "b" },
+    ];
+    expect(matchCheckpoint(installed, { hash: "F116B0C78F", name: "renamed" })?.model_name).toBe("animeMix_v2");
+    expect(matchCheckpoint(installed, { name: "photoReal_v1" })?.model_name).toBe("photoReal_v1");
+    expect(matchCheckpoint(installed, { name: "missing" })).toBeUndefined();
+  });
+
+  it("reads the model from the settings text", () => {
+    const parsed = parseInfotext("x\nSteps: 5, Model hash: F116B0C78F, Model: animeMix_v2");
+    expect(modelFromInfotext(parsed)).toEqual({ name: "animeMix_v2", hash: "f116b0c78f" });
   });
 });

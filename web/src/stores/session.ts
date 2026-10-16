@@ -30,6 +30,11 @@ export type Job =
     }
   | { status: "error"; message: string };
 
+export interface Notice {
+  tone: "info" | "warning";
+  text: string;
+}
+
 /** Keeps memory bounded on a long session; older images remain in Forge's outputs folder. */
 const MAX_SESSION_IMAGES = 200;
 
@@ -39,6 +44,9 @@ interface SessionState {
   job: Job;
   /** The last live preview, shown beneath the finished image while it fades in. */
   handoff: { imageId: string; previewUrl: string } | null;
+  /** A short message under the settings panel, such as "Settings applied." */
+  notice: Notice | null;
+  setNotice: (notice: Notice | null) => void;
   addImages: (images: SessionImage[]) => void;
   select: (id: string | null) => void;
   selectRelative: (delta: number) => void;
@@ -50,6 +58,8 @@ export const useSession = create<SessionState>((set, get) => ({
   selectedId: null,
   job: { status: "idle" },
   handoff: null,
+  notice: null,
+  setNotice: (notice) => set({ notice }),
   addImages: (added) => {
     if (added.length === 0) return;
     const { images, job } = get();

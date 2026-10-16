@@ -41,6 +41,16 @@ export function paramValue(parsed: ParsedInfotext, label: string): string | unde
   return parsed.params.find(([l]) => l === label)?.[1];
 }
 
+/** True for text that carries generation settings, like data copied from an image on Civitai. */
+export function looksLikeGenerationData(text: string): boolean {
+  return /(^|\n)\s*Steps: \d+,/.test(text) && /\b(Sampler|Seed): /.test(text);
+}
+
+/** The checkpoint an image was made with, as far as its settings text says. */
+export function modelFromInfotext(parsed: ParsedInfotext): { name?: string; hash?: string } {
+  return { name: paramValue(parsed, "Model"), hash: paramValue(parsed, "Model hash")?.toLowerCase() };
+}
+
 function toNumber(value: string | undefined): number | undefined {
   if (value === undefined) return undefined;
   const n = Number(value);
