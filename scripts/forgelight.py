@@ -27,6 +27,9 @@ if str(ROOT) not in sys.path:
 from forgelight_backend import models, startup  # noqa: E402
 from forgelight_backend.security import require_same_origin  # noqa: E402
 
+# Scripts load before Forge starts its web server, in time to catch its browser opening.
+startup.redirect_forge_browser_launch()
+
 NOT_BUILT = """<!doctype html><meta charset="utf-8"><title>Forgelight</title>
 <body style="font:16px system-ui,sans-serif;max-width:36rem;margin:15vh auto;padding:0 20px">
 <h1 style="font-size:1.4rem">Forgelight isn't built yet</h1>

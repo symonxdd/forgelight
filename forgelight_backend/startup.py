@@ -54,11 +54,42 @@ def set_open_on_start(enabled: bool) -> dict:
     return prefs
 
 
+LAUNCH_ENV = "FORGELIGHT_LAUNCH"
+
+
+def started_from_shortcut() -> bool:
+    return os.environ.get(LAUNCH_ENV) == "1"
+
+
+def redirect_forge_browser_launch() -> None:
+    """For a Forge run started by the Forgelight shortcut only: when Forge opens its
+    classic page in the browser at startup, open Forgelight instead. No setting changes.
+    Must run before Forge launches its web server, so it is called when the script loads."""
+    if not started_from_shortcut() or getattr(webbrowser.open, "_forgelight", False):
+        return
+    original = webbrowser.open
+
+    def open_forgelight(url, *args, **kwargs):
+        if re.fullmatch(r"https?://[^/]+/?", str(url)):
+            url = str(url).rstrip("/") + "/forgelight/"
+        return original(url, *args, **kwargs)
+
+    open_forgelight._forgelight = True
+    webbrowser.open = open_forgelight
+
+
 def open_browser_once(demo) -> None:
-    """Opens Forgelight after Forge has started, once per Forge run (not on "Reload UI")."""
+    """Opens Forgelight after Forge has started, once per Forge run (not on "Reload UI").
+
+    Happens when "Open Forgelight on start" is on, or when the shortcut started Forge
+    while Forge's own browser opening is switched off (otherwise Forge opens it)."""
     from modules import shared
 
-    if not preferences().get("open_on_start") or getattr(shared, "_forgelight_opened", False):
+    if getattr(shared, "_forgelight_opened", False):
+        return
+    forge_opens_browser = shared.opts.auto_launch_browser != "Disable"
+    wanted = preferences().get("open_on_start") or (started_from_shortcut() and not forge_opens_browser)
+    if not wanted:
         return
     shared._forgelight_opened = True
     threading.Timer(1.0, webbrowser.open, [forgelight_url(demo)]).start()
@@ -97,7 +128,13 @@ def write_launcher() -> Path:
     ]
     if package:
         lines.append(f'call "{package / "environment.bat"}"')
-    lines += [f'cd /d "{webui}"', f"set COMMANDLINE_ARGS={_user_args(webui)}", "call webui.bat", ""]
+    lines += [
+        f'cd /d "{webui}"',
+        f"set COMMANDLINE_ARGS={_user_args(webui)}",
+        f"set {LAUNCH_ENV}=1",
+        "call webui.bat",
+        "",
+    ]
     DATA.mkdir(exist_ok=True)
     LAUNCHER.write_text("\r\n".join(lines), encoding="utf-8")
     return LAUNCHER
@@ -125,7 +162,7 @@ def desktop_shortcut_path() -> Path | None:
 
 
 def create_desktop_shortcut() -> Path:
-    """Writes the launcher and a desktop shortcut to it. Also turns on opening Forgelight at start."""
+    """Writes the launcher and a desktop shortcut to it. Changes no settings."""
     if os.name != "nt":
         raise RuntimeError("Desktop shortcuts are only supported on Windows.")
     launcher = write_launcher()
@@ -147,6 +184,4 @@ def create_desktop_shortcut() -> Path:
         "FL_WORKDIR": str(webui),
         "FL_ICON": str(ICON) if ICON.is_file() else "",
     }
-    path = Path(_powershell(script, env))
-    set_open_on_start(True)
-    return path
+    return Path(_powershell(script, env))
