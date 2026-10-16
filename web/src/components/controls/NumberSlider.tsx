@@ -73,7 +73,7 @@ export function NumberSlider({
           onChange={(e) => setDraft(e.target.value)}
           onBlur={(e) => commit(e.target.value)}
           onKeyDown={onKeyDown}
-          className="w-14 rounded-md border border-transparent bg-transparent px-1.5 py-0.5 text-right text-[13px] text-fg-strong tabular-nums hover:border-line focus:border-line-strong focus:bg-surface focus:outline-none"
+          className="w-14 rounded-md border border-transparent bg-transparent px-1.5 py-0.5 text-right text-[13px] text-fg-strong tabular-nums hover:border-line focus:border-line-strong focus:bg-canvas focus:outline-none"
         />
       </div>
       <Slider.Root

@@ -22,7 +22,7 @@ function SizeInput({ label, value, onChange }: { label: string; value: number; o
   const [draft, setDraft] = useState<string | null>(null);
   const id = `size-${label.toLowerCase()}`;
   return (
-    <div className="flex flex-1 items-center gap-2 rounded-md border border-line bg-surface px-2.5 focus-within:border-line-strong">
+    <div className="flex flex-1 items-center gap-2 rounded-md border border-line bg-canvas px-2.5 focus-within:border-line-strong">
       <label htmlFor={id} className="text-[12px] text-muted">
         {label}
       </label>

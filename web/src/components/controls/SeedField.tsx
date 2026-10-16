@@ -35,7 +35,7 @@ export function SeedField() {
           onChange={(e) => setDraft(e.target.value)}
           onBlur={(e) => commit(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && e.currentTarget.blur()}
-          className="h-8 min-w-0 flex-1 rounded-md border border-line bg-surface px-2.5 text-[13px] text-fg-strong tabular-nums placeholder:text-faint hover:border-line-strong focus:border-line-strong focus:outline-none"
+          className="h-8 min-w-0 flex-1 rounded-md border border-line bg-canvas px-2.5 text-[13px] text-fg-strong tabular-nums placeholder:text-faint hover:border-line-strong focus:border-line-strong focus:outline-none"
         />
         <Hint label={"Random seed"}>
           <button

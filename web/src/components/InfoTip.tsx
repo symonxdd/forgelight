@@ -5,11 +5,12 @@ interface InfoTipProps {
   /** What the tip explains, for screen readers: "About CFG scale". */
   topic: string;
   text: string;
+  /** Right by default: most icons sit near the left edge, so the open space is to their right. */
   side?: "top" | "right" | "bottom" | "left";
 }
 
 /** A small info icon that explains a setting on hover or keyboard focus. */
-export function InfoTip({ topic, text, side = "top" }: InfoTipProps) {
+export function InfoTip({ topic, text, side = "right" }: InfoTipProps) {
   return (
     <Tooltip.Root>
       <Tooltip.Trigger asChild>

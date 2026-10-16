@@ -20,7 +20,7 @@ export function SelectField({ label, value, options, onChange, disabled, help }:
       <Select.Root value={value} onValueChange={onChange} disabled={disabled}>
         <Select.Trigger
           aria-label={label}
-          className="flex h-8 items-center justify-between gap-2 rounded-md border border-line bg-surface px-2.5 text-left text-[13px] text-fg-strong hover:border-line-strong disabled:opacity-50"
+          className="flex h-8 items-center justify-between gap-2 rounded-md border border-line bg-canvas px-2.5 text-left text-[13px] text-fg-strong hover:border-line-strong disabled:opacity-50"
         >
           <Select.Value placeholder="Choose…" />
           <Select.Icon>
