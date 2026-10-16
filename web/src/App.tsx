@@ -8,7 +8,7 @@ export function App() {
   const connection = useConnection();
   useShortcuts();
   return (
-    <Tooltip.Provider delayDuration={400}>
+    <Tooltip.Provider delayDuration={0} skipDelayDuration={0} disableHoverableContent>
       <div className="flex h-full flex-col">
         <TopBar connection={connection} />
         <Workspace connection={connection} />
