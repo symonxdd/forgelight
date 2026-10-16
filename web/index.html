@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>Forgelight</title>
+    <script>
+      // Applies the saved theme and font before the first paint, so the page
+      // never flashes the wrong colours. Keys match src/lib/preferences.ts.
+      (function () {
+        var theme = null;
+        var font = null;
+        try {
+          theme = localStorage.getItem("forgelight.theme");
+          font = localStorage.getItem("forgelight.font");
+        } catch (e) {}
+        if (theme !== "light" && theme !== "dark") {
+          theme = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        }
+        document.documentElement.dataset.theme = theme;
+        if (font) document.documentElement.dataset.font = font;
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
