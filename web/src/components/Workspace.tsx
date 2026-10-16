@@ -1,5 +1,6 @@
 import { Group, Panel, Separator, useDefaultLayout, type LayoutStorage } from "react-resizable-panels";
 import type { ConnectionState } from "../api/queries";
+import { useOverlayOpen } from "../hooks/useOverlayOpen";
 import { ControlsPanel } from "./ControlsPanel";
 import { HistoryRail } from "./HistoryRail";
 import { Viewer } from "./viewer/Viewer";
@@ -29,11 +30,15 @@ function ResizeHandle() {
 }
 
 export function Workspace({ connection }: { connection: ConnectionState }) {
+  // With a menu open, the panel edges must not react to the pointer passing over them.
+  const overlayOpen = useOverlayOpen();
   const layout = useDefaultLayout({ id: "forgelight.workspace", storage, onlySaveAfterUserInteractions: true });
 
   return (
     <Group
       orientation="horizontal"
+      disabled={overlayOpen}
+      disableCursor={overlayOpen}
       defaultLayout={layout.defaultLayout}
       onLayoutChanged={layout.onLayoutChanged}
       className="min-h-0 flex-1"

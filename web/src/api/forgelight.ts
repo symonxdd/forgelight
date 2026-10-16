@@ -64,11 +64,20 @@ export function useStartup() {
   return useQuery({ queryKey: ["forgelight-startup"], queryFn: () => request<StartupState>("startup") });
 }
 
+/** Flips the switch at once and confirms with Forge in the background; reverts if that fails. */
 export function useSetOpenOnStart() {
   const queryClient = useQueryClient();
+  const key = ["forgelight-startup"];
   return useMutation({
     mutationFn: (enabled: boolean) => request<StartupState>("startup/open-on-start", { enabled }),
-    onSuccess: (state) => queryClient.setQueryData(["forgelight-startup"], state),
+    onMutate: async (enabled) => {
+      await queryClient.cancelQueries({ queryKey: key });
+      const previous = queryClient.getQueryData<StartupState>(key);
+      if (previous) queryClient.setQueryData<StartupState>(key, { ...previous, openOnStart: enabled });
+      return { previous };
+    },
+    onError: (_error, _enabled, context) => queryClient.setQueryData(key, context?.previous),
+    onSuccess: (state) => queryClient.setQueryData(key, state),
   });
 }
 
