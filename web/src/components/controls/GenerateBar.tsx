@@ -103,7 +103,7 @@ export function GenerateBar({ connected }: { connected: boolean }) {
         type="button"
         onClick={() => void generate()}
         disabled={!connected}
-        className="flex h-10 flex-1 items-center justify-center gap-2 rounded-lg bg-fg-strong text-[14px] font-medium text-canvas hover:bg-fg-strong/90 disabled:opacity-40"
+        className="flex h-10 flex-1 items-center justify-center gap-2 rounded-lg bg-primary text-[14px] font-medium text-on-primary hover:bg-primary-hover disabled:opacity-40"
       >
         Generate
         <kbd className="font-sans text-[11px] font-normal opacity-60">Ctrl ↵</kbd>

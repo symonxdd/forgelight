@@ -1,5 +1,5 @@
 import { ArrowDownLeft, ChevronRight, X } from "lucide-react";
-import { Collapsible, Tooltip } from "radix-ui";
+import { Collapsible } from "radix-ui";
 import { useState } from "react";
 import { HELP } from "../../lib/help";
 import { looksLikeGenerationData } from "../../lib/infotext";
@@ -12,30 +12,17 @@ const textarea =
 
 function ApplySettingsButton() {
   return (
-    <Tooltip.Root>
-      <Tooltip.Trigger asChild>
-        <button
-          type="button"
-          onClick={() => void applySettingsFromPromptOrImage()}
-          aria-label="Apply settings from pasted data or the shown image"
-          className="flex h-6 items-center gap-1 rounded-md px-1.5 text-[12px] text-muted hover:bg-raised hover:text-fg-strong"
-        >
-          <ArrowDownLeft className="size-3.5" aria-hidden />
-          Apply settings
-        </button>
-      </Tooltip.Trigger>
-      <Tooltip.Portal>
-        <Tooltip.Content
-          side="bottom"
-          align="end"
-          sideOffset={6}
-          collisionPadding={12}
-          className="z-50 max-w-72 rounded-lg border border-line bg-surface px-3 py-2.5 text-[12.5px] leading-relaxed text-fg shadow-lg shadow-black/15"
-        >
-          {HELP.applySettings}
-        </Tooltip.Content>
-      </Tooltip.Portal>
-    </Tooltip.Root>
+    <span className="flex items-center gap-1">
+      <button
+        type="button"
+        onClick={() => void applySettingsFromPromptOrImage()}
+        className="flex h-6 items-center gap-1 rounded-md px-1.5 text-[12px] text-muted hover:bg-raised hover:text-fg-strong"
+      >
+        <ArrowDownLeft className="size-3.5" aria-hidden />
+        Apply settings
+      </button>
+      <InfoTip topic="Apply settings" text={HELP.applySettings} />
+    </span>
   );
 }
 
@@ -50,7 +37,7 @@ function PastedDataBanner({ onDone }: { onDone: () => void }) {
           onDone();
           void applyGenerationData(useSettings.getState().prompt);
         }}
-        className="h-7 rounded-md bg-fg-strong px-2.5 text-[12px] font-medium text-canvas hover:bg-fg-strong/90"
+        className="h-7 rounded-md bg-primary px-2.5 text-[12px] font-medium text-on-primary hover:bg-primary-hover"
       >
         Apply all
       </button>

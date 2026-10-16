@@ -78,7 +78,7 @@ export function InfoDrawer({ image }: { image: SessionImage }) {
         <button
           type="button"
           onClick={() => update(settingsFromInfotext(parsed))}
-          className="h-9 flex-1 rounded-lg bg-fg-strong text-[13px] font-medium text-canvas hover:bg-fg-strong/90"
+          className="h-9 flex-1 rounded-lg bg-primary text-[13px] font-medium text-on-primary hover:bg-primary-hover"
         >
           Use these settings
         </button>
