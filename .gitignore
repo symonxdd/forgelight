@@ -21,3 +21,6 @@ desktop.ini
 
 # Forgelight runtime data (Civitai lookups, preferences, launcher)
 data/
+
+# Local design explorations (icon concepts and notes)
+design/
