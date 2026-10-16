@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import os
 import threading
+import time
 from pathlib import Path
 from typing import Any
 
@@ -27,4 +28,13 @@ def write(name: str, value: Any) -> None:
         target = DATA / name
         temp = target.with_suffix(target.suffix + ".tmp")
         temp.write_text(json.dumps(value, indent=2, ensure_ascii=False), encoding="utf-8")
-        os.replace(temp, target)
+        # Windows refuses to replace a file while another request is reading it; that read
+        # takes a moment at most, so try again briefly before giving up.
+        for attempt in range(20):
+            try:
+                os.replace(temp, target)
+                return
+            except PermissionError:
+                if attempt == 19:
+                    raise
+                time.sleep(0.025)

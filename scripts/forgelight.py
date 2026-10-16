@@ -68,9 +68,12 @@ def on_app_started(demo, app: FastAPI) -> None:
                 body = json.loads(await request.body() or b"{}")
             except ValueError as error:
                 raise HTTPException(status_code=400, detail="Send JSON.") from error
-        reloader.maybe_reload()
-        api = sys.modules["forgelight_backend.api"]
-        return await run_in_threadpool(api.handle, request.method, path, request, body)
+
+        def handle():
+            # Looked up at call time: a live reload swaps in fresh code.
+            return sys.modules["forgelight_backend.api"].handle(request.method, path, request, body)
+
+        return await run_in_threadpool(reloader.run, handle)
 
     @app.get(f"{BASE}/{{path:path}}", include_in_schema=False)
     def forgelight_file(path: str):

@@ -38,21 +38,31 @@ def forgelight_url(demo=None) -> str:
     return base.replace("0.0.0.0", "127.0.0.1").rstrip("/") + "/forgelight/"
 
 
+# Kept across live reloads (reloading reuses this module's globals), so changes stay serialized.
+_open_on_start_lock = globals().get("_open_on_start_lock") or threading.Lock()
+
+
 def set_open_on_start(enabled: bool) -> dict:
-    """Swaps Forge's own "open browser on startup" for Forgelight's, and back."""
+    """Swaps Forge's own "open browser on startup" for Forgelight's, and back.
+
+    One change at a time: quick repeated clicks arrive as separate requests, and
+    interleaving them could leave Forgelight's switch and Forge's setting disagreeing."""
     from modules import shared
     from modules.sysinfo import set_config
 
-    prefs = preferences()
-    if enabled and not prefs.get("open_on_start"):
-        current = shared.opts.auto_launch_browser
-        prefs["previous_auto_launch"] = current if current != "Disable" else prefs.get("previous_auto_launch", "Local")
-        set_config({"auto_launch_browser": "Disable"})
-    elif not enabled and prefs.get("open_on_start"):
-        set_config({"auto_launch_browser": prefs.get("previous_auto_launch", "Local")})
-    prefs["open_on_start"] = enabled
-    store.write(PREFS_FILE, prefs)
-    return prefs
+    with _open_on_start_lock:
+        prefs = preferences()
+        if enabled and not prefs.get("open_on_start"):
+            current = shared.opts.auto_launch_browser
+            prefs["previous_auto_launch"] = (
+                current if current != "Disable" else prefs.get("previous_auto_launch", "Local")
+            )
+            set_config({"auto_launch_browser": "Disable"})
+        elif not enabled and prefs.get("open_on_start"):
+            set_config({"auto_launch_browser": prefs.get("previous_auto_launch", "Local")})
+        prefs["open_on_start"] = enabled
+        store.write(PREFS_FILE, prefs)
+        return prefs
 
 
 LAUNCH_ENV = "FORGELIGHT_LAUNCH"

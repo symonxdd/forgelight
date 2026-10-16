@@ -64,20 +64,31 @@ export function useStartup() {
   return useQuery({ queryKey: ["forgelight-startup"], queryFn: () => request<StartupState>("startup") });
 }
 
-/** Flips the switch at once and confirms with Forge in the background; reverts if that fails. */
+const OPEN_ON_START = ["open-on-start"];
+
+/**
+ * Flips the switch at once and confirms with Forge in the background. Rapid clicks
+ * are sent one after another, in order, and the true state is read back only once
+ * the last one is done, so the switch never jumps back mid-way.
+ */
 export function useSetOpenOnStart() {
   const queryClient = useQueryClient();
   const key = ["forgelight-startup"];
   return useMutation({
+    mutationKey: OPEN_ON_START,
+    scope: { id: "open-on-start" },
     mutationFn: (enabled: boolean) => request<StartupState>("startup/open-on-start", { enabled }),
     onMutate: async (enabled) => {
       await queryClient.cancelQueries({ queryKey: key });
       const previous = queryClient.getQueryData<StartupState>(key);
       if (previous) queryClient.setQueryData<StartupState>(key, { ...previous, openOnStart: enabled });
-      return { previous };
     },
-    onError: (_error, _enabled, context) => queryClient.setQueryData(key, context?.previous),
-    onSuccess: (state) => queryClient.setQueryData(key, state),
+    onSettled: () => {
+      // This mutation still counts itself; anything above 1 means more clicks are queued.
+      if (queryClient.isMutating({ mutationKey: OPEN_ON_START }) <= 1) {
+        void queryClient.invalidateQueries({ queryKey: key });
+      }
+    },
   });
 }
 
