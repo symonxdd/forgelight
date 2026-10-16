@@ -13,10 +13,12 @@ const NOTICE_MS = 6000;
 function Message({
   tone,
   text,
+  action,
   onDismiss,
 }: {
   tone: "error" | "warning" | "info";
   text: string;
+  action?: { label: string; run: () => void };
   onDismiss: () => void;
 }) {
   const toneClass =
@@ -28,9 +30,21 @@ function Message({
   return (
     <div
       role={tone === "error" ? "alert" : "status"}
-      className={`mx-4 mb-3 flex items-start gap-2 rounded-lg border p-3 ${toneClass}`}
+      className={`mx-3 mb-3 flex items-center gap-2 rounded-lg border p-3 ${toneClass}`}
     >
       <p className="flex-1 text-[13px] leading-relaxed text-fg">{text}</p>
+      {action && (
+        <button
+          type="button"
+          onClick={() => {
+            action.run();
+            onDismiss();
+          }}
+          className="h-6 shrink-0 rounded-md px-2 text-[12.5px] font-medium text-fg-strong hover:bg-surface"
+        >
+          {action.label}
+        </button>
+      )}
       <button
         type="button"
         onClick={onDismiss}
@@ -56,14 +70,16 @@ function Messages() {
   }, [notice, setNotice]);
 
   if (job.status === "error") return <Message tone="error" text={job.message} onDismiss={dismissError} />;
-  if (notice) return <Message tone={notice.tone} text={notice.text} onDismiss={() => setNotice(null)} />;
+  if (notice) {
+    return <Message tone={notice.tone} text={notice.text} action={notice.action} onDismiss={() => setNotice(null)} />;
+  }
   return null;
 }
 
 export function ControlsPanel({ connected }: { connected: boolean }) {
   return (
     <aside aria-label="Generation settings" className="flex h-full flex-col bg-canvas">
-      <div className="min-h-0 flex-1 overflow-y-auto">
+      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-3">
         <PromptFields />
         <LoraSection />
         <SizeSection />

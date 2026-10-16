@@ -1,14 +1,16 @@
-import { ChevronRight, X } from "lucide-react";
+import { ChevronRight, Eraser, X } from "lucide-react";
 import { Collapsible } from "radix-ui";
 import { useState } from "react";
 import { HELP } from "../../lib/help";
 import { looksLikeGenerationData } from "../../lib/infotext";
 import { applyGenerationData } from "../../stores/applySettings";
+import { useSession } from "../../stores/session";
 import { useSettings } from "../../stores/settings";
+import { Hint } from "../Hint";
 import { InfoTip } from "../InfoTip";
 
 const textarea =
-  "w-full resize-none rounded-lg border border-line bg-surface px-3 py-2.5 text-[14px] leading-relaxed text-fg-strong placeholder:text-faint hover:border-line-strong focus:border-line-strong focus:outline-none [field-sizing:content]";
+  "w-full resize-none rounded-lg border border-line bg-canvas px-3 py-2.5 text-[14px] leading-relaxed text-fg-strong placeholder:text-faint hover:border-line-strong focus:border-line-strong focus:outline-none [field-sizing:content]";
 
 /** Offered whenever the prompt holds generation data, such as text copied from an image on Civitai. */
 function PastedDataBanner({ onDone }: { onDone: () => void }) {
@@ -37,6 +39,34 @@ function PastedDataBanner({ onDone }: { onDone: () => void }) {
   );
 }
 
+/** Empties one prompt field, with an Undo in the message that follows. */
+function ClearButton({ field, label }: { field: "prompt" | "negativePrompt"; label: string }) {
+  const value = useSettings((s) => s[field]);
+  if (!value) return null;
+  const clear = () => {
+    const previous = useSettings.getState()[field];
+    useSettings.getState().update({ [field]: "" });
+    useSession.getState().setNotice({
+      tone: "info",
+      text: `${label} cleared.`,
+      action: { label: "Undo", run: () => useSettings.getState().update({ [field]: previous }) },
+    });
+    document.getElementById(field === "prompt" ? "prompt" : "negative-prompt")?.focus();
+  };
+  return (
+    <Hint label={`Clear ${label.toLowerCase()}`}>
+      <button
+        type="button"
+        onClick={clear}
+        aria-label={`Clear ${label.toLowerCase()}`}
+        className="ml-auto grid size-6 place-items-center rounded-md text-faint hover:bg-raised hover:text-fg-strong"
+      >
+        <Eraser className="size-3.5" aria-hidden />
+      </button>
+    </Hint>
+  );
+}
+
 export function PromptFields() {
   const prompt = useSettings((s) => s.prompt);
   const negativePrompt = useSettings((s) => s.negativePrompt);
@@ -48,12 +78,13 @@ export function PromptFields() {
   const offerApply = looksLikeGenerationData(prompt) && dismissedFor !== prompt;
 
   return (
-    <div className="flex flex-col gap-3 px-5 pt-4 pb-4">
-      <div className="flex items-center gap-1.5">
+    <div className="flex flex-col gap-3 rounded-xl border border-line bg-surface p-4">
+      <div className="flex h-6 items-center gap-1.5">
         <label htmlFor="prompt" className="text-[13px] font-medium text-fg-strong">
           Prompt
         </label>
         <InfoTip topic="the prompt" text={HELP.prompt} />
+        <ClearButton field="prompt" label="Prompt" />
       </div>
       <textarea
         id="prompt"
@@ -66,7 +97,7 @@ export function PromptFields() {
       {offerApply && <PastedDataBanner onDone={() => setDismissedFor(prompt)} />}
 
       <Collapsible.Root open={negativeOpen || negativePrompt.length > 0} onOpenChange={setNegativeOpen}>
-        <div className="flex items-center gap-1.5">
+        <div className="flex h-6 items-center gap-1.5">
           <Collapsible.Trigger
             disabled={negativePrompt.length > 0}
             className="group flex items-center gap-1.5 text-[13px] text-muted hover:text-fg disabled:cursor-default disabled:text-fg-strong"
@@ -78,6 +109,7 @@ export function PromptFields() {
             Negative prompt
           </Collapsible.Trigger>
           <InfoTip topic="the negative prompt" text={HELP.negativePrompt} />
+          <ClearButton field="negativePrompt" label="Negative prompt" />
         </div>
         <Collapsible.Content className="pt-2">
           <label htmlFor="negative-prompt" className="sr-only">

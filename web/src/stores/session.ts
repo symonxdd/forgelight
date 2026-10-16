@@ -33,6 +33,8 @@ export type Job =
 export interface Notice {
   tone: "info" | "warning";
   text: string;
+  /** One optional button, such as "Undo". */
+  action?: { label: string; run: () => void };
 }
 
 /** Keeps memory bounded on a long session; older images remain in Forge's outputs folder. */
