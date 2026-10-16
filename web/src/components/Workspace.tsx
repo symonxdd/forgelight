@@ -32,7 +32,8 @@ function ResizeHandle() {
 export function Workspace({ connection }: { connection: ConnectionState }) {
   // With a menu open, the panel edges must not react to the pointer passing over them.
   const overlayOpen = useOverlayOpen();
-  const layout = useDefaultLayout({ id: "forgelight.workspace", storage, onlySaveAfterUserInteractions: true });
+  // v2: the two-column settings panel needs a wider default than layouts saved before it.
+  const layout = useDefaultLayout({ id: "forgelight.workspace.v2", storage, onlySaveAfterUserInteractions: true });
 
   return (
     <Group
@@ -43,11 +44,11 @@ export function Workspace({ connection }: { connection: ConnectionState }) {
       onLayoutChanged={layout.onLayoutChanged}
       className="min-h-0 flex-1"
     >
-      <Panel id="controls" defaultSize="24" minSize={260} maxSize="40">
+      <Panel id="controls" defaultSize="38" minSize={300} maxSize="60">
         <ControlsPanel connected={connection === "connected"} />
       </Panel>
       <ResizeHandle />
-      <Panel id="viewer" minSize="40">
+      <Panel id="viewer" minSize="25">
         <Viewer connection={connection} />
       </Panel>
       <ResizeHandle />

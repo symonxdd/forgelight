@@ -1,4 +1,4 @@
-import { ChevronRight, Eraser, X } from "lucide-react";
+import { ChevronRight, Eraser, PencilLine, X } from "lucide-react";
 import { Collapsible } from "radix-ui";
 import { useState } from "react";
 import { HELP } from "../../lib/help";
@@ -8,6 +8,8 @@ import { useSession } from "../../stores/session";
 import { useSettings } from "../../stores/settings";
 import { Hint } from "../Hint";
 import { InfoTip } from "../InfoTip";
+import { GenerateBar } from "./GenerateBar";
+import { Messages } from "./Messages";
 
 const textarea =
   "w-full resize-none rounded-lg border border-line bg-canvas px-3 py-2.5 text-[14px] leading-relaxed text-fg-strong placeholder:text-faint hover:border-line-strong focus:border-line-strong focus:outline-none [field-sizing:content]";
@@ -67,7 +69,11 @@ function ClearButton({ field, label }: { field: "prompt" | "negativePrompt"; lab
   );
 }
 
-export function PromptFields() {
+/**
+ * The composer: prompt, negative prompt and Generate in one card, framed in the accent
+ * color as the panel's main section.
+ */
+export function PromptFields({ connected }: { connected: boolean }) {
   const prompt = useSettings((s) => s.prompt);
   const negativePrompt = useSettings((s) => s.negativePrompt);
   const negativeOpen = useSettings((s) => s.negativeOpen);
@@ -78,8 +84,12 @@ export function PromptFields() {
   const offerApply = looksLikeGenerationData(prompt) && dismissedFor !== prompt;
 
   return (
-    <div className="flex flex-col gap-3 rounded-xl border border-line bg-surface p-4">
+    <section
+      aria-label="Prompt"
+      className="flex flex-col gap-3 rounded-xl border border-accent/45 bg-surface p-4 shadow-[0_0_0_0_transparent] focus-within:border-accent/80 focus-within:shadow-[0_0_0_3px_color-mix(in_srgb,var(--accent)_18%,transparent)] motion-safe:transition-[border-color,box-shadow] motion-safe:duration-200"
+    >
       <div className="flex h-6 items-center gap-1.5">
+        <PencilLine className="size-4 shrink-0 text-accent" aria-hidden />
         <label htmlFor="prompt" className="text-[13px] font-medium text-fg-strong">
           Prompt
         </label>
@@ -103,7 +113,7 @@ export function PromptFields() {
             className="group flex items-center gap-1.5 text-[13px] text-muted hover:text-fg disabled:cursor-default disabled:text-fg-strong"
           >
             <ChevronRight
-              className="size-3.5 group-data-[state=open]:rotate-90 motion-safe:transition-transform"
+              className="size-3.5 group-data-[state=open]:rotate-90 motion-safe:transition-transform motion-safe:duration-200"
               aria-hidden
             />
             Negative prompt
@@ -111,20 +121,24 @@ export function PromptFields() {
           <InfoTip topic="the negative prompt" text={HELP.negativePrompt} />
           <ClearButton field="negativePrompt" label="Negative prompt" />
         </div>
-        <Collapsible.Content className="pt-2">
-          <label htmlFor="negative-prompt" className="sr-only">
-            Negative prompt
-          </label>
-          <textarea
-            id="negative-prompt"
-            value={negativePrompt}
-            onChange={(e) => update({ negativePrompt: e.target.value })}
-            placeholder="What to avoid…"
-            spellCheck={false}
-            className={`${textarea} max-h-[30vh] min-h-20`}
-          />
+        <Collapsible.Content className="collapsible overflow-hidden">
+          <div className="pt-2">
+            <label htmlFor="negative-prompt" className="sr-only">
+              Negative prompt
+            </label>
+            <textarea
+              id="negative-prompt"
+              value={negativePrompt}
+              onChange={(e) => update({ negativePrompt: e.target.value })}
+              placeholder="What to avoid…"
+              spellCheck={false}
+              className={`${textarea} max-h-[30vh] min-h-20`}
+            />
+          </div>
         </Collapsible.Content>
       </Collapsible.Root>
-    </div>
+      <GenerateBar connected={connected} />
+      <Messages />
+    </section>
   );
 }

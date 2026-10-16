@@ -61,7 +61,7 @@ export function GenerateBar({ connected }: { connected: boolean }) {
 
   if (job.status === "running") {
     return (
-      <div className="flex items-center gap-2 border-t border-line bg-canvas p-4">
+      <div className="flex items-center gap-2">
         <div
           role="progressbar"
           aria-valuemin={0}
@@ -101,7 +101,7 @@ export function GenerateBar({ connected }: { connected: boolean }) {
   }
 
   return (
-    <div className="flex items-center gap-2 border-t border-line bg-canvas p-4">
+    <div className="flex items-center gap-2">
       <button
         type="button"
         onClick={() => void generate()}

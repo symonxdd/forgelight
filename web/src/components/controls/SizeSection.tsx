@@ -1,4 +1,4 @@
-import { ArrowLeftRight } from "lucide-react";
+import { ArrowLeftRight, Proportions } from "lucide-react";
 import { useState } from "react";
 import { HELP } from "../../lib/help";
 import { SIZE_PRESETS, matchPreset, normalizeSize } from "../../lib/sizes";
@@ -53,6 +53,7 @@ export function SizeSection() {
   return (
     <Section
       title="Size"
+      icon={Proportions}
       help={HELP.size}
       summary={`${width} × ${height}${preset ? ` · ${preset.label}` : ""}`}
       open={open}

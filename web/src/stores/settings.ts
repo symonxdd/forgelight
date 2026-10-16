@@ -8,9 +8,12 @@ export type SectionId = "loras" | "size" | "sampling";
 interface SettingsState extends GenerationSettings {
   negativeOpen: boolean;
   openSections: Record<SectionId, boolean>;
+  /** Sections hidden with the pills above the panel. Their settings still apply. */
+  hiddenSections: SectionId[];
   update: (changes: Partial<GenerationSettings>) => void;
   setNegativeOpen: (open: boolean) => void;
   setSectionOpen: (id: SectionId, open: boolean) => void;
+  toggleSectionHidden: (id: SectionId) => void;
 }
 
 /** The generation settings, remembered between visits. */
@@ -20,15 +23,27 @@ export const useSettings = create<SettingsState>()(
       ...DEFAULT_SETTINGS,
       negativeOpen: false,
       openSections: { loras: true, size: true, sampling: true },
+      hiddenSections: [],
       update: (changes) => set(changes),
       setNegativeOpen: (negativeOpen) => set({ negativeOpen }),
       setSectionOpen: (id, open) => set((s) => ({ openSections: { ...s.openSections, [id]: open } })),
+      toggleSectionHidden: (id) =>
+        set((s) => ({
+          hiddenSections: s.hiddenSections.includes(id)
+            ? s.hiddenSections.filter((h) => h !== id)
+            : [...s.hiddenSections, id],
+        })),
     }),
     {
       name: "forgelight.settings",
       version: 2,
       storage: createJSONStorage(() => safeStorage),
-      partialize: (s) => ({ ...pickSettings(s), negativeOpen: s.negativeOpen, openSections: s.openSections }),
+      partialize: (s) => ({
+        ...pickSettings(s),
+        negativeOpen: s.negativeOpen,
+        openSections: s.openSections,
+        hiddenSections: s.hiddenSections,
+      }),
       // Anything missing or of the wrong type in storage falls back to the default.
       merge: (stored, current) => {
         const saved = (stored ?? {}) as Record<string, unknown>;

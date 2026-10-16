@@ -267,6 +267,7 @@ export function LoraSection() {
   return (
     <Section
       title="LoRAs"
+      icon={Layers}
       help={HELP.loras}
       summary={summary}
       open={open}

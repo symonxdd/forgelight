@@ -1,92 +1,45 @@
-import { X } from "lucide-react";
-import { useEffect } from "react";
-import { dismissError } from "../stores/generation";
-import { useSession } from "../stores/session";
-import { GenerateBar } from "./controls/GenerateBar";
+import { useSettings } from "../stores/settings";
 import { LoraSection } from "./controls/LoraSection";
 import { PromptFields } from "./controls/PromptFields";
 import { SamplingSection } from "./controls/SamplingSection";
+import { SectionPills } from "./controls/SectionPills";
 import { SizeSection } from "./controls/SizeSection";
 
-const NOTICE_MS = 6000;
-
-function Message({
-  tone,
-  text,
-  action,
-  onDismiss,
-}: {
-  tone: "error" | "warning" | "info";
-  text: string;
-  action?: { label: string; run: () => void };
-  onDismiss: () => void;
-}) {
-  const toneClass =
-    tone === "error"
-      ? "border-bad/30 bg-bad/8"
-      : tone === "warning"
-        ? "border-line-strong bg-raised"
-        : "border-line bg-raised";
-  return (
-    <div
-      role={tone === "error" ? "alert" : "status"}
-      className={`mx-3 mb-3 flex items-center gap-2 rounded-lg border p-3 ${toneClass}`}
-    >
-      <p className="flex-1 text-[13px] leading-relaxed text-fg">{text}</p>
-      {action && (
-        <button
-          type="button"
-          onClick={() => {
-            action.run();
-            onDismiss();
-          }}
-          className="h-6 shrink-0 rounded-md px-2 text-[12.5px] font-medium text-fg-strong hover:bg-surface"
-        >
-          {action.label}
-        </button>
-      )}
-      <button
-        type="button"
-        onClick={onDismiss}
-        aria-label="Dismiss"
-        className="grid size-6 shrink-0 place-items-center rounded text-muted hover:text-fg-strong"
-      >
-        <X className="size-3.5" aria-hidden />
-      </button>
-    </div>
-  );
-}
-
-function Messages() {
-  const job = useSession((s) => s.job);
-  const notice = useSession((s) => s.notice);
-  const setNotice = useSession((s) => s.setNotice);
-
-  // Short confirmations fade away by themselves; warnings stay until dismissed.
-  useEffect(() => {
-    if (notice?.tone !== "info") return;
-    const timer = setTimeout(() => setNotice(null), NOTICE_MS);
-    return () => clearTimeout(timer);
-  }, [notice, setNotice]);
-
-  if (job.status === "error") return <Message tone="error" text={job.message} onDismiss={dismissError} />;
-  if (notice) {
-    return <Message tone={notice.tone} text={notice.text} action={notice.action} onDismiss={() => setNotice(null)} />;
-  }
-  return null;
-}
-
+/**
+ * The settings panel. Wide enough, its cards sit in two columns: the composer with
+ * LoRAs beside it, then Size and Sampling. A card whose neighbor is hidden takes the
+ * full width.
+ */
 export function ControlsPanel({ connected }: { connected: boolean }) {
+  const hidden = useSettings((s) => s.hiddenSections);
+  const showLoras = !hidden.includes("loras");
+  const showSize = !hidden.includes("size");
+  const showSampling = !hidden.includes("sampling");
+  const wide = "@min-[40rem]:col-span-2";
+
   return (
     <aside aria-label="Generation settings" className="flex h-full flex-col bg-canvas">
-      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-3">
-        <PromptFields />
-        <LoraSection />
-        <SizeSection />
-        <SamplingSection />
+      <div className="@container min-h-0 flex-1 overflow-y-auto p-3">
+        <div className="flex flex-col gap-3">
+          <SectionPills />
+          <div className="grid grid-cols-1 items-start gap-3 @min-[40rem]:grid-cols-2">
+            <div className={showLoras ? "" : wide}>
+              <PromptFields connected={connected} />
+            </div>
+            {showLoras && <LoraSection />}
+            {showSize && (
+              <div className={showSampling ? "" : wide}>
+                <SizeSection />
+              </div>
+            )}
+            {showSampling && (
+              <div className={showSize ? "" : wide}>
+                <SamplingSection />
+              </div>
+            )}
+          </div>
+        </div>
       </div>
-      <Messages />
-      <GenerateBar connected={connected} />
     </aside>
   );
 }

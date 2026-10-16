@@ -1,3 +1,4 @@
+import { SlidersHorizontal } from "lucide-react";
 import { useSamplers, useSchedulers } from "../../api/queries";
 import { HELP } from "../../lib/help";
 import { useSettings } from "../../stores/settings";
@@ -14,6 +15,7 @@ export function SamplingSection() {
   return (
     <Section
       title="Sampling"
+      icon={SlidersHorizontal}
       summary={`${s.steps} steps · CFG ${s.cfgScale} · ${s.sampler}`}
       open={s.openSections.sampling}
       onOpenChange={(o) => s.setSectionOpen("sampling", o)}
