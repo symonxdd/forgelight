@@ -1,17 +1,18 @@
 """Forgelight: serves the built interface at /forgelight inside Forge.
 
-Read-only by design. It serves files from this extension's page/ folder and
-reports status; it never generates images or touches models, samplers,
-precision or memory management. Image generation goes through Forge's own
-/sdapi/v1 API, called by the interface.
+It never generates images or touches models, samplers, precision or memory
+management; image generation goes through Forge's own /sdapi/v1 API, called by
+the interface. Besides serving files it reads model lists, looks models up on
+Civitai once each, and manages two startup conveniences the user switches on.
 """
 
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
 
-from fastapi import FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException
 from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 
 from modules import script_callbacks
@@ -19,6 +20,12 @@ from modules import script_callbacks
 ROOT = Path(__file__).resolve().parent.parent
 PAGE = ROOT / "page"
 BASE = "/forgelight"
+
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
+
+from forgelight_backend import models, startup  # noqa: E402
+from forgelight_backend.security import require_same_origin  # noqa: E402
 
 NOT_BUILT = """<!doctype html><meta charset="utf-8"><title>Forgelight</title>
 <body style="font:16px system-ui,sans-serif;max-width:36rem;margin:15vh auto;padding:0 20px">
@@ -43,7 +50,19 @@ def _page_file(relative: str) -> Path:
     return target
 
 
-def on_app_started(_demo, app: FastAPI) -> None:
+def _startup_state() -> dict:
+    prefs = startup.preferences()
+    try:
+        shortcut = startup.desktop_shortcut_path()
+    except (RuntimeError, OSError):
+        shortcut = None
+    return {
+        "openOnStart": bool(prefs.get("open_on_start")),
+        "desktopShortcut": bool(shortcut and shortcut.exists()),
+    }
+
+
+def on_app_started(demo, app: FastAPI) -> None:
     @app.get(BASE, include_in_schema=False)
     def forgelight_redirect():
         return RedirectResponse(f"{BASE}/")
@@ -66,6 +85,27 @@ def on_app_started(_demo, app: FastAPI) -> None:
             "api_enabled": bool(cmd_opts.api),
         }
 
+    @app.get(f"{BASE}/api/models")
+    def forgelight_models():
+        return {"checkpoints": models.checkpoints(), "loras": models.loras()}
+
+    @app.get(f"{BASE}/api/startup")
+    def forgelight_startup():
+        return _startup_state()
+
+    @app.post(f"{BASE}/api/startup/open-on-start", dependencies=[Depends(require_same_origin)])
+    def forgelight_open_on_start(body: dict):
+        startup.set_open_on_start(bool(body.get("enabled")))
+        return _startup_state()
+
+    @app.post(f"{BASE}/api/startup/desktop-shortcut", dependencies=[Depends(require_same_origin)])
+    def forgelight_desktop_shortcut(body: dict):
+        try:
+            startup.create_desktop_shortcut()
+        except (RuntimeError, OSError) as error:
+            raise HTTPException(status_code=500, detail=str(error)) from error
+        return _startup_state()
+
     @app.get(f"{BASE}/{{path:path}}", include_in_schema=False)
     def forgelight_file(path: str):
         file = _page_file(path)
@@ -73,6 +113,8 @@ def on_app_started(_demo, app: FastAPI) -> None:
         immutable = file.parent.name == "assets"
         headers = {"Cache-Control": "public, max-age=31536000, immutable" if immutable else "no-cache"}
         return FileResponse(file, headers=headers)
+
+    startup.open_browser_once(demo)
 
 
 script_callbacks.on_app_started(on_app_started)
