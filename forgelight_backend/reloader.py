@@ -16,7 +16,7 @@ from typing import Any, Callable
 
 PACKAGE = Path(__file__).resolve().parent
 # Dependencies first, so each reloaded module picks up the fresh versions of what it imports.
-ORDER = ["store", "security", "civitai", "models", "startup", "api"]
+ORDER = ["store", "security", "architecture", "civitai", "models", "startup", "api"]
 
 _gate = threading.Condition()
 _active = 0

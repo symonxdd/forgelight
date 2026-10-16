@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from .architecture import detect
 from .civitai import lookups
 
 LORA_EXTENSIONS = {".safetensors", ".pt", ".ckpt"}
@@ -23,6 +24,7 @@ def _entry(kind: str, path: Path, root: Path | None, sha256: str | None, title: 
         "file": relative.replace("\\", "/"),
         "stem": path.stem,
         "size": path.stat().st_size,
+        "arch": detect(path),
         "civitai": lookups.request(kind, path, sha256),
     }
 
