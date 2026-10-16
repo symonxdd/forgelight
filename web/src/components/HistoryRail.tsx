@@ -13,7 +13,7 @@ export function HistoryRail() {
         Session
         {images.length > 0 && <span className="font-normal text-faint tabular-nums">{images.length}</span>}
       </h2>
-      <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-3 pb-3">
+      <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto px-3 pt-1 pb-3">
         {job.status === "running" && (
           <div
             className="relative overflow-hidden rounded-md bg-raised"
@@ -34,8 +34,8 @@ export function HistoryRail() {
               onClick={() => select(image.id)}
               aria-label={`Image with seed ${image.seed}`}
               aria-current={active}
-              className={`shrink-0 overflow-hidden rounded-md outline-offset-2 ${
-                active ? "ring-2 ring-fg-strong/70" : "opacity-80 hover:opacity-100"
+              className={`shrink-0 overflow-hidden rounded-md outline-offset-2 motion-safe:transition-opacity ${
+                active ? "opacity-100" : "opacity-45 hover:opacity-80"
               }`}
               style={{ aspectRatio: `${image.width} / ${image.height}` }}
             >
