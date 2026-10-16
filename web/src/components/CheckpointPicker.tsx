@@ -5,6 +5,8 @@ import { useModels, type ModelEntry } from "../api/forgelight";
 import { useCheckpoints, useCurrentCheckpoint, useSetCheckpoint } from "../api/queries";
 import { HELP } from "../lib/help";
 import { baseModelLabel, displayName, tidyName } from "../lib/modelNames";
+import { civitaiLink } from "../lib/preferences";
+import { usePreferences } from "../stores/preferences";
 import { useSession } from "../stores/session";
 import { InfoTip } from "./InfoTip";
 
@@ -40,13 +42,14 @@ function useRows(enabled: boolean): Row[] {
 }
 
 function CivitaiLink({ url, name }: { url: string; name: string }) {
+  const site = usePreferences((s) => s.civitaiSite);
   return (
     <a
-      href={url}
+      href={civitaiLink(url, site)}
       target="_blank"
       rel="noopener"
       aria-label={`Open ${name} on Civitai`}
-      title="Open on Civitai"
+      title={`Open on civitai.${site}`}
       className="grid size-7 shrink-0 place-items-center rounded-md text-faint hover:bg-surface hover:text-fg-strong"
     >
       <ExternalLink className="size-3.5" aria-hidden />
@@ -96,17 +99,22 @@ export function CheckpointPicker({ enabled }: { enabled: boolean }) {
         </Popover.Trigger>
         <Popover.Portal>
           <Popover.Content
+            // Opening with focus on an info icon would pop its tooltip up uninvited.
+            onOpenAutoFocus={(event) => event.preventDefault()}
             align="start"
             sideOffset={6}
             collisionPadding={12}
             className="z-50 flex max-h-[min(30rem,var(--radix-popover-content-available-height))] w-[min(26rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-lg border border-line bg-surface text-fg shadow-lg shadow-black/15"
           >
-            <p className="px-3.5 pt-3 pb-1.5 text-xs font-medium tracking-wide text-muted uppercase">Checkpoints</p>
+            <div className="flex items-center gap-1.5 px-3.5 pt-3 pb-1.5">
+              <span className="text-xs font-medium tracking-wide text-muted uppercase">Checkpoints</span>
+              <InfoTip topic="checkpoints" text={HELP.checkpoint} side="right" />
+            </div>
             <ul role="listbox" aria-label="Checkpoints" className="flex flex-col overflow-y-auto px-1.5 pb-1.5">
               {rows.map((row) => {
                 const selected = row.title === checkpoint?.title;
                 return (
-                  <li key={row.title} className="group flex items-center gap-1 rounded-md hover:bg-raised">
+                  <li key={row.title} className="group flex items-center gap-1 rounded-md pr-1.5 hover:bg-raised">
                     <button
                       type="button"
                       role="option"
@@ -146,7 +154,6 @@ export function CheckpointPicker({ enabled }: { enabled: boolean }) {
           </Popover.Content>
         </Popover.Portal>
       </Popover.Root>
-      <InfoTip topic="the checkpoint" text={HELP.checkpoint} side="bottom" />
     </div>
   );
 }

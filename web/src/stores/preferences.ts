@@ -1,8 +1,10 @@
 import { create } from "zustand";
 import {
+  CIVITAI_SITE_KEY,
   FONT_KEY,
   OLED_KEY,
   THEME_KEY,
+  parseCivitaiSite,
   parseFont,
   parseOled,
   parseTheme,
@@ -10,6 +12,7 @@ import {
   resolveOled,
   resolveTheme,
   writeStored,
+  type CivitaiSite,
   type FontId,
   type Theme,
 } from "../lib/preferences";
@@ -21,9 +24,11 @@ interface PreferencesState {
   /** Pure black dark mode. null until dark mode is first used. */
   oled: boolean | null;
   font: FontId;
+  civitaiSite: CivitaiSite;
   setTheme: (theme: Theme) => void;
   setOled: (oled: boolean) => void;
   setFont: (font: FontId) => void;
+  setCivitaiSite: (site: CivitaiSite) => void;
 }
 
 const systemDark = window.matchMedia("(prefers-color-scheme: dark)");
@@ -35,6 +40,7 @@ export const usePreferences = create<PreferencesState>((set) => ({
   themeChosen: storedTheme !== null,
   oled: parseOled(readStored(OLED_KEY)),
   font: parseFont(readStored(FONT_KEY)),
+  civitaiSite: parseCivitaiSite(readStored(CIVITAI_SITE_KEY)),
   setTheme: (theme) => {
     writeStored(THEME_KEY, theme);
     set({ theme, themeChosen: true });
@@ -46,6 +52,10 @@ export const usePreferences = create<PreferencesState>((set) => ({
   setFont: (font) => {
     writeStored(FONT_KEY, font);
     set({ font });
+  },
+  setCivitaiSite: (civitaiSite) => {
+    writeStored(CIVITAI_SITE_KEY, civitaiSite);
+    set({ civitaiSite });
   },
 }));
 

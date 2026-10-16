@@ -1,5 +1,15 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_FONT, fontStack, parseFont, parseOled, parseTheme, resolveOled, resolveTheme } from "./preferences";
+import {
+  DEFAULT_FONT,
+  civitaiLink,
+  fontStack,
+  parseCivitaiSite,
+  parseFont,
+  parseOled,
+  parseTheme,
+  resolveOled,
+  resolveTheme,
+} from "./preferences";
 
 describe("theme", () => {
   it("follows the system until the user picks a theme", () => {
@@ -37,6 +47,19 @@ describe("OLED", () => {
     expect(parseOled("true")).toBe(true);
     expect(parseOled("false")).toBe(false);
     expect(parseOled("yes")).toBeNull();
+  });
+});
+
+describe("Civitai site", () => {
+  it("switches the address and keeps the page", () => {
+    const url = "https://civitai.com/models/827184?modelVersionId=2883731";
+    expect(civitaiLink(url, "red")).toBe("https://civitai.red/models/827184?modelVersionId=2883731");
+    expect(civitaiLink(civitaiLink(url, "red"), "com")).toBe(url);
+  });
+
+  it("defaults to civitai.com", () => {
+    expect(parseCivitaiSite(null)).toBe("com");
+    expect(parseCivitaiSite("red")).toBe("red");
   });
 });
 

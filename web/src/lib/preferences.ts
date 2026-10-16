@@ -17,6 +17,24 @@ export const FALLBACK_STACK = 'system-ui, -apple-system, "Segoe UI", Roboto, san
 export const THEME_KEY = "forgelight.theme";
 export const FONT_KEY = "forgelight.font";
 export const OLED_KEY = "forgelight.oled";
+export const CIVITAI_SITE_KEY = "forgelight.civitaiSite";
+
+/** Civitai runs the same site on two addresses; .red also shows mature preview images. */
+export const CIVITAI_SITES = [
+  { id: "com", label: "civitai.com" },
+  { id: "red", label: "civitai.red" },
+] as const;
+
+export type CivitaiSite = (typeof CIVITAI_SITES)[number]["id"];
+
+export function parseCivitaiSite(value: string | null): CivitaiSite {
+  return value === "red" ? "red" : "com";
+}
+
+/** Points a Civitai page link at the chosen site; the rest of the address is identical. */
+export function civitaiLink(url: string, site: CivitaiSite): string {
+  return url.replace(/^https:\/\/civitai\.(com|red)(?=\/)/, `https://civitai.${site}`);
+}
 
 /** null means OLED has never been decided: it switches on the first time dark mode is in use. */
 export function parseOled(value: string | null): boolean | null {
