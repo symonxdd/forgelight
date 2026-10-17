@@ -126,7 +126,7 @@ const SECTIONS: { id: SectionId; label: string }[] = [
   { id: "hires", label: "Hires fix" },
 ];
 
-/** Shows or hides the panel's sections. The prompt is always shown. */
+/** Shows or hides sections of the Generate screen. The prompt is always shown. */
 function PanelSections() {
   const hidden = useSettings((s) => s.hiddenSections);
   const toggle = useSettings((s) => s.toggleSectionHidden);
@@ -134,7 +134,7 @@ function PanelSections() {
 
   return (
     <>
-      <Heading help={HELP.panelSections}>Panel sections</Heading>
+      <Heading help={HELP.panelSections}>Sections</Heading>
       {SECTIONS.map(({ id, label }) => (
         <Row
           key={id}

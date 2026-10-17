@@ -1,6 +1,9 @@
 import { Group, Panel, Separator, useDefaultLayout, type LayoutStorage } from "react-resizable-panels";
 import type { ConnectionState } from "../api/queries";
 import { useOverlayOpen } from "../hooks/useOverlayOpen";
+import { usePreferences } from "../stores/preferences";
+import { useHasPanelSections } from "../stores/settings";
+import { PromptFields } from "./controls/PromptFields";
 import { ControlsPanel } from "./ControlsPanel";
 import { HistoryRail } from "./HistoryRail";
 import { Viewer } from "./viewer/Viewer";
@@ -29,11 +32,36 @@ function ResizeHandle() {
   );
 }
 
+/**
+ * The middle of the screen: the image, with the prompt card centered under it, or above
+ * it when moved there. The card sits outside the viewer, so typing never triggers viewer keys.
+ */
+function Stage({ connection }: { connection: ConnectionState }) {
+  const above = usePreferences((s) => s.promptPosition) === "above";
+  const composer = (
+    <div className={`shrink-0 px-4 ${above ? "pt-4 pb-1" : "pt-1 pb-4"}`}>
+      <div className="mx-auto w-full max-w-3xl">
+        <PromptFields connected={connection === "connected"} />
+      </div>
+    </div>
+  );
+  return (
+    <div className="flex h-full flex-col bg-viewer">
+      {above && composer}
+      <div className="min-h-0 flex-1">
+        <Viewer connection={connection} />
+      </div>
+      {!above && composer}
+    </div>
+  );
+}
+
 export function Workspace({ connection }: { connection: ConnectionState }) {
   // With a menu open, the panel edges must not react to the pointer passing over them.
   const overlayOpen = useOverlayOpen();
-  // v2: the two-column settings panel needs a wider default than layouts saved before it.
-  const layout = useDefaultLayout({ id: "forgelight.workspace.v3", storage, onlySaveAfterUserInteractions: true });
+  const showPanel = useHasPanelSections();
+  // v4: the prompt moved to the middle, so the settings column starts narrow again.
+  const layout = useDefaultLayout({ id: "forgelight.workspace.v4", storage, onlySaveAfterUserInteractions: true });
 
   return (
     <Group
@@ -44,12 +72,16 @@ export function Workspace({ connection }: { connection: ConnectionState }) {
       onLayoutChanged={layout.onLayoutChanged}
       className="min-h-0 flex-1"
     >
-      <Panel id="controls" defaultSize="45" minSize={300} maxSize="65">
-        <ControlsPanel connected={connection === "connected"} />
-      </Panel>
-      <ResizeHandle />
-      <Panel id="viewer" minSize="25">
-        <Viewer connection={connection} />
+      {showPanel && (
+        <>
+          <Panel id="controls" defaultSize={340} minSize={280} maxSize={560}>
+            <ControlsPanel />
+          </Panel>
+          <ResizeHandle />
+        </>
+      )}
+      <Panel id="stage" minSize="35">
+        <Stage connection={connection} />
       </Panel>
       <ResizeHandle />
       <Panel id="history" defaultSize={128} minSize={96} maxSize={280} collapsible collapsedSize={0}>

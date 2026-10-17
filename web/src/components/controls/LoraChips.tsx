@@ -6,13 +6,15 @@ import { useCurrentCheckpoint } from "../../api/queries";
 import { HELP, HELP_NOTES } from "../../lib/help";
 import { ARCH_LABEL, addTriggerWord, compatibility, hasTriggerWord, type Arch, type LoraSlot } from "../../lib/loras";
 import { baseModelLabel, displayName } from "../../lib/modelNames";
+import { usePreferences } from "../../stores/preferences";
 import { useSettings } from "../../stores/settings";
 import { CivitaiLink } from "../CivitaiLink";
 import { Hint } from "../Hint";
 import { InfoTip } from "../InfoTip";
 import { RefreshButton } from "../RefreshButton";
 import { NumberSlider } from "./NumberSlider";
-import { Section } from "./Section";
+
+const popover = "z-50 rounded-lg border border-line bg-surface text-fg shadow-lg shadow-black/15";
 
 function findEntry(loras: readonly ModelEntry[], name: string): ModelEntry | undefined {
   return loras.find((m) => m.stem.toLowerCase() === name.toLowerCase());
@@ -23,6 +25,11 @@ function useCheckpointArch(): Arch | undefined {
   const models = useModels();
   const { checkpoint } = useCurrentCheckpoint(true);
   return models.data?.checkpoints.find((m) => m.title === checkpoint?.title)?.arch;
+}
+
+/** Popovers open away from the image, on the side where the page has room. */
+function usePopoverSide(): "top" | "bottom" {
+  return usePreferences((s) => s.promptPosition) === "below" ? "top" : "bottom";
 }
 
 function Badge({ children }: { children: string }) {
@@ -84,19 +91,16 @@ function TriggerWords({ words }: { words: string[] }) {
   );
 }
 
-function LoraCard({
-  slot,
-  entry,
-  checkpointArch,
-  onChange,
-  onRemove,
-}: {
+interface LoraProps {
   slot: LoraSlot;
   entry: ModelEntry | undefined;
   checkpointArch: Arch | undefined;
   onChange: (weight: number) => void;
   onRemove: () => void;
-}) {
+}
+
+/** Everything about one added LoRA, shown when its chip is clicked. */
+function LoraDetails({ slot, entry, checkpointArch, onChange, onRemove }: LoraProps) {
   const { name, detail } = displayName(entry?.stem ?? slot.name, entry?.civitai);
   const base = baseModelLabel(entry?.civitai.baseModel);
   const arch = entry?.arch;
@@ -104,7 +108,7 @@ function LoraCard({
   const words = entry?.civitai.trainedWords?.filter((w) => w.trim()) ?? [];
 
   return (
-    <li className="flex flex-col gap-3 rounded-lg border border-line bg-canvas p-3">
+    <div className="flex flex-col gap-3">
       <div className="flex items-start gap-2">
         <Layers className="mt-0.5 size-4 shrink-0 text-faint" aria-hidden />
         <div className="flex min-w-0 flex-1 flex-col">
@@ -142,7 +146,48 @@ function LoraCard({
         onChange={onChange}
       />
       {words.length > 0 && <TriggerWords words={words} />}
-    </li>
+    </div>
+  );
+}
+
+/** One added LoRA: its name and strength. Red when it can't apply; a click opens its details. */
+function LoraChip(props: LoraProps) {
+  const { slot, entry, checkpointArch } = props;
+  const { name } = displayName(entry?.stem ?? slot.name, entry?.civitai);
+  const problem = !entry || compatibility(entry.arch, checkpointArch) === "mismatch";
+  const side = usePopoverSide();
+  return (
+    <Popover.Root>
+      <Popover.Trigger
+        aria-label={`${name}, strength ${slot.weight}`}
+        className={`flex h-7 max-w-60 items-center gap-1.5 rounded-md border px-2 text-[12.5px] data-[state=open]:bg-raised ${
+          problem
+            ? "border-bad/45 text-bad hover:border-bad/70"
+            : "border-line text-fg-strong hover:border-line-strong data-[state=open]:border-line-strong"
+        }`}
+      >
+        {problem ? (
+          <TriangleAlert className="size-3.5 shrink-0" aria-hidden />
+        ) : (
+          <Layers className="size-3.5 shrink-0 text-faint" aria-hidden />
+        )}
+        <span className="truncate">{name}</span>
+        <span className="shrink-0 text-muted tabular-nums">{slot.weight}</span>
+      </Popover.Trigger>
+      <Popover.Portal>
+        <Popover.Content
+          side={side}
+          align="start"
+          sideOffset={6}
+          collisionPadding={12}
+          // Focus landing on a button would pop its tooltip up uninvited.
+          onOpenAutoFocus={(event) => event.preventDefault()}
+          className={`${popover} w-[min(22rem,calc(100vw-2rem))] p-3`}
+        >
+          <LoraDetails {...props} />
+        </Popover.Content>
+      </Popover.Portal>
+    </Popover.Root>
   );
 }
 
@@ -159,6 +204,8 @@ function LoraPicker({
 }) {
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
+  const refresh = useRefreshLoras();
+  const side = usePopoverSide();
   const rows = useMemo(() => {
     const q = query.trim().toLowerCase();
     return loras
@@ -175,28 +222,34 @@ function LoraPicker({
         if (!next) setQuery("");
       }}
     >
-      <Popover.Trigger className="flex h-9 flex-1 items-center justify-center gap-1.5 rounded-lg border border-dashed border-line-strong text-[13px] text-muted hover:border-fg/40 hover:text-fg-strong data-[state=open]:text-fg-strong">
+      <Popover.Trigger className="flex h-7 items-center gap-1 rounded-md border border-dashed border-line-strong px-2 text-[12.5px] text-muted hover:border-fg/40 hover:text-fg-strong data-[state=open]:text-fg-strong">
         <Plus className="size-3.5" aria-hidden />
         Add LoRA
       </Popover.Trigger>
       <Popover.Portal>
         <Popover.Content
           align="start"
-          side="right"
-          sideOffset={10}
+          side={side}
+          sideOffset={6}
           collisionPadding={12}
-          className="z-50 flex max-h-[min(32rem,var(--radix-popover-content-available-height))] w-[min(26rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-lg border border-line bg-surface text-fg shadow-lg shadow-black/15"
+          className={`${popover} flex max-h-[min(32rem,var(--radix-popover-content-available-height))] w-[min(26rem,calc(100vw-2rem))] flex-col overflow-hidden`}
         >
-          <label className="flex items-center gap-2 border-b border-line px-3.5 py-2.5">
+          <div className="flex items-center gap-2 border-b border-line py-1.5 pr-1.5 pl-3.5">
             <Search className="size-3.5 shrink-0 text-faint" aria-hidden />
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Search LoRAs…"
               aria-label="Search LoRAs"
-              className="w-full bg-transparent text-[13.5px] text-fg-strong placeholder:text-faint focus:outline-none"
+              className="h-8 w-full bg-transparent text-[13.5px] text-fg-strong placeholder:text-faint focus:outline-none"
             />
-          </label>
+            <RefreshButton
+              label="Reload LoRA list"
+              busy={refresh.isPending}
+              onClick={() => refresh.mutate()}
+              className="size-7"
+            />
+          </div>
           <ul aria-label="LoRAs" className="flex flex-col overflow-y-auto p-1.5">
             {rows.length === 0 && (
               <li className="px-2.5 py-6 text-center text-[13px] text-faint">
@@ -247,56 +300,39 @@ function LoraPicker({
   );
 }
 
-export function LoraSection() {
+/**
+ * LoRAs as a row of chips inside the prompt card: they work together with the prompt,
+ * since their trigger words go into it. A chip opens its strength and trigger words.
+ */
+export function LoraChips() {
   const loras = useSettings((s) => s.loras);
-  const open = useSettings((s) => s.openSections.loras ?? true);
   const update = useSettings((s) => s.update);
-  const setSectionOpen = useSettings((s) => s.setSectionOpen);
   const models = useModels();
   const installed = models.data?.loras ?? [];
   const checkpointArch = useCheckpointArch();
-  const refresh = useRefreshLoras();
 
   const setWeight = (index: number, weight: number) =>
     update({ loras: loras.map((l, i) => (i === index ? { ...l, weight } : l)) });
   const remove = (index: number) => update({ loras: loras.filter((_, i) => i !== index) });
   const add = (name: string) => update({ loras: [...loras, { name, weight: 1 }] });
 
-  const summary = loras.length === 0 ? "None" : loras.length === 1 ? "1 LoRA" : `${loras.length} LoRAs`;
-
   return (
-    <Section
-      title="LoRAs"
-      icon={Layers}
-      help={HELP.loras}
-      helpNote={HELP_NOTES.loras}
-      summary={summary}
-      open={open}
-      onOpenChange={(o) => setSectionOpen("loras", o)}
-    >
-      {loras.length > 0 && (
-        <ul className="flex flex-col gap-2">
-          {loras.map((slot, index) => (
-            <LoraCard
-              key={slot.name}
-              slot={slot}
-              entry={findEntry(installed, slot.name)}
-              checkpointArch={checkpointArch}
-              onChange={(weight) => setWeight(index, weight)}
-              onRemove={() => remove(index)}
-            />
-          ))}
-        </ul>
-      )}
-      <div className="flex gap-2">
-        <LoraPicker loras={installed} added={loras} checkpointArch={checkpointArch} onAdd={add} />
-        <RefreshButton
-          label="Reload LoRA list"
-          busy={refresh.isPending}
-          onClick={() => refresh.mutate()}
-          className="size-9 border border-line"
+    <div role="group" aria-label="LoRAs" className="flex flex-wrap items-center gap-1.5">
+      <span className="mr-1 flex h-7 items-center gap-1.5 text-[13px] text-muted">
+        LoRAs
+        <InfoTip topic="LoRAs" text={HELP.loras} note={HELP_NOTES.loras} />
+      </span>
+      {loras.map((slot, index) => (
+        <LoraChip
+          key={slot.name}
+          slot={slot}
+          entry={findEntry(installed, slot.name)}
+          checkpointArch={checkpointArch}
+          onChange={(weight) => setWeight(index, weight)}
+          onRemove={() => remove(index)}
         />
-      </div>
-    </Section>
+      ))}
+      <LoraPicker loras={installed} added={loras} checkpointArch={checkpointArch} onAdd={add} />
+    </div>
   );
 }

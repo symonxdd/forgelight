@@ -1,14 +1,16 @@
-import { ChevronRight, Eraser, PencilLine, X } from "lucide-react";
+import { ArrowDownToLine, ArrowUpToLine, ChevronRight, Eraser, PencilLine, X } from "lucide-react";
 import { Collapsible } from "radix-ui";
 import { useState } from "react";
 import { HELP } from "../../lib/help";
 import { looksLikeGenerationData } from "../../lib/infotext";
 import { applyGenerationData } from "../../stores/applySettings";
+import { usePreferences } from "../../stores/preferences";
 import { useSession } from "../../stores/session";
 import { useSettings } from "../../stores/settings";
 import { Hint } from "../Hint";
 import { InfoTip } from "../InfoTip";
 import { GenerateBar } from "./GenerateBar";
+import { LoraChips } from "./LoraChips";
 import { Messages } from "./Messages";
 
 const textarea =
@@ -61,7 +63,7 @@ function ClearButton({ field, label }: { field: "prompt" | "negativePrompt"; lab
         type="button"
         onClick={clear}
         aria-label={`Clear ${label.toLowerCase()}`}
-        className="ml-auto grid size-6 place-items-center rounded-md text-faint hover:bg-raised hover:text-fg-strong"
+        className="grid size-6 place-items-center rounded-md text-faint hover:bg-raised hover:text-fg-strong"
       >
         <Eraser className="size-3.5" aria-hidden />
       </button>
@@ -69,9 +71,29 @@ function ClearButton({ field, label }: { field: "prompt" | "negativePrompt"; lab
   );
 }
 
+/** Moves the prompt card to the other side of the image; the choice is remembered. */
+function SwapPositionButton() {
+  const position = usePreferences((s) => s.promptPosition);
+  const setPosition = usePreferences((s) => s.setPromptPosition);
+  const label = position === "below" ? "Move the prompt above the image" : "Move the prompt below the image";
+  const Icon = position === "below" ? ArrowUpToLine : ArrowDownToLine;
+  return (
+    <Hint label={label}>
+      <button
+        type="button"
+        onClick={() => setPosition(position === "below" ? "above" : "below")}
+        aria-label={label}
+        className="grid size-6 place-items-center rounded-md text-faint hover:bg-raised hover:text-fg-strong"
+      >
+        <Icon className="size-3.5" aria-hidden />
+      </button>
+    </Hint>
+  );
+}
+
 /**
- * The composer: prompt, negative prompt and Generate in one card, framed in the accent
- * color as the panel's main section.
+ * The composer: prompt, LoRAs, negative prompt and Generate in one card, framed in the
+ * accent color as the screen's main section. It sits under or above the image.
  */
 export function PromptFields({ connected }: { connected: boolean }) {
   const prompt = useSettings((s) => s.prompt);
@@ -79,6 +101,7 @@ export function PromptFields({ connected }: { connected: boolean }) {
   const negativeOpen = useSettings((s) => s.negativeOpen);
   const update = useSettings((s) => s.update);
   const setNegativeOpen = useSettings((s) => s.setNegativeOpen);
+  const showLoras = useSettings((s) => !s.hiddenSections.includes("loras"));
   // Dismissing hides the offer until the prompt text changes.
   const [dismissedFor, setDismissedFor] = useState<string | null>(null);
   const offerApply = looksLikeGenerationData(prompt) && dismissedFor !== prompt;
@@ -94,7 +117,10 @@ export function PromptFields({ connected }: { connected: boolean }) {
           Prompt
         </label>
         <InfoTip topic="the prompt" text={HELP.prompt} />
-        <ClearButton field="prompt" label="Prompt" />
+        <div className="ml-auto flex items-center gap-0.5">
+          <ClearButton field="prompt" label="Prompt" />
+          <SwapPositionButton />
+        </div>
       </div>
       <textarea
         id="prompt"
@@ -102,9 +128,10 @@ export function PromptFields({ connected }: { connected: boolean }) {
         onChange={(e) => update({ prompt: e.target.value })}
         placeholder="Describe the image…"
         spellCheck={false}
-        className={`${textarea} -mt-1 max-h-[40vh] min-h-32`}
+        className={`${textarea} -mt-1 max-h-[30vh] min-h-18`}
       />
       {offerApply && <PastedDataBanner onDone={() => setDismissedFor(prompt)} />}
+      {showLoras && <LoraChips />}
 
       <Collapsible.Root open={negativeOpen || negativePrompt.length > 0} onOpenChange={setNegativeOpen}>
         <div className="flex h-6 items-center gap-1.5">
@@ -119,7 +146,9 @@ export function PromptFields({ connected }: { connected: boolean }) {
             Negative prompt
           </Collapsible.Trigger>
           <InfoTip topic="the negative prompt" text={HELP.negativePrompt} />
-          <ClearButton field="negativePrompt" label="Negative prompt" />
+          <div className="ml-auto flex items-center">
+            <ClearButton field="negativePrompt" label="Negative prompt" />
+          </div>
         </div>
         <Collapsible.Content className="collapsible overflow-hidden">
           <div className="pt-2">

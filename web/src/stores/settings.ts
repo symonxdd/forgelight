@@ -5,6 +5,9 @@ import { DEFAULT_SETTINGS, type GenerationSettings } from "../lib/txt2img";
 
 export type SectionId = "loras" | "size" | "sampling" | "hires";
 
+/** The sections in the settings column beside the image; LoRAs live in the prompt card. */
+const PANEL_SECTIONS: SectionId[] = ["size", "sampling", "hires"];
+
 interface SettingsState extends GenerationSettings {
   negativeOpen: boolean;
   openSections: Record<SectionId, boolean>;
@@ -81,4 +84,9 @@ function pickSettings(s: GenerationSettings): GenerationSettings {
     hiresUpscaler: s.hiresUpscaler,
     hiresDenoise: s.hiresDenoise,
   };
+}
+
+/** True while at least one settings column section is shown, so the column is needed. */
+export function useHasPanelSections(): boolean {
+  return useSettings((s) => PANEL_SECTIONS.some((id) => !s.hiddenSections.includes(id)));
 }

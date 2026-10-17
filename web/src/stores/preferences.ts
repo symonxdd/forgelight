@@ -5,11 +5,13 @@ import {
   LIBRARY_BLUR_KEY,
   LIBRARY_STACKS_KEY,
   OLED_KEY,
+  PROMPT_POSITION_KEY,
   THEME_KEY,
   parseCivitaiSite,
   parseFont,
   parseLibraryBlur,
   parseOled,
+  parsePromptPosition,
   parseTheme,
   readStored,
   resolveOled,
@@ -18,6 +20,7 @@ import {
   type CivitaiSite,
   type FontId,
   type LibraryBlur,
+  type PromptPosition,
   type Theme,
 } from "../lib/preferences";
 
@@ -32,12 +35,14 @@ interface PreferencesState {
   libraryBlur: LibraryBlur;
   /** Library shows each batch as one stacked tile. On until switched off. */
   libraryStacks: boolean;
+  promptPosition: PromptPosition;
   setTheme: (theme: Theme) => void;
   setOled: (oled: boolean) => void;
   setFont: (font: FontId) => void;
   setCivitaiSite: (site: CivitaiSite) => void;
   setLibraryBlur: (blur: LibraryBlur) => void;
   setLibraryStacks: (stacks: boolean) => void;
+  setPromptPosition: (position: PromptPosition) => void;
 }
 
 const systemDark = window.matchMedia("(prefers-color-scheme: dark)");
@@ -52,6 +57,7 @@ export const usePreferences = create<PreferencesState>((set) => ({
   civitaiSite: parseCivitaiSite(readStored(CIVITAI_SITE_KEY)),
   libraryBlur: parseLibraryBlur(readStored(LIBRARY_BLUR_KEY)),
   libraryStacks: readStored(LIBRARY_STACKS_KEY) !== "false",
+  promptPosition: parsePromptPosition(readStored(PROMPT_POSITION_KEY)),
   setTheme: (theme) => {
     writeStored(THEME_KEY, theme);
     set({ theme, themeChosen: true });
@@ -75,6 +81,10 @@ export const usePreferences = create<PreferencesState>((set) => ({
   setLibraryStacks: (libraryStacks) => {
     writeStored(LIBRARY_STACKS_KEY, String(libraryStacks));
     set({ libraryStacks });
+  },
+  setPromptPosition: (promptPosition) => {
+    writeStored(PROMPT_POSITION_KEY, promptPosition);
+    set({ promptPosition });
   },
 }));
 

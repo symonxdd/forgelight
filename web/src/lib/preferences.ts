@@ -20,6 +20,14 @@ export const OLED_KEY = "forgelight.oled";
 export const CIVITAI_SITE_KEY = "forgelight.civitaiSite";
 export const LIBRARY_BLUR_KEY = "forgelight.libraryBlur";
 export const LIBRARY_STACKS_KEY = "forgelight.libraryStacks";
+export const PROMPT_POSITION_KEY = "forgelight.promptPosition";
+
+/** Where the prompt card sits on the Generate screen: under the image (default) or above it. */
+export type PromptPosition = "below" | "above";
+
+export function parsePromptPosition(value: string | null): PromptPosition {
+  return value === "above" ? "above" : "below";
+}
 
 /** Which Library previews are blurred until pointed at. */
 export const LIBRARY_BLUR_CHOICES = [

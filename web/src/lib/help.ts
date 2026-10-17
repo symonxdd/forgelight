@@ -43,7 +43,7 @@ export const HELP = {
   libraryBlur:
     "Blurs previews in the Library until you point at them. Likely NSFW is a guess from words in each image's prompt, so it can miss some.",
   panelSections:
-    "Hide the sections you rarely change to keep the panel tidy. Hidden sections still apply their settings to every image.",
+    "Hides sections that rarely change, to keep the screen tidy. LoRAs sit in the prompt card; with Size, Sampling and Hires fix all hidden, the settings column disappears. Hidden sections still apply their settings to every image.",
   oled: "Pure black instead of dark gray. On OLED screens black pixels are switched off, which gives deeper contrast and uses less power.",
   font: "The typeface used throughout Forgelight.",
   openOnStart:
