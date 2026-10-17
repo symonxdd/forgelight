@@ -10,6 +10,8 @@ interface SectionProps {
   summary?: string;
   /** Explanation shown in an info tooltip next to the title. */
   help?: string;
+  /** A side note under the explanation, in smaller print. */
+  helpNote?: string;
   /** A control at the right end of the header, such as an on/off switch. */
   action?: ReactNode;
   open: boolean;
@@ -17,7 +19,17 @@ interface SectionProps {
   children: ReactNode;
 }
 
-export function Section({ title, icon: Icon, summary, help, action, open, onOpenChange, children }: SectionProps) {
+export function Section({
+  title,
+  icon: Icon,
+  summary,
+  help,
+  helpNote,
+  action,
+  open,
+  onOpenChange,
+  children,
+}: SectionProps) {
   return (
     <Collapsible.Root open={open} onOpenChange={onOpenChange} className="rounded-xl border border-line bg-surface">
       <div className="flex items-center gap-2 px-4 py-3">
@@ -29,7 +41,7 @@ export function Section({ title, icon: Icon, summary, help, action, open, onOpen
           <Icon className="size-4 shrink-0 text-muted" aria-hidden />
           <span className="text-[13px] font-medium text-fg-strong">{title}</span>
         </Collapsible.Trigger>
-        {help && <InfoTip topic={title} text={help} />}
+        {help && <InfoTip topic={title} text={help} note={helpNote} />}
         <div className="ml-auto flex min-w-0 items-center gap-3">
           {!open && summary && (
             <button

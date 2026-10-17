@@ -3,7 +3,7 @@ import { Popover } from "radix-ui";
 import { useMemo, useState } from "react";
 import { useModels, useRefreshLoras, type ModelEntry } from "../../api/forgelight";
 import { useCurrentCheckpoint } from "../../api/queries";
-import { HELP } from "../../lib/help";
+import { HELP, HELP_NOTES } from "../../lib/help";
 import { ARCH_LABEL, addTriggerWord, compatibility, hasTriggerWord, type Arch, type LoraSlot } from "../../lib/loras";
 import { baseModelLabel, displayName } from "../../lib/modelNames";
 import { useSettings } from "../../stores/settings";
@@ -269,6 +269,7 @@ export function LoraSection() {
       title="LoRAs"
       icon={Layers}
       help={HELP.loras}
+      helpNote={HELP_NOTES.loras}
       summary={summary}
       open={open}
       onOpenChange={(o) => setSectionOpen("loras", o)}

@@ -1,6 +1,6 @@
 import { Expand } from "lucide-react";
 import { useUpscalers } from "../../api/queries";
-import { HELP } from "../../lib/help";
+import { HELP, HELP_NOTES } from "../../lib/help";
 import { hiresSize } from "../../lib/txt2img";
 import { useSettings } from "../../stores/settings";
 import { Toggle } from "../Toggle";
@@ -27,6 +27,7 @@ export function HiresSection() {
       icon={Expand}
       help={HELP.hiresFix}
       summary={enabled ? `${s.hiresScale}× · ${target.width} × ${target.height}` : "Off"}
+      helpNote={HELP_NOTES.hiresFix}
       // Off, the card is a single line; switching on opens it.
       open={enabled && s.openSections.hires}
       onOpenChange={(open) => (enabled ? s.setSectionOpen("hires", open) : open && s.update({ hiresEnabled: true }))}

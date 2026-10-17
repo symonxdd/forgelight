@@ -8,14 +8,19 @@ interface SelectFieldProps {
   onChange: (value: string) => void;
   disabled?: boolean;
   help?: string;
+  helpNote?: string;
 }
 
-export function SelectField({ label, value, options, onChange, disabled, help }: SelectFieldProps) {
+export function SelectField({ label, value, options, onChange, disabled, help, helpNote }: SelectFieldProps) {
   // Keep a value Forge doesn't list (e.g. from an older image) selectable rather than blank.
   const items = options.includes(value) || !value ? options : [value, ...options];
   return (
     <div className="flex flex-col gap-1.5">
-      {help ? <LabelWithTip label={label} help={help} /> : <span className="text-[13px] text-fg">{label}</span>}
+      {help ? (
+        <LabelWithTip label={label} help={help} note={helpNote} />
+      ) : (
+        <span className="text-[13px] text-fg">{label}</span>
+      )}
       <SelectMenu
         value={value}
         options={items.map((option) => ({ value: option, label: option }))}

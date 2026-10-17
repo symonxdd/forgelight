@@ -16,6 +16,8 @@ export const HELP = {
   triggerWords:
     "Words this LoRA was trained together with, taken from its Civitai page. An added LoRA always has an effect, but for characters and concepts it often stays weak or partial unless its trigger words are in the prompt. Style LoRAs usually need none. Click a word to add it to the prompt.",
   size: "The width and height of the image in pixels. SDXL-based checkpoints are trained around one megapixel (1024 × 1024), so these presets keep the total close to that for the best results.",
+  sampling:
+    "How the image is made: the checkpoint starts from pure random noise and removes a little of it at every step until a picture appears. These settings choose the method, the number of steps and how closely the prompt is followed.",
   sampler:
     "The method used to remove noise at each step. Samplers reach slightly different results and suit different step counts. DPM++ 2M is a dependable all-round choice.",
   scheduleType:
@@ -52,4 +54,19 @@ export const HELP = {
     "Which address Civitai links open on. Both show the same models and pages; civitai.red also shows mature preview images.",
   civitai:
     "Details looked up on Civitai once per model, using only the file name, file size and a short fingerprint of the file. Saved on this computer afterwards.",
+} as const;
+
+/**
+ * Side notes shown under an explanation in smaller print: where a name comes from and
+ * how to say it, spelled with everyday words rather than phonetic symbols.
+ */
+export const HELP_NOTES = {
+  sampling:
+    "Why the name: one prompt could lead to countless different images. Each generation draws just one of them, and drawing one example out of many possible ones is what statistics calls taking a sample.",
+  sampler:
+    'Euler is named after the mathematician Leonhard Euler and is said like "oiler". DPM stands for Diffusion Probabilistic Model; DPM++ is said "D P M plus plus".',
+  hiresFix:
+    'Why the name: "hires" is short for high resolution and is said "high res", like the start of "high resolution", not like the word "hires". The "fix" comes from early models, which went wrong when asked for a large image directly, often drawing two heads or repeated bodies. Drawing small first and enlarging afterwards fixed that.',
+  loras:
+    'LoRA stands for Low-Rank Adaptation: a small set of changes laid over a checkpoint (the adaptation), stored in a slimmed-down form (low rank) instead of as a full copy of the model. Said like the name "Laura"; LoRAs like "Lauras".',
 } as const;

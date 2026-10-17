@@ -1,6 +1,6 @@
 import { SlidersHorizontal } from "lucide-react";
 import { useSamplers, useSchedulers } from "../../api/queries";
-import { HELP } from "../../lib/help";
+import { HELP, HELP_NOTES } from "../../lib/help";
 import { useSettings } from "../../stores/settings";
 import { NumberSlider } from "./NumberSlider";
 import { SeedField } from "./SeedField";
@@ -16,6 +16,8 @@ export function SamplingSection() {
     <Section
       title="Sampling"
       icon={SlidersHorizontal}
+      help={HELP.sampling}
+      helpNote={HELP_NOTES.sampling}
       summary={`${s.steps} steps · CFG ${s.cfgScale} · ${s.sampler}`}
       open={s.openSections.sampling}
       onOpenChange={(o) => s.setSectionOpen("sampling", o)}
@@ -24,6 +26,7 @@ export function SamplingSection() {
         <SelectField
           label="Sampler"
           help={HELP.sampler}
+          helpNote={HELP_NOTES.sampler}
           value={s.sampler}
           options={samplers.data ?? []}
           onChange={(sampler) => s.update({ sampler })}
