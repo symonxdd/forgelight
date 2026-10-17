@@ -3,6 +3,7 @@ import type { ConnectionState } from "../api/queries";
 import { useOverlayOpen } from "../hooks/useOverlayOpen";
 import { usePreferences } from "../stores/preferences";
 import { useHasPanelSections } from "../stores/settings";
+import { Messages } from "./controls/Messages";
 import { PromptFields } from "./controls/PromptFields";
 import { ControlsPanel } from "./ControlsPanel";
 import { Tagline } from "./Tagline";
@@ -41,9 +42,19 @@ function Stage({ connection }: { connection: ConnectionState }) {
   const above = usePreferences((s) => s.promptPosition) === "above";
   const composer = (
     <div className={`shrink-0 px-4 ${above ? "pt-4" : "pt-1"} pb-2.5`}>
-      <div className="mx-auto flex w-full max-w-3xl flex-col gap-2.5">
+      <div className="relative mx-auto flex w-full max-w-3xl flex-col gap-2.5">
         <PromptFields connected={connection === "connected"} />
         <Tagline />
+        {/* Messages float on the image side of the card, clear of the viewer's zoom bar. */}
+        <div
+          className={`pointer-events-none absolute inset-x-0 z-20 flex justify-center ${
+            above ? "top-full mt-3" : "bottom-full mb-[4.5rem]"
+          }`}
+        >
+          <div className="pointer-events-auto w-full max-w-lg">
+            <Messages />
+          </div>
+        </div>
       </div>
     </div>
   );

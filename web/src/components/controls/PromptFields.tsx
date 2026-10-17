@@ -11,7 +11,6 @@ import { Hint } from "../Hint";
 import { InfoTip } from "../InfoTip";
 import { GenerateBar } from "./GenerateBar";
 import { LoraChips } from "./LoraChips";
-import { Messages } from "./Messages";
 
 const textarea =
   "w-full resize-none rounded-lg border border-line bg-canvas px-3 py-2.5 text-[14px] leading-relaxed text-fg-strong placeholder:text-faint hover:border-line-strong focus:border-line-strong focus:outline-none [field-sizing:content]";
@@ -166,7 +165,6 @@ export function PromptFields({ connected }: { connected: boolean }) {
         </Collapsible.Content>
       </Collapsible.Root>
       <GenerateBar connected={connected} />
-      <Messages />
     </section>
   );
 }
