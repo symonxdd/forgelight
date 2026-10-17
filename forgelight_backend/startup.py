@@ -188,7 +188,10 @@ def create_desktop_shortcut() -> Path:
         "$shell = New-Object -ComObject WScript.Shell;"
         "$path = Join-Path ([Environment]::GetFolderPath('Desktop')) $env:FL_NAME;"
         "$link = $shell.CreateShortcut($path);"
-        "$link.TargetPath = $env:FL_TARGET;"
+        # cmd.exe runs the launcher itself, so the shortcut works even where another
+        # program (such as a text editor) has taken over double-clicking .bat files.
+        "$link.TargetPath = $env:ComSpec;"
+        "$link.Arguments = '/c \"' + $env:FL_TARGET + '\"';"
         "$link.WorkingDirectory = $env:FL_WORKDIR;"
         "$link.Description = 'Start Forge and open Forgelight';"
         "if ($env:FL_ICON) { $link.IconLocation = $env:FL_ICON };"
