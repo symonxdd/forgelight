@@ -2,9 +2,9 @@
 CLAUDE.md
 .claude/
 
-# Dependencies and build output
+# Dependencies and build caches. page/ (the built interface) is tracked, so
+# Forge can install Forgelight straight from the repository.
 node_modules/
-page/
 *.tsbuildinfo
 .eslintcache
 coverage/
