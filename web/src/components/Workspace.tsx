@@ -5,6 +5,7 @@ import { usePreferences } from "../stores/preferences";
 import { useHasPanelSections } from "../stores/settings";
 import { PromptFields } from "./controls/PromptFields";
 import { ControlsPanel } from "./ControlsPanel";
+import { Tagline } from "./Tagline";
 import { HistoryRail } from "./HistoryRail";
 import { Viewer } from "./viewer/Viewer";
 
@@ -39,9 +40,10 @@ function ResizeHandle() {
 function Stage({ connection }: { connection: ConnectionState }) {
   const above = usePreferences((s) => s.promptPosition) === "above";
   const composer = (
-    <div className={`shrink-0 px-4 ${above ? "pt-4 pb-1" : "pt-1 pb-4"}`}>
-      <div className="mx-auto w-full max-w-3xl">
+    <div className={`shrink-0 px-4 ${above ? "pt-4" : "pt-1"} pb-2.5`}>
+      <div className="mx-auto flex w-full max-w-3xl flex-col gap-2.5">
         <PromptFields connected={connection === "connected"} />
+        <Tagline />
       </div>
     </div>
   );
