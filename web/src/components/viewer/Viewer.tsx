@@ -1,6 +1,6 @@
 import { ImageIcon, LoaderCircle, PlugZap } from "lucide-react";
 import type { ConnectionState } from "../../api/queries";
-import { progressLabel } from "../../lib/progress";
+import { barFraction, barPulses, isLoading, progressLabel } from "../../lib/progress";
 import { selectedImage, useSession } from "../../stores/session";
 import { useViewer } from "../../stores/viewer";
 import { ImageStage } from "./ImageStage";
@@ -57,6 +57,14 @@ export function Viewer({ connection }: { connection: ConnectionState }) {
         <div className="flex flex-col items-center gap-3 text-muted">
           <LoaderCircle className="size-6 animate-spin text-faint" aria-hidden />
           <p className="text-[13px]">{progressLabel(job)}</p>
+          {isLoading(job) && (
+            <div className="h-1 w-56 overflow-hidden rounded-full bg-raised" aria-hidden>
+              <div
+                className={`h-full rounded-full bg-accent ${barPulses(job) ? "motion-safe:animate-pulse" : ""}`}
+                style={{ width: `${Math.max(barFraction(job), barPulses(job) ? 1 : 0) * 100}%` }}
+              />
+            </div>
+          )}
         </div>
       </div>
     );
@@ -82,7 +90,7 @@ export function Viewer({ connection }: { connection: ConnectionState }) {
         {stage ?? <EmptyState connection={connection} />}
         {running && (
           <div className="absolute inset-x-0 top-0 h-0.5" aria-hidden>
-            <div className="h-full bg-accent" style={{ width: `${job.progress * 100}%` }} />
+            <div className="h-full bg-accent" style={{ width: `${barFraction(job) * 100}%` }} />
           </div>
         )}
         {(image || running) && <ViewerToolbar image={running ? undefined : image} />}

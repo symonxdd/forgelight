@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import type { LoadStep } from "../lib/progress";
 
 export interface SessionImage {
   id: string;
@@ -28,6 +29,10 @@ export type Job =
       batchCount: number;
       /** The final size when hires fix runs a second pass, otherwise null. */
       hires: { width: number; height: number } | null;
+      /** Set once this generation turns out to load the checkpoint first. */
+      loading: LoadStep | null;
+      /** Whether the extension has reported on loading at all; without it, the label guesses. */
+      loadingKnown: boolean;
       stopping: boolean;
     }
   | { status: "error"; message: string };

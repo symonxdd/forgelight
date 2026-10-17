@@ -1,7 +1,7 @@
 import { Minus, Plus, SkipForward, Square } from "lucide-react";
 import { Tooltip } from "radix-ui";
 import { HELP } from "../../lib/help";
-import { progressLabel } from "../../lib/progress";
+import { barFraction, barPulses, progressLabel } from "../../lib/progress";
 import { generate, interrupt, skip } from "../../stores/generation";
 import { useSession } from "../../stores/session";
 import { useSettings } from "../../stores/settings";
@@ -66,12 +66,15 @@ export function GenerateBar({ connected }: { connected: boolean }) {
           role="progressbar"
           aria-valuemin={0}
           aria-valuemax={100}
-          aria-valuenow={Math.round(job.progress * 100)}
+          aria-valuenow={Math.round(barFraction(job) * 100)}
           aria-label="Generation progress"
           className="relative flex h-10 flex-1 items-center overflow-hidden rounded-lg bg-raised"
         >
-          <div className="absolute inset-y-0 left-0 bg-fg-strong/12" style={{ width: `${job.progress * 100}%` }} />
-          <span className="relative px-3.5 text-[13px] text-fg-strong tabular-nums">{progressLabel(job)}</span>
+          <div
+            className={`absolute inset-y-0 left-0 bg-fg-strong/12 ${barPulses(job) ? "motion-safe:animate-pulse" : ""}`}
+            style={{ width: `${barFraction(job) * 100}%` }}
+          />
+          <span className="relative truncate px-3.5 text-[13px] text-fg-strong tabular-nums">{progressLabel(job)}</span>
         </div>
         {job.batchCount > 1 && (
           <Hint label={"Skip this image (Alt+Enter)"}>

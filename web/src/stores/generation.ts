@@ -1,7 +1,8 @@
 import { forgePost } from "../api/client";
-import type { ModelEntry } from "../api/forgelight";
+import { request, type LoadingState, type ModelEntry } from "../api/forgelight";
 import { queryClient } from "../api/queryClient";
 import { randomTaskId } from "../lib/format";
+import { nextLoadStep } from "../lib/progress";
 import { buildTxt2imgRequest, friendlyError, hiresSize, parseTxt2imgResult } from "../lib/txt2img";
 import { useSession, type Job, type JobPhase, type SessionImage } from "./session";
 import { currentSettings } from "./settings";
@@ -26,11 +27,13 @@ function pollProgress(taskId: string) {
 
   const tick = async () => {
     try {
-      const p = await forgePost("/internal/progress", {
-        id_task: taskId,
-        id_live_preview: previewId,
-        live_preview: true,
-      });
+      const job = useSession.getState().job;
+      // Until the image itself starts, also ask whether a checkpoint is loading.
+      const askLoading = job.status === "running" && job.phase !== "sampling";
+      const [p, loading] = await Promise.all([
+        forgePost("/internal/progress", { id_task: taskId, id_live_preview: previewId, live_preview: true }),
+        askLoading ? request<LoadingState>("loading").catch(() => null) : null,
+      ]);
       if (stopped) return;
       const progress = p.progress ?? 0;
       const phase: JobPhase = !p.active ? "waiting" : progress > 0 || p.live_preview ? "sampling" : "preparing";
@@ -39,6 +42,10 @@ function pollProgress(taskId: string) {
         progress,
         etaSeconds: p.eta ?? null,
       };
+      if (loading && job.status === "running") {
+        changes.loading = nextLoadStep(job.loading, loading);
+        changes.loadingKnown = true;
+      }
       if (p.live_preview) {
         changes.previewUrl = p.live_preview;
         previewId = p.id_live_preview ?? previewId;
@@ -93,6 +100,8 @@ export async function generate(): Promise<void> {
     height: settings.height,
     batchCount: settings.batchCount,
     hires: settings.hiresEnabled ? hiresSize(settings.width, settings.height, settings.hiresScale) : null,
+    loading: null,
+    loadingKnown: false,
     stopping: false,
   });
   const stopPolling = pollProgress(taskId);

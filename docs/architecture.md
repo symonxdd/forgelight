@@ -13,7 +13,7 @@ Forgelight has two parts in one repository. The repository root is a Forge exten
 Chrome  →  127.0.0.1:7860/forgelight      the interface, served by the extension
            ├─ /sdapi/v1/...                Forge's own API: generate, progress, models, settings
            ├─ /internal/progress           Forge's progress + live preview endpoint
-           └─ /forgelight/api/...          the extension: status, history, image files, thumbnails
+           └─ /forgelight/api/...          the extension: status, history, image files, thumbnails, loading
                          ↓
               Forge generates exactly as from its classic page
 ```
@@ -25,6 +25,7 @@ The interface and Forge share one address, so the browser allows the interface t
 - **Generation is Forge's job.** The interface only sends requests to Forge's official API. The extension never touches models, samplers, precision or memory management.
 - **Explicit requests.** Every generation request lists its settings explicitly. Forge's `infotext` shortcut crashes in original Forge and is not used.
 - **No outside network.** Fonts and assets are bundled. The interface talks to `127.0.0.1` only.
+- **Reading Forge, never changing it.** Forge reports no progress while it loads a checkpoint. The extension's `loading` endpoint looks at the call stack of Forge's generating thread to name the current step, and while the file is read, counts the tensors already in memory against the file's header. It wraps or patches nothing.
 - **Light on the GPU.** No WebGL or heavy effects. The laptop's 6 GB of VRAM belongs to Forge.
 
 ## Interface stack

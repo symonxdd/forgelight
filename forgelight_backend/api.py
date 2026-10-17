@@ -12,7 +12,7 @@ from typing import Any, Callable
 from fastapi import HTTPException, Request
 from fastapi.responses import FileResponse
 
-from . import library, models, startup
+from . import library, loading, models, startup
 from .security import require_own_page, require_same_origin
 from .store import ROOT
 
@@ -50,6 +50,10 @@ def status(_request: Request, _body: Any) -> dict:
 
 def list_models(_request: Request, _body: Any) -> dict:
     return {"checkpoints": models.checkpoints(), "loras": models.loras()}
+
+
+def loading_state(_request: Request, _body: Any) -> dict:
+    return loading.state()
 
 
 def startup_state(_request: Request, _body: Any) -> dict:
@@ -127,6 +131,7 @@ ROUTES: dict[tuple[str, str], Handler] = {
     ("GET", "startup"): startup_state,
     ("POST", "startup/open-on-start"): open_on_start,
     ("POST", "startup/desktop-shortcut"): desktop_shortcut,
+    ("GET", "loading"): loading_state,
     ("GET", "library"): library_list,
     ("GET", "library/image"): library_image,
     ("GET", "library/thumb"): library_thumb,

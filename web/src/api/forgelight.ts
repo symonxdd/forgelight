@@ -29,6 +29,20 @@ export interface StartupState {
   desktopShortcut: boolean;
 }
 
+export type LoadingStage = "unloading" | "reading" | "building" | "moving";
+
+/** What Forge is doing to load a checkpoint, read by the extension from Forge's own thread. */
+export interface LoadingState {
+  /** The next generation loads the selected checkpoint first. */
+  pending: boolean;
+  checkpoint: string | null;
+  stage: LoadingStage | null;
+  /** 0 to 1 while reading the file or setting up the model's parts, otherwise null. */
+  progress: number | null;
+  /** While reading: whether the file is the checkpoint itself rather than an extra module. */
+  isCheckpoint?: boolean;
+}
+
 /** Calls one of the extension's own endpoints under /forgelight/api/. */
 export async function request<T>(path: string, body?: unknown): Promise<T> {
   const response = await fetch(`/forgelight/api/${path}`, {
