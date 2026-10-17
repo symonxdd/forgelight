@@ -24,9 +24,9 @@ The interface and Forge share one address, so the browser allows the interface t
 
 - **Generation is Forge's job.** The interface only sends requests to Forge's official API. The extension never touches models, samplers, precision or memory management.
 - **Explicit requests.** Every generation request lists its settings explicitly. Forge's `infotext` shortcut crashes in original Forge and is not used.
-- **No outside network.** Fonts and assets are bundled. The interface talks to `127.0.0.1` only.
+- **Almost no outside network.** Fonts and assets are bundled, and there is no telemetry. The interface talks to `127.0.0.1` only. The one outside destination is Civitai's API, which the extension asks once per model for its name, base model and trigger words, sending only a file fingerprint (or, as a last resort, the file name).
 - **Reading Forge, never changing it.** Forge reports no progress while it loads a checkpoint. The extension's `loading` endpoint looks at the call stack of Forge's generating thread to name the current step, and while the file is read, counts the tensors already in memory against the file's header. It wraps or patches nothing.
-- **Light on the GPU.** No WebGL or heavy effects. The laptop's 6 GB of VRAM belongs to Forge.
+- **Light on the graphics card.** Chrome uses the graphics card to draw pages, and Forge uses the same card, with its limited memory, to make images. Flashy visual effects in the interface would take some of that memory away from Forge, so Forgelight keeps its visuals simple and its image grids use small thumbnails.
 
 ## Interface stack
 
