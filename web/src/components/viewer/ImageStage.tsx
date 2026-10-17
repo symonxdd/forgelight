@@ -12,11 +12,23 @@ interface ImageStageProps {
   imageKey: string;
   fadeIn?: boolean;
   alt: string;
+  /** A plain click (no drag) outside the picture, e.g. to close it. */
+  onBackgroundClick?: () => void;
 }
 
 /** Shows one image with wheel zoom at the cursor, drag to pan and double-click to toggle 100%. */
-export function ImageStage({ src, underlay, width, height, imageKey, fadeIn, alt }: ImageStageProps) {
+export function ImageStage({
+  src,
+  underlay,
+  width,
+  height,
+  imageKey,
+  fadeIn,
+  alt,
+  onBackgroundClick,
+}: ImageStageProps) {
   const ref = useRef<HTMLDivElement>(null);
+  const imageRef = useRef<HTMLImageElement>(null);
   const drag = useRef<{ startX: number; startY: number; view: View } | null>(null);
   const [dragging, setDragging] = useState(false);
   const [showUnderlay, setShowUnderlay] = useState(Boolean(underlay));
@@ -74,9 +86,20 @@ export function ImageStage({ src, underlay, width, height, imageKey, fadeIn, alt
     useViewer.getState().setView({ ...start.view, x: start.view.x + dx, y: start.view.y + dy });
   };
 
-  const onPointerUp = () => {
+  const onPointerUp = (event: React.PointerEvent) => {
+    const start = drag.current;
     drag.current = null;
     setDragging(false);
+    if (!start || !onBackgroundClick || event.type !== "pointerup") return;
+    if (Math.hypot(event.clientX - start.startX, event.clientY - start.startY) >= 3) return;
+    const rect = imageRef.current?.getBoundingClientRect();
+    const inside =
+      rect &&
+      event.clientX >= rect.left &&
+      event.clientX <= rect.right &&
+      event.clientY >= rect.top &&
+      event.clientY <= rect.bottom;
+    if (!inside) onBackgroundClick();
   };
 
   const onDoubleClick = (event: React.MouseEvent) => {
@@ -110,6 +133,7 @@ export function ImageStage({ src, underlay, width, height, imageKey, fadeIn, alt
     >
       {underlay && showUnderlay && <img src={underlay} alt="" aria-hidden className={imageClass} style={imageStyle} />}
       <img
+        ref={imageRef}
         key={imageKey}
         src={src}
         alt={alt}
