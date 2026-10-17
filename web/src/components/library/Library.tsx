@@ -130,11 +130,13 @@ function Tile({ batch, selected, selecting, onOpen, onToggle }: TileProps) {
           loading="lazy"
           decoding="async"
           draggable={false}
+          // A blurred preview clears while pointed at, or reached with the keyboard. Focus
+          // left behind by a mouse click doesn't count, so the blur returns once the pointer leaves.
           className={`size-full object-cover object-top motion-safe:transition-[filter,scale,border-radius] motion-safe:duration-200 ${
             selected
-              ? `scale-[0.86] rounded-md ${blurred ? "blur-lg" : ""}`
+              ? `scale-[0.86] rounded-md ${blurred ? "blur-lg group-hover:blur-none group-has-[:focus-visible]:blur-none" : ""}`
               : blurred
-                ? "scale-110 blur-xl group-focus-within:scale-100 group-focus-within:blur-none group-hover:scale-100 group-hover:blur-none"
+                ? "scale-110 blur-xl group-hover:scale-100 group-hover:blur-none group-has-[:focus-visible]:scale-100 group-has-[:focus-visible]:blur-none"
                 : "group-hover:brightness-110"
           }`}
         />
@@ -234,10 +236,13 @@ export function Library() {
   const close = useCallback(() => {
     const id = openId;
     setOpenId(null);
-    // Back in the grid, keep the place of the image last shown.
+    // Back in the grid, keep the place of the image last shown. Without a visible focus
+    // ring, which would also lift that tile's blur until something else is clicked.
     const tileId = (stacks && id && batchOf.get(id)?.key) || id;
     requestAnimationFrame(() =>
-      document.querySelector<HTMLElement>(`[data-library-id="${CSS.escape(tileId ?? "")}"]`)?.focus(),
+      document
+        .querySelector<HTMLElement>(`[data-library-id="${CSS.escape(tileId ?? "")}"]`)
+        ?.focus({ focusVisible: false } as FocusOptions),
     );
   }, [openId, stacks, batchOf]);
 
