@@ -25,7 +25,7 @@ function useModelLabels(): (name: string) => string {
 
 function SearchBox({ value, onChange }: { value: string; onChange: (value: string) => void }) {
   return (
-    <div className="relative w-full max-w-xs">
+    <div className="relative w-72 max-w-full">
       <Search
         className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-faint"
         aria-hidden
@@ -163,6 +163,38 @@ function Tile({ batch, selected, selecting, onOpen, onToggle }: TileProps) {
       >
         <Check className="size-3.5" strokeWidth={3} aria-hidden />
       </button>
+    </div>
+  );
+}
+
+/** Floats at the bottom center while images are selected, close to wherever the pointer is. */
+function SelectionBar({ count, onClear, onDelete }: { count: number; onClear: () => void; onDelete: () => void }) {
+  return (
+    <div className="pointer-events-none absolute inset-x-0 bottom-5 z-10 flex justify-center px-4">
+      <div
+        role="toolbar"
+        aria-label="Selected images"
+        className="pointer-events-auto flex items-center gap-1.5 rounded-xl border border-line-strong bg-surface py-1.5 pr-1.5 pl-4 shadow-lg shadow-black/25"
+      >
+        <span className="mr-2 text-[13px] font-medium text-fg-strong tabular-nums">
+          {count.toLocaleString("en-US")} selected
+        </span>
+        <button
+          type="button"
+          onClick={onClear}
+          className="h-8 rounded-md px-2.5 text-[13px] text-muted hover:bg-raised hover:text-fg-strong"
+        >
+          Clear
+        </button>
+        <button
+          type="button"
+          onClick={onDelete}
+          className="flex h-8 items-center gap-1.5 rounded-md border border-bad/40 px-3 text-[13px] text-bad hover:bg-bad/10"
+        >
+          <Trash2 className="size-3.5" aria-hidden />
+          Delete
+        </button>
+      </div>
     </div>
   );
 }
@@ -368,54 +400,40 @@ export function Library() {
 
   return (
     <main aria-label="Library" className="relative flex min-h-0 flex-1 flex-col bg-canvas">
-      <div className="flex flex-wrap items-center gap-2 border-b border-line px-4 py-3">
-        <SearchBox value={input} onChange={changeInput} />
-        <ModelFilter value={model} models={models} onChange={changeModel} />
-        <Hint label={stacks ? "Show every image on its own" : "Stack images made together"}>
-          <button
-            type="button"
-            onClick={() => setStacks(!stacks)}
-            aria-pressed={stacks}
-            className={`flex h-8 items-center gap-1.5 rounded-md border px-2.5 text-[13px] ${
-              stacks
-                ? "border-line-strong bg-raised text-fg-strong"
-                : "border-line text-muted hover:border-line-strong hover:text-fg-strong"
-            }`}
-          >
-            <Layers className="size-3.5" aria-hidden />
-            Stacks
-          </button>
-        </Hint>
-        {selectedCount > 0 ? (
-          <div className="ml-auto flex items-center gap-1.5">
-            <span className="mr-1 text-[13px] text-fg-strong tabular-nums">
-              {selectedCount.toLocaleString("en-US")} selected
-            </span>
+      <div className="border-b border-line px-4 py-3">
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          <SearchBox value={input} onChange={changeInput} />
+          <ModelFilter value={model} models={models} onChange={changeModel} />
+          <Hint label={stacks ? "Show every image on its own" : "Stack images made together"}>
             <button
               type="button"
-              onClick={clearSelection}
-              className="h-8 rounded-md px-2.5 text-[13px] text-muted hover:bg-raised hover:text-fg-strong"
+              onClick={() => setStacks(!stacks)}
+              aria-pressed={stacks}
+              className={`flex h-8 items-center gap-1.5 rounded-md border px-2.5 text-[13px] ${
+                stacks
+                  ? "border-line-strong bg-raised text-fg-strong"
+                  : "border-line text-muted hover:border-line-strong hover:text-fg-strong"
+              }`}
             >
-              Clear
+              <Layers className="size-3.5" aria-hidden />
+              Stacks
             </button>
-            <button
-              type="button"
-              onClick={() => setPendingDelete({ ids: [...selected], next: null })}
-              className="flex h-8 items-center gap-1.5 rounded-md border border-bad/40 px-3 text-[13px] text-bad hover:bg-bad/10"
-            >
-              <Trash2 className="size-3.5" aria-hidden />
-              Delete
-            </button>
-          </div>
-        ) : (
-          !library.isPending && (
-            <span className="ml-auto text-[12.5px] text-muted tabular-nums">
+          </Hint>
+          {!library.isPending && (
+            <span className="ml-2 text-[12.5px] text-muted tabular-nums">
               {total === 1 ? "1 image" : `${total.toLocaleString("en-US")} images`}
             </span>
-          )
-        )}
+          )}
+        </div>
       </div>
-      <div className="min-h-0 flex-1 overflow-y-auto">{body}</div>
+      <div className={`min-h-0 flex-1 overflow-y-auto ${selectedCount > 0 ? "pb-20" : ""}`}>{body}</div>
+      {selectedCount > 0 && openIndex === -1 && (
+        <SelectionBar
+          count={selectedCount}
+          onClear={clearSelection}
+          onDelete={() => setPendingDelete({ ids: [...selected], next: null })}
+        />
+      )}
       {openIndex !== -1 && (
         <LibraryViewer
           items={items}
