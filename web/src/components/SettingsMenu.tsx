@@ -1,5 +1,5 @@
 import { Check, ChevronDown, ExternalLink, LoaderCircle, Monitor, Settings } from "lucide-react";
-import { Popover, Select, Switch } from "radix-ui";
+import { Popover, Select } from "radix-ui";
 import type { CSSProperties, ReactNode } from "react";
 import { useCreateDesktopShortcut, useSetOpenOnStart, useStartup } from "../api/forgelight";
 import { useOptions, useSetOptions } from "../api/queries";
@@ -24,6 +24,7 @@ import { usePreferences } from "../stores/preferences";
 import { useSettings, type SectionId } from "../stores/settings";
 import { IconButton } from "./IconButton";
 import { InfoTip } from "./InfoTip";
+import { Toggle } from "./Toggle";
 
 interface Option {
   value: string;
@@ -83,30 +84,6 @@ function Dropdown({
         </Select.Content>
       </Select.Portal>
     </Select.Root>
-  );
-}
-
-function Toggle({
-  checked,
-  onChange,
-  labelledBy,
-  disabled,
-}: {
-  checked: boolean;
-  onChange: (value: boolean) => void;
-  labelledBy: string;
-  disabled?: boolean;
-}) {
-  return (
-    <Switch.Root
-      checked={checked}
-      onCheckedChange={onChange}
-      disabled={disabled}
-      aria-labelledby={labelledBy}
-      className="relative h-5 w-9 shrink-0 rounded-full bg-line-strong transition-colors duration-200 ease-out data-[state=checked]:bg-accent disabled:opacity-40"
-    >
-      <Switch.Thumb className="block size-4 translate-x-0.5 rounded-full bg-surface shadow-sm transition-transform duration-200 ease-out data-[state=checked]:translate-x-[18px]" />
-    </Switch.Root>
   );
 }
 
@@ -178,6 +155,7 @@ const SECTIONS: { id: SectionId; label: string }[] = [
   { id: "loras", label: "LoRAs" },
   { id: "size", label: "Size" },
   { id: "sampling", label: "Sampling" },
+  { id: "hires", label: "Hires fix" },
 ];
 
 /** Shows or hides the panel's sections. The prompt is always shown. */
@@ -209,7 +187,7 @@ function Checkpoints() {
   return (
     <>
       <Heading>Checkpoints</Heading>
-      <Row id="checkpoint-memory-label" label="Remember settings per checkpoint" help={HELP.checkpointMemory}>
+      <Row id="checkpoint-memory-label" label="Remember per checkpoint" help={HELP.checkpointMemory}>
         <Toggle checked={enabled} onChange={setEnabled} labelledBy="checkpoint-memory-label" />
       </Row>
     </>

@@ -2,7 +2,7 @@ import { forgePost } from "../api/client";
 import type { ModelEntry } from "../api/forgelight";
 import { queryClient } from "../api/queryClient";
 import { randomTaskId } from "../lib/format";
-import { buildTxt2imgRequest, friendlyError, parseTxt2imgResult } from "../lib/txt2img";
+import { buildTxt2imgRequest, friendlyError, hiresSize, parseTxt2imgResult } from "../lib/txt2img";
 import { useSession, type Job, type JobPhase, type SessionImage } from "./session";
 import { currentSettings } from "./settings";
 
@@ -92,6 +92,7 @@ export async function generate(): Promise<void> {
     width: settings.width,
     height: settings.height,
     batchCount: settings.batchCount,
+    hires: settings.hiresEnabled ? hiresSize(settings.width, settings.height, settings.hiresScale) : null,
     stopping: false,
   });
   const stopPolling = pollProgress(taskId);

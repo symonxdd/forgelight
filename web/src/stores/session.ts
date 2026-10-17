@@ -26,6 +26,8 @@ export type Job =
       width: number;
       height: number;
       batchCount: number;
+      /** The final size when hires fix runs a second pass, otherwise null. */
+      hires: { width: number; height: number } | null;
       stopping: boolean;
     }
   | { status: "error"; message: string };

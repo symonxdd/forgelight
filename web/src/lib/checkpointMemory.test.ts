@@ -18,9 +18,20 @@ describe("settingsToLoad", () => {
 });
 
 describe("remembered settings", () => {
-  it("keeps only Size and Sampling", () => {
+  it("keeps only Size, Sampling and Hires fix", () => {
     expect(Object.keys(pickRemembered(DEFAULT_SETTINGS)).sort()).toEqual(
-      ["cfgScale", "height", "sampler", "scheduler", "steps", "width"].sort(),
+      [
+        "cfgScale",
+        "height",
+        "hiresDenoise",
+        "hiresEnabled",
+        "hiresScale",
+        "hiresUpscaler",
+        "sampler",
+        "scheduler",
+        "steps",
+        "width",
+      ].sort(),
     );
     const withOtherPrompt = { ...DEFAULT_SETTINGS, prompt: "different" };
     expect(sameRemembered(current, withOtherPrompt)).toBe(true);
@@ -31,5 +42,11 @@ describe("remembered settings", () => {
     expect(parseRemembered({ ...saved, steps: "30" })).toBeUndefined();
     expect(parseRemembered({ width: 832 })).toBeUndefined();
     expect(parseRemembered(null)).toBeUndefined();
+  });
+
+  it("reads entries saved before Hires fix existed, with Hires fix off", () => {
+    const { hiresEnabled, hiresScale, hiresUpscaler, hiresDenoise, ...older } = saved;
+    void [hiresEnabled, hiresScale, hiresUpscaler, hiresDenoise];
+    expect(parseRemembered(older)).toMatchObject({ steps: 30, hiresEnabled: false, hiresScale: 1.5 });
   });
 });

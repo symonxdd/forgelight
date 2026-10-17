@@ -1,9 +1,18 @@
-import type { GenerationSettings } from "./txt2img";
+import { DEFAULT_SETTINGS, type GenerationSettings } from "./txt2img";
 
-/** The Size and Sampling settings, which each checkpoint remembers for itself. */
+/** The Size, Sampling and Hires fix settings, which each checkpoint remembers for itself. */
 export type RememberedSettings = Pick<
   GenerationSettings,
-  "width" | "height" | "steps" | "cfgScale" | "sampler" | "scheduler"
+  | "width"
+  | "height"
+  | "steps"
+  | "cfgScale"
+  | "sampler"
+  | "scheduler"
+  | "hiresEnabled"
+  | "hiresScale"
+  | "hiresUpscaler"
+  | "hiresDenoise"
 >;
 
 export function pickRemembered(s: RememberedSettings): RememberedSettings {
@@ -14,6 +23,10 @@ export function pickRemembered(s: RememberedSettings): RememberedSettings {
     cfgScale: s.cfgScale,
     sampler: s.sampler,
     scheduler: s.scheduler,
+    hiresEnabled: s.hiresEnabled,
+    hiresScale: s.hiresScale,
+    hiresUpscaler: s.hiresUpscaler,
+    hiresDenoise: s.hiresDenoise,
   };
 }
 
@@ -24,7 +37,11 @@ export function sameRemembered(a: RememberedSettings, b: RememberedSettings): bo
     a.steps === b.steps &&
     a.cfgScale === b.cfgScale &&
     a.sampler === b.sampler &&
-    a.scheduler === b.scheduler
+    a.scheduler === b.scheduler &&
+    a.hiresEnabled === b.hiresEnabled &&
+    a.hiresScale === b.hiresScale &&
+    a.hiresUpscaler === b.hiresUpscaler &&
+    a.hiresDenoise === b.hiresDenoise
   );
 }
 
@@ -34,7 +51,14 @@ export function parseRemembered(value: unknown): RememberedSettings | undefined 
   const v = value as Record<string, unknown>;
   const numbers = [v.width, v.height, v.steps, v.cfgScale].every((n) => typeof n === "number" && Number.isFinite(n));
   if (!numbers || typeof v.sampler !== "string" || typeof v.scheduler !== "string") return undefined;
-  return pickRemembered(v as unknown as RememberedSettings);
+  // Entries saved before Hires fix existed had it off.
+  const hires = {
+    hiresEnabled: typeof v.hiresEnabled === "boolean" ? v.hiresEnabled : DEFAULT_SETTINGS.hiresEnabled,
+    hiresScale: typeof v.hiresScale === "number" ? v.hiresScale : DEFAULT_SETTINGS.hiresScale,
+    hiresUpscaler: typeof v.hiresUpscaler === "string" ? v.hiresUpscaler : DEFAULT_SETTINGS.hiresUpscaler,
+    hiresDenoise: typeof v.hiresDenoise === "number" ? v.hiresDenoise : DEFAULT_SETTINGS.hiresDenoise,
+  };
+  return pickRemembered({ ...(v as unknown as RememberedSettings), ...hires });
 }
 
 /**

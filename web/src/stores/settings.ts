@@ -3,7 +3,7 @@ import { createJSONStorage, persist } from "zustand/middleware";
 import { safeStorage } from "../lib/storage";
 import { DEFAULT_SETTINGS, type GenerationSettings } from "../lib/txt2img";
 
-export type SectionId = "loras" | "size" | "sampling";
+export type SectionId = "loras" | "size" | "sampling" | "hires";
 
 interface SettingsState extends GenerationSettings {
   negativeOpen: boolean;
@@ -22,7 +22,7 @@ export const useSettings = create<SettingsState>()(
     (set) => ({
       ...DEFAULT_SETTINGS,
       negativeOpen: false,
-      openSections: { loras: true, size: true, sampling: true },
+      openSections: { loras: true, size: true, sampling: true, hires: true },
       hiddenSections: [],
       update: (changes) => set(changes),
       setNegativeOpen: (negativeOpen) => set({ negativeOpen }),
@@ -51,6 +51,8 @@ export const useSettings = create<SettingsState>()(
         for (const key of Object.keys(current)) {
           if (key in saved && typeof saved[key] === typeof merged[key]) merged[key] = saved[key];
         }
+        // Sections added later start open, next to the saved state of the others.
+        merged.openSections = { ...current.openSections, ...(merged.openSections as object) };
         return merged as unknown as SettingsState;
       },
     },
@@ -74,5 +76,9 @@ function pickSettings(s: GenerationSettings): GenerationSettings {
     seed: s.seed,
     batchCount: s.batchCount,
     loras: s.loras,
+    hiresEnabled: s.hiresEnabled,
+    hiresScale: s.hiresScale,
+    hiresUpscaler: s.hiresUpscaler,
+    hiresDenoise: s.hiresDenoise,
   };
 }

@@ -28,8 +28,16 @@ export const HELP = {
   batchCount: "How many images to make in a row. Each one uses the next seed, so every image is different.",
   livePreview:
     "How often the quick, low-detail look at the image is refreshed while it is being made. Every step shows the image sharpening, at no noticeable cost. This is Forge's own setting, so the classic page uses it too.",
+  hiresFix:
+    "Draws the image first at the normal size, then enlarges it and draws over it again for sharper detail. Gives cleaner faces, hair and textures, but each image takes longer.",
+  hiresScale:
+    "How much larger the final image is than the size set above. 1.5× is a common choice; larger needs more time and graphics memory.",
+  hiresUpscaler:
+    "The method that enlarges the image before it is drawn over again. R-ESRGAN 4x+ suits most images, R-ESRGAN 4x+ Anime6B suits anime and illustration. Latent upscalers enlarge inside the model and need a higher Detail to look sharp.",
+  hiresDenoise:
+    "How much the second pass may change the image (called denoising strength in Forge). Low keeps it close to the original; high adds more detail but can alter faces, hands or the composition. 0.3 to 0.5 suits most images.",
   checkpointMemory:
-    "Each checkpoint keeps its own Size and Sampling settings. Switching to a checkpoint brings back what you last used with it. Prompt and LoRAs stay as they are.",
+    "Each checkpoint keeps its own Size, Sampling and Hires fix settings. Switching to a checkpoint brings back what you last used with it. Prompt and LoRAs stay as they are.",
   libraryBlur:
     "Blurs previews in the Library until you point at them. Likely NSFW is a guess from words in each image's prompt, so it can miss some.",
   panelSections:

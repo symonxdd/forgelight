@@ -1,4 +1,5 @@
 import { useSettings } from "../stores/settings";
+import { HiresSection } from "./controls/HiresSection";
 import { LoraSection } from "./controls/LoraSection";
 import { PromptFields } from "./controls/PromptFields";
 import { SamplingSection } from "./controls/SamplingSection";
@@ -14,7 +15,8 @@ export function ControlsPanel({ connected }: { connected: boolean }) {
   const showLoras = !hidden.includes("loras");
   const showSize = !hidden.includes("size");
   const showSampling = !hidden.includes("sampling");
-  const twoColumns = showSize || showSampling;
+  const showHires = !hidden.includes("hires");
+  const twoColumns = showSize || showSampling || showHires;
 
   return (
     <aside aria-label="Generation settings" className="flex h-full flex-col bg-canvas">
@@ -28,6 +30,7 @@ export function ControlsPanel({ connected }: { connected: boolean }) {
             <div className="flex min-w-0 flex-col gap-3">
               {showSize && <SizeSection />}
               {showSampling && <SamplingSection />}
+              {showHires && <HiresSection />}
             </div>
           )}
         </div>

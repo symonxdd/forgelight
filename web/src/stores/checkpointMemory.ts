@@ -104,7 +104,7 @@ export function checkpointChanged(key: string, name: string): void {
   useSettings.getState().update(load);
   useSession.getState().setNotice({
     tone: "info",
-    text: `Size and Sampling set to what you last used with ${name}.`,
+    text: `Size, Sampling and Hires fix set to what you last used with ${name}.`,
     action: { label: "Undo", run: () => useSettings.getState().update(current) },
   });
 }

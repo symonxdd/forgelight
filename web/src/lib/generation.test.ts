@@ -10,7 +10,7 @@ import {
 } from "./infotext";
 import { matchCheckpoint } from "./matchCheckpoint";
 import { matchPreset, normalizeSize } from "./sizes";
-import { DEFAULT_SETTINGS, buildTxt2imgRequest, friendlyError, parseTxt2imgResult } from "./txt2img";
+import { DEFAULT_SETTINGS, buildTxt2imgRequest, friendlyError, hiresSize, parseTxt2imgResult } from "./txt2img";
 import { fitScale, zoomAt } from "./zoom";
 
 describe("buildTxt2imgRequest", () => {
@@ -41,6 +41,29 @@ describe("buildTxt2imgRequest", () => {
 
   it("saves images like the classic page", () => {
     expect(request.save_images).toBe(true);
+  });
+
+  it("leaves hires fix off unless switched on", () => {
+    expect(request.enable_hr).toBe(false);
+    expect(request).not.toHaveProperty("hr_scale");
+  });
+
+  it("sends hires fix with the fields Forge needs spelled out", () => {
+    const hires = buildTxt2imgRequest({ ...DEFAULT_SETTINGS, cfgScale: 6, hiresEnabled: true, hiresScale: 1.5 }, "t");
+    expect(hires).toMatchObject({
+      enable_hr: true,
+      hr_scale: 1.5,
+      hr_upscaler: "R-ESRGAN 4x+",
+      denoising_strength: 0.4,
+      // Without these Forge crashes, or runs the second pass at CFG 1.
+      hr_additional_modules: ["Use same choices"],
+      hr_cfg: 6,
+    });
+  });
+
+  it("computes the hires size like Forge", () => {
+    expect(hiresSize(832, 1216, 1.5)).toEqual({ width: 1248, height: 1824 });
+    expect(hiresSize(830, 1216, 1.25)).toEqual({ width: 1040, height: 1520 });
   });
 });
 
@@ -91,7 +114,29 @@ describe("parseInfotext", () => {
       width: 832,
       height: 1216,
       loras: [],
+      hiresEnabled: false,
     });
+  });
+
+  it("switches hires fix on with the image's values", () => {
+    const settings = settingsFromInfotext(
+      parseInfotext(
+        "cat\nSteps: 20, CFG scale: 5, Seed: 1, Size: 832x1216, Denoising strength: 0.35, Hires CFG Scale: 5, Hires upscale: 1.5, Hires upscaler: R-ESRGAN 4x+ Anime6B",
+      ),
+    );
+    expect(settings).toMatchObject({
+      hiresEnabled: true,
+      hiresScale: 1.5,
+      hiresUpscaler: "R-ESRGAN 4x+ Anime6B",
+      hiresDenoise: 0.35,
+    });
+  });
+
+  it("turns a fixed hires size into the matching upscale", () => {
+    const settings = settingsFromInfotext(
+      parseInfotext("cat\nSteps: 20, Seed: 1, Size: 800x1200, Denoising strength: 0.4, Hires resize: 1200x1800"),
+    );
+    expect(settings).toMatchObject({ hiresEnabled: true, hiresScale: 1.5, hiresDenoise: 0.4 });
   });
 
   it("turns LoRA tags in an image's prompt into LoRA entries", () => {

@@ -3,6 +3,15 @@ import { formatSeconds } from "./format";
 
 type RunningJob = Extract<Job, { status: "running" }>;
 
+/**
+ * True during hires fix's second pass. Forge counts each image as two equal jobs,
+ * first pass then second, so progress runs through both halves for every image.
+ */
+export function isRefining(job: RunningJob): boolean {
+  if (!job.hires) return false;
+  return Math.floor(job.progress * job.batchCount * 2) % 2 === 1;
+}
+
 /** The words shown on the progress bar while a job runs. */
 export function progressLabel(job: RunningJob, now = Date.now()): string {
   if (job.stopping) return "Stopping…";
@@ -12,5 +21,6 @@ export function progressLabel(job: RunningJob, now = Date.now()): string {
     return now - job.startedAt > 8000 ? "Loading checkpoint…" : "Preparing…";
   }
   const percent = `${Math.round(job.progress * 100)}%`;
-  return job.etaSeconds && job.etaSeconds > 0 ? `${percent} · ${formatSeconds(job.etaSeconds)} left` : percent;
+  const done = job.etaSeconds && job.etaSeconds > 0 ? `${percent} · ${formatSeconds(job.etaSeconds)} left` : percent;
+  return job.hires && isRefining(job) ? `Refining at ${job.hires.width} × ${job.hires.height} · ${done}` : done;
 }

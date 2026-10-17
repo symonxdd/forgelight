@@ -45,6 +45,21 @@ export function useSchedulers() {
   });
 }
 
+/** Upscalers for hires fix: Forge's image upscalers, then its latent (in-model) ones. */
+export function useUpscalers() {
+  return useQuery({
+    queryKey: ["upscalers"],
+    queryFn: async ({ signal }) => {
+      const [upscalers, latent] = await Promise.all([
+        forgeGet("/sdapi/v1/upscalers", signal),
+        forgeGet("/sdapi/v1/latent-upscale-modes", signal),
+      ]);
+      return [...upscalers.map((u) => u.name).filter((name) => name !== "None"), ...latent.map((m) => m.name)];
+    },
+    staleTime: Infinity,
+  });
+}
+
 /**
  * Picks the checkpoint Forge uses, the same as choosing it in the classic page.
  * Forge loads the file at the next generation, not now.

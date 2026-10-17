@@ -52,6 +52,24 @@ export function modelFromInfotext(parsed: ParsedInfotext): { name?: string; hash
   return { name: paramValue(parsed, "Model"), hash: paramValue(parsed, "Model hash")?.toLowerCase() };
 }
 
+/**
+ * Hires fix as the image used it: on with its values, or off when the image had none.
+ * A fixed target size ("Hires resize") becomes the matching upscale factor.
+ */
+function hiresFromParsed(parsed: ParsedInfotext, width: number | undefined): Partial<GenerationSettings> {
+  const scale = toNumber(paramValue(parsed, "Hires upscale"));
+  const resizeWidth = toNumber(paramValue(parsed, "Hires resize")?.split("x")[0]);
+  const fromResize = resizeWidth && width ? Math.round((resizeWidth / width) * 100) / 100 : undefined;
+  const hiresScale = scale ?? fromResize;
+  if (hiresScale === undefined) return { hiresEnabled: false };
+  return {
+    hiresEnabled: true,
+    hiresScale,
+    hiresUpscaler: paramValue(parsed, "Hires upscaler"),
+    hiresDenoise: toNumber(paramValue(parsed, "Denoising strength")),
+  };
+}
+
 function toNumber(value: string | undefined): number | undefined {
   if (value === undefined) return undefined;
   const n = Number(value);
@@ -75,6 +93,7 @@ export function settingsFromInfotext(parsed: ParsedInfotext): Partial<Generation
     scheduler: paramValue(parsed, "Schedule type"),
     width: size ? Number(size[1]) : undefined,
     height: size ? Number(size[2]) : undefined,
+    ...hiresFromParsed(parsed, size ? Number(size[1]) : undefined),
   };
   for (const [key, value] of Object.entries(fields)) {
     if (value !== undefined) Object.assign(result, { [key]: value });
