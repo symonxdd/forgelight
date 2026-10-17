@@ -1,6 +1,6 @@
-import { Check, ExternalLink, LoaderCircle, Monitor, Settings } from "lucide-react";
+import { Check, ChevronRight, ExternalLink, LoaderCircle, Monitor, Settings } from "lucide-react";
 import { Popover } from "radix-ui";
-import type { ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { useCreateDesktopShortcut, useSetOpenOnStart, useStartup } from "../api/forgelight";
 import { useOptions, useSetOptions } from "../api/queries";
 import { HELP } from "../lib/help";
@@ -22,6 +22,8 @@ import {
 import { useCheckpointMemory } from "../stores/checkpointMemory";
 import { usePreferences } from "../stores/preferences";
 import { useSettings, type SectionId } from "../stores/settings";
+import { AboutDialog } from "./about/AboutDialog";
+import { Signature } from "./about/Signature";
 import { IconButton } from "./IconButton";
 import { InfoTip } from "./InfoTip";
 import { SelectMenu, type MenuOption } from "./SelectMenu";
@@ -262,58 +264,79 @@ function Startup() {
 }
 
 export function SettingsMenu() {
+  const [open, setOpen] = useState(false);
+  const [aboutOpen, setAboutOpen] = useState(false);
   return (
-    <Popover.Root>
-      <Popover.Trigger asChild>
-        <IconButton label="Settings" tooltip={false}>
-          <Settings className="size-4" aria-hidden />
-        </IconButton>
-      </Popover.Trigger>
-      <Popover.Portal>
-        <Popover.Content
-          // Opening with focus on an info icon would pop its tooltip up uninvited.
-          onOpenAutoFocus={(event) => event.preventDefault()}
-          align="end"
-          sideOffset={8}
-          collisionPadding={12}
-          aria-label="Settings"
-          className="z-40 flex max-h-[var(--radix-popover-content-available-height)] w-80 flex-col overflow-y-auto rounded-lg border border-line bg-surface p-2 text-fg shadow-lg shadow-black/15"
-        >
-          <div className="flex items-center gap-2.5 px-1 pt-0.5 pb-1.5">
-            <img src={`${import.meta.env.BASE_URL}favicon.svg`} alt="" className="size-8 rounded-lg ring-1 ring-line" />
-            <div className="flex flex-col">
-              <span className="text-[14px] font-semibold tracking-tight text-fg-strong">Forgelight</span>
-              <span className="text-[11.5px] text-faint">Version {__APP_VERSION__}</span>
-            </div>
-          </div>
-          <Divider />
-          <Appearance />
-          <Divider />
-          <PanelSections />
-          <Divider />
-          <Checkpoints />
-          <Divider />
-          <Library />
-          <Divider />
-          <LivePreview />
-          <Divider />
-          <Civitai />
-          <Divider />
-          <Startup />
-          <Divider />
-          <div className="flex items-center px-1 py-1">
-            <a
-              href="/"
-              target="_blank"
-              rel="noopener"
-              className="flex items-center gap-1.5 text-[13px] text-muted hover:text-fg-strong"
+    <>
+      <Popover.Root open={open} onOpenChange={setOpen}>
+        <Popover.Trigger asChild>
+          <IconButton label="Settings" tooltip={false}>
+            <Settings className="size-4" aria-hidden />
+          </IconButton>
+        </Popover.Trigger>
+        <Popover.Portal>
+          <Popover.Content
+            // Opening with focus on an info icon would pop its tooltip up uninvited.
+            onOpenAutoFocus={(event) => event.preventDefault()}
+            align="end"
+            sideOffset={8}
+            collisionPadding={12}
+            aria-label="Settings"
+            className="z-40 flex max-h-[var(--radix-popover-content-available-height)] w-80 flex-col overflow-y-auto rounded-lg border border-line bg-surface p-2 text-fg shadow-lg shadow-black/15"
+          >
+            <button
+              type="button"
+              onClick={() => {
+                setOpen(false);
+                setAboutOpen(true);
+              }}
+              aria-label="About Forgelight"
+              className="group flex items-center gap-2.5 rounded-md px-1 pt-0.5 pb-1.5 text-left"
             >
-              Open classic Forge
-              <ExternalLink className="size-3.5" aria-hidden />
-            </a>
-          </div>
-        </Popover.Content>
-      </Popover.Portal>
-    </Popover.Root>
+              <img
+                src={`${import.meta.env.BASE_URL}favicon.svg`}
+                alt=""
+                className="size-8 rounded-lg ring-1 ring-line"
+              />
+              <div className="flex flex-col">
+                <span className="text-[14px] font-semibold tracking-tight text-fg-strong">Forgelight</span>
+                <span className="text-[11.5px] text-faint">Version {__APP_VERSION__} · About</span>
+              </div>
+              <ChevronRight className="ml-auto size-4 text-faint group-hover:text-fg-strong" aria-hidden />
+            </button>
+            <Divider />
+            <Appearance />
+            <Divider />
+            <PanelSections />
+            <Divider />
+            <Checkpoints />
+            <Divider />
+            <Library />
+            <Divider />
+            <LivePreview />
+            <Divider />
+            <Civitai />
+            <Divider />
+            <Startup />
+            <Divider />
+            <div className="flex items-center px-1 py-1">
+              <a
+                href="/"
+                target="_blank"
+                rel="noopener"
+                className="flex items-center gap-1.5 text-[13px] text-muted hover:text-fg-strong"
+              >
+                Open classic Forge
+                <ExternalLink className="size-3.5" aria-hidden />
+              </a>
+            </div>
+            <div className="pt-3 pb-1">
+              <Signature />
+            </div>
+          </Popover.Content>
+        </Popover.Portal>
+      </Popover.Root>
+      <AboutDialog open={aboutOpen} onOpenChange={setAboutOpen} />
+    </>
   );
 }

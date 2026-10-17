@@ -89,6 +89,54 @@
   }
 }
 
+/* The signature's sweep: a 200%-wide gradient tile moved by exactly one tile per loop. */
+.signature {
+  background-image: linear-gradient(90deg, #8b5cf6, #6366f1, #8b5cf6);
+  background-size: 200% 100%;
+  animation: signature-sweep 4s linear infinite;
+}
+@keyframes signature-sweep {
+  from {
+    background-position: 0% 50%;
+  }
+  to {
+    background-position: -200% 50%;
+  }
+}
+
+/* The flame easter egg: each part settles in from slightly low, one after another. */
+@keyframes splash-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+@keyframes splash-rule {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+.splash-step {
+  animation: splash-rise 700ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+.splash-rule {
+  animation: splash-rule 600ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .signature,
+  .splash-step,
+  .splash-rule {
+    animation: none;
+  }
+}
+
 /* Folding sections open and close over a fifth of a second instead of jumping. */
 @keyframes collapsible-open {
   from {
