@@ -5,6 +5,7 @@ import { barFraction, barPulses, progressLabel } from "../../lib/progress";
 import { generate, interrupt, skip } from "../../stores/generation";
 import { useSession } from "../../stores/session";
 import { useSettings } from "../../stores/settings";
+import { CheckpointPicker } from "../CheckpointPicker";
 import { Hint } from "../Hint";
 
 const MAX_BATCH = 8;
@@ -17,7 +18,7 @@ function BatchStepper() {
   return (
     <Tooltip.Root>
       <Tooltip.Trigger asChild>
-        <div role="group" aria-label="Number of images" className="flex items-center rounded-md border border-line">
+        <div role="group" aria-label="Number of images" className="flex h-9 items-center rounded-lg border border-line">
           <button
             type="button"
             className={button}
@@ -56,19 +57,25 @@ function BatchStepper() {
   );
 }
 
+/**
+ * The prompt card's bottom row, laid out like a chat composer: the checkpoint on the left,
+ * the number of images and Generate on the right. While a job runs, its progress fills the
+ * middle and Generate turns into Stop.
+ */
 export function GenerateBar({ connected }: { connected: boolean }) {
   const job = useSession((s) => s.job);
 
   if (job.status === "running") {
     return (
       <div className="flex items-center gap-2">
+        <CheckpointPicker enabled={connected} />
         <div
           role="progressbar"
           aria-valuemin={0}
           aria-valuemax={100}
           aria-valuenow={Math.round(barFraction(job) * 100)}
           aria-label="Generation progress"
-          className="relative flex h-10 flex-1 items-center overflow-hidden rounded-lg bg-raised"
+          className="relative flex h-9 min-w-0 flex-1 items-center overflow-hidden rounded-lg bg-raised"
         >
           <div
             className={`absolute inset-y-0 left-0 bg-fg-strong/12 ${barPulses(job) ? "motion-safe:animate-pulse" : ""}`}
@@ -82,7 +89,7 @@ export function GenerateBar({ connected }: { connected: boolean }) {
               type="button"
               onClick={() => void skip()}
               aria-label="Skip this image (Alt+Enter)"
-              className="grid size-10 place-items-center rounded-lg border border-line text-muted hover:bg-raised hover:text-fg-strong"
+              className="grid size-9 shrink-0 place-items-center rounded-lg border border-line text-muted hover:bg-raised hover:text-fg-strong"
             >
               <SkipForward className="size-4" aria-hidden />
             </button>
@@ -94,7 +101,7 @@ export function GenerateBar({ connected }: { connected: boolean }) {
             onClick={() => void interrupt()}
             disabled={job.stopping}
             aria-label="Stop (Esc)"
-            className="grid size-10 place-items-center rounded-lg border border-line text-muted hover:bg-raised hover:text-fg-strong disabled:opacity-40"
+            className="grid size-9 shrink-0 place-items-center rounded-lg bg-primary text-on-primary hover:bg-primary-hover disabled:opacity-40"
           >
             <Square className="size-3.5 fill-current" aria-hidden />
           </button>
@@ -105,16 +112,19 @@ export function GenerateBar({ connected }: { connected: boolean }) {
 
   return (
     <div className="flex items-center gap-2">
-      <button
-        type="button"
-        onClick={() => void generate()}
-        disabled={!connected}
-        className="flex h-10 flex-1 items-center justify-center gap-2 rounded-lg bg-primary text-[14px] font-medium text-on-primary hover:bg-primary-hover disabled:opacity-40"
-      >
-        Generate
-        <kbd className="font-sans text-[11px] font-normal opacity-60">Ctrl ↵</kbd>
-      </button>
-      <BatchStepper />
+      <CheckpointPicker enabled={connected} />
+      <div className="ml-auto flex shrink-0 items-center gap-2">
+        <BatchStepper />
+        <button
+          type="button"
+          onClick={() => void generate()}
+          disabled={!connected}
+          className="flex h-9 items-center gap-2 rounded-lg bg-primary px-4 text-[14px] font-medium text-on-primary hover:bg-primary-hover disabled:opacity-40"
+        >
+          Generate
+          <kbd className="font-sans text-[11px] font-normal opacity-60">Ctrl ↵</kbd>
+        </button>
+      </div>
     </div>
   );
 }

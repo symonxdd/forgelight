@@ -5,6 +5,7 @@ import { useModels, useRefreshCheckpoints, type ModelEntry } from "../api/forgel
 import { useCheckpoints, useCurrentCheckpoint, useSetCheckpoint } from "../api/queries";
 import { HELP } from "../lib/help";
 import { baseModelLabel, displayName, tidyName } from "../lib/modelNames";
+import { usePreferences } from "../stores/preferences";
 import { useSession } from "../stores/session";
 import { Hint } from "./Hint";
 import { CivitaiLink } from "./CivitaiLink";
@@ -43,7 +44,8 @@ function useRows(enabled: boolean): Row[] {
 }
 
 /**
- * Chooses the checkpoint Forge uses, like the dropdown in the classic page.
+ * Chooses the checkpoint Forge uses, like the dropdown in the classic page. Sits in the
+ * prompt card's bottom row, where the model is chosen in most image and chat tools.
  * Forge loads the new file at the next generation, which then takes longer.
  */
 export function CheckpointPicker({ enabled }: { enabled: boolean }) {
@@ -53,6 +55,8 @@ export function CheckpointPicker({ enabled }: { enabled: boolean }) {
   const setCheckpoint = useSetCheckpoint();
   const refresh = useRefreshCheckpoints();
   const running = useSession((s) => s.job.status === "running");
+  // The list opens away from the image, toward the side with room.
+  const side = usePreferences((s) => s.promptPosition) === "below" ? "top" : "bottom";
   if (!enabled) return null;
 
   const current = rows.find((r) => r.title === checkpoint?.title);
@@ -70,7 +74,7 @@ export function CheckpointPicker({ enabled }: { enabled: boolean }) {
           <span className="flex min-w-0" tabIndex={running ? 0 : -1}>
             <Popover.Trigger
               disabled={disabled}
-              className="group flex max-w-[26rem] min-w-0 items-center gap-2 rounded-md border border-line py-1 pr-2 pl-2.5 text-left hover:border-line-strong disabled:opacity-60 disabled:hover:border-line data-[state=open]:border-line-strong"
+              className="group flex h-9 max-w-[22rem] min-w-0 items-center gap-2 rounded-lg border border-line pr-2 pl-2.5 text-left hover:border-line-strong disabled:opacity-60 disabled:hover:border-line data-[state=open]:border-line-strong"
             >
               {setCheckpoint.isPending ? (
                 <LoaderCircle className="size-3.5 shrink-0 animate-spin text-muted" aria-hidden />
@@ -92,6 +96,7 @@ export function CheckpointPicker({ enabled }: { enabled: boolean }) {
           <Popover.Content
             // Opening with focus on an info icon would pop its tooltip up uninvited.
             onOpenAutoFocus={(event) => event.preventDefault()}
+            side={side}
             align="start"
             sideOffset={6}
             collisionPadding={12}
