@@ -3,6 +3,7 @@ import type { ConnectionState } from "../../api/queries";
 import { barFraction, barPulses, isLoading, progressLabel } from "../../lib/progress";
 import { selectedImage, useSession } from "../../stores/session";
 import { useViewer } from "../../stores/viewer";
+import { ProgressText } from "../ProgressText";
 import { ImageStage } from "./ImageStage";
 import { InfoDrawer } from "./InfoDrawer";
 import { ViewerToolbar } from "./ViewerToolbar";
@@ -56,7 +57,9 @@ export function Viewer({ connection }: { connection: ConnectionState }) {
       <div className="grid h-full place-items-center">
         <div className="flex flex-col items-center gap-3 text-muted">
           <LoaderCircle className="size-6 animate-spin text-faint" aria-hidden />
-          <p className="text-[13px]">{progressLabel(job)}</p>
+          <p className="text-[13px]">
+            <ProgressText label={progressLabel(job)} />
+          </p>
           {isLoading(job) && (
             <div className="h-1 w-56 overflow-hidden rounded-full bg-raised" aria-hidden>
               <div

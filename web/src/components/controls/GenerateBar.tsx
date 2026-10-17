@@ -6,6 +6,7 @@ import { generate, interrupt, skip } from "../../stores/generation";
 import { useSession } from "../../stores/session";
 import { useSettings } from "../../stores/settings";
 import { CheckpointPicker } from "../CheckpointPicker";
+import { ProgressText } from "../ProgressText";
 import { Hint } from "../Hint";
 
 const MAX_BATCH = 8;
@@ -81,7 +82,9 @@ export function GenerateBar({ connected }: { connected: boolean }) {
             className={`absolute inset-y-0 left-0 bg-fg-strong/12 ${barPulses(job) ? "motion-safe:animate-pulse" : ""}`}
             style={{ width: `${barFraction(job) * 100}%` }}
           />
-          <span className="relative truncate px-3.5 text-[13px] text-fg-strong tabular-nums">{progressLabel(job)}</span>
+          <span className="relative truncate px-3.5 text-[13px] text-fg-strong tabular-nums">
+            <ProgressText label={progressLabel(job)} />
+          </span>
         </div>
         {job.batchCount > 1 && (
           <Hint label={"Skip this image (Alt+Enter)"}>

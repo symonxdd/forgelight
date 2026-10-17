@@ -61,6 +61,8 @@ export const HELP = {
  * how to say it, spelled with everyday words rather than phonetic symbols.
  */
 export const HELP_NOTES = {
+  checkpoint:
+    "Why the name: while a model is trained, its progress is saved at regular points, much like save points in a game. Each saved file is a checkpoint, a snapshot of everything the model has learned up to that moment. The file picked here is one of those snapshots.",
   sampling:
     "Why the name: one prompt could lead to countless different images. Each generation draws just one of them, and drawing one example out of many possible ones is what statistics calls taking a sample.",
   sampler:
