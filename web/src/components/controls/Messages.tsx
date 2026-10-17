@@ -1,7 +1,7 @@
 import { X } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { dismissError } from "../../stores/generation";
-import { useSession } from "../../stores/session";
+import { useSession, type Notice } from "../../stores/session";
 
 const NOTICE_MS = 6000;
 
@@ -56,17 +56,24 @@ export function Messages() {
   const job = useSession((s) => s.job);
   const notice = useSession((s) => s.notice);
   const setNotice = useSession((s) => s.setNotice);
+  // The notice under the pointer; a new notice is never paused by an old hover.
+  const [hovered, setHovered] = useState<Notice | null>(null);
 
-  // Short confirmations fade away by themselves; warnings stay until dismissed.
+  // Short confirmations fade away by themselves, but not while pointed at, so there is time
+  // to read them or click Undo. Warnings stay until dismissed.
   useEffect(() => {
-    if (notice?.tone !== "info") return;
+    if (notice?.tone !== "info" || hovered === notice) return;
     const timer = setTimeout(() => setNotice(null), NOTICE_MS);
     return () => clearTimeout(timer);
-  }, [notice, setNotice]);
+  }, [notice, setNotice, hovered]);
 
   if (job.status === "error") return <Message tone="error" text={job.message} onDismiss={dismissError} />;
   if (notice) {
-    return <Message tone={notice.tone} text={notice.text} action={notice.action} onDismiss={() => setNotice(null)} />;
+    return (
+      <div onPointerEnter={() => setHovered(notice)} onPointerLeave={() => setHovered(null)}>
+        <Message tone={notice.tone} text={notice.text} action={notice.action} onDismiss={() => setNotice(null)} />
+      </div>
+    );
   }
   return null;
 }
