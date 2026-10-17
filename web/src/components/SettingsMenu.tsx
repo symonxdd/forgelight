@@ -1,6 +1,6 @@
-import { Check, ChevronDown, ExternalLink, LoaderCircle, Monitor, Settings } from "lucide-react";
-import { Popover, Select } from "radix-ui";
-import type { CSSProperties, ReactNode } from "react";
+import { Check, ExternalLink, LoaderCircle, Monitor, Settings } from "lucide-react";
+import { Popover } from "radix-ui";
+import type { ReactNode } from "react";
 import { useCreateDesktopShortcut, useSetOpenOnStart, useStartup } from "../api/forgelight";
 import { useOptions, useSetOptions } from "../api/queries";
 import { HELP } from "../lib/help";
@@ -24,13 +24,8 @@ import { usePreferences } from "../stores/preferences";
 import { useSettings, type SectionId } from "../stores/settings";
 import { IconButton } from "./IconButton";
 import { InfoTip } from "./InfoTip";
+import { SelectMenu, type MenuOption } from "./SelectMenu";
 import { Toggle } from "./Toggle";
-
-interface Option {
-  value: string;
-  label: string;
-  style?: CSSProperties;
-}
 
 /** A compact dropdown for the settings menu. */
 function Dropdown({
@@ -41,49 +36,22 @@ function Dropdown({
   disabled,
 }: {
   value: string;
-  options: readonly Option[];
+  options: readonly MenuOption[];
   onChange: (value: string) => void;
   labelledBy: string;
   disabled?: boolean;
 }) {
-  const current = options.find((o) => o.value === value);
   return (
-    <Select.Root value={value} onValueChange={onChange} disabled={disabled}>
-      <Select.Trigger
-        aria-labelledby={labelledBy}
-        className="flex h-8 w-36 shrink-0 items-center justify-between gap-2 rounded-md border border-line bg-surface px-2.5 text-left text-[13px] text-fg-strong hover:border-line-strong disabled:opacity-50"
-        style={current?.style}
-      >
-        <Select.Value placeholder="Custom" />
-        <Select.Icon>
-          <ChevronDown className="size-3.5 text-muted" aria-hidden />
-        </Select.Icon>
-      </Select.Trigger>
-      <Select.Portal>
-        <Select.Content
-          position="popper"
-          sideOffset={4}
-          align="end"
-          className="z-50 min-w-[var(--radix-select-trigger-width)] overflow-hidden rounded-lg border border-line bg-surface p-1 text-fg shadow-lg shadow-black/15"
-        >
-          <Select.Viewport>
-            {options.map((option) => (
-              <Select.Item
-                key={option.value}
-                value={option.value}
-                style={option.style}
-                className="flex cursor-default items-center justify-between gap-3 rounded-md px-2.5 py-1.5 text-[13px] outline-none data-[highlighted]:bg-raised data-[state=checked]:text-fg-strong"
-              >
-                <Select.ItemText>{option.label}</Select.ItemText>
-                <Select.ItemIndicator>
-                  <Check className="size-3.5 text-accent" aria-hidden />
-                </Select.ItemIndicator>
-              </Select.Item>
-            ))}
-          </Select.Viewport>
-        </Select.Content>
-      </Select.Portal>
-    </Select.Root>
+    <SelectMenu
+      value={value}
+      options={options}
+      onChange={onChange}
+      disabled={disabled}
+      placeholder="Custom"
+      align="end"
+      aria-labelledby={labelledBy}
+      className="h-8 w-36 shrink-0 rounded-md border border-line bg-surface px-2.5 text-[13px] text-fg-strong hover:border-line-strong disabled:opacity-50"
+    />
   );
 }
 

@@ -1,5 +1,4 @@
-import { Check, ChevronDown, ImageIcon, Layers, LoaderCircle, Search, Trash2, X } from "lucide-react";
-import { Select } from "radix-ui";
+import { Check, ImageIcon, Layers, LoaderCircle, Search, Trash2, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useModels } from "../../api/forgelight";
 import { useLibrary } from "../../api/library";
@@ -8,6 +7,7 @@ import { displayName, tidyName } from "../../lib/modelNames";
 import { looksNsfw } from "../../lib/nsfw";
 import { usePreferences } from "../../stores/preferences";
 import { Hint } from "../Hint";
+import { SelectMenu } from "../SelectMenu";
 import { DeleteDialog } from "./DeleteDialog";
 import { LibraryViewer } from "./LibraryViewer";
 
@@ -64,45 +64,17 @@ function ModelFilter({
 }) {
   const label = useModelLabels();
   const options = [
-    { value: ALL, text: "All checkpoints" },
-    ...models.map((m) => ({ value: m.name, text: label(m.name) })),
+    { value: ALL, label: "All checkpoints" },
+    ...models.map((m) => ({ value: m.name, label: label(m.name) })),
   ];
   return (
-    <Select.Root value={value || ALL} onValueChange={(v) => onChange(v === ALL ? "" : v)}>
-      <Select.Trigger
-        aria-label="Checkpoint"
-        className="flex h-8 max-w-64 min-w-40 items-center justify-between gap-2 rounded-md border border-line bg-surface px-2.5 text-left text-[13px] text-fg-strong hover:border-line-strong"
-      >
-        <span className="truncate">
-          <Select.Value />
-        </span>
-        <Select.Icon>
-          <ChevronDown className="size-3.5 shrink-0 text-muted" aria-hidden />
-        </Select.Icon>
-      </Select.Trigger>
-      <Select.Portal>
-        <Select.Content
-          position="popper"
-          sideOffset={4}
-          className="z-50 max-h-[min(24rem,var(--radix-select-content-available-height))] min-w-[var(--radix-select-trigger-width)] overflow-hidden rounded-lg border border-line bg-surface p-1 text-fg shadow-lg shadow-black/10"
-        >
-          <Select.Viewport>
-            {options.map((option) => (
-              <Select.Item
-                key={option.value}
-                value={option.value}
-                className="flex cursor-default items-center justify-between gap-3 rounded-md px-2.5 py-1.5 text-[13px] outline-none data-[highlighted]:bg-raised data-[state=checked]:text-fg-strong"
-              >
-                <Select.ItemText>{option.text}</Select.ItemText>
-                <Select.ItemIndicator>
-                  <Check className="size-3.5 text-accent" aria-hidden />
-                </Select.ItemIndicator>
-              </Select.Item>
-            ))}
-          </Select.Viewport>
-        </Select.Content>
-      </Select.Portal>
-    </Select.Root>
+    <SelectMenu
+      value={value || ALL}
+      options={options}
+      onChange={(v) => onChange(v === ALL ? "" : v)}
+      aria-label="Checkpoint"
+      className="h-8 max-w-64 min-w-40 rounded-md border border-line bg-surface px-2.5 text-[13px] text-fg-strong hover:border-line-strong"
+    />
   );
 }
 
@@ -296,7 +268,8 @@ export function Library() {
   useEffect(() => {
     if (selectedCount === 0 || openId) return;
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key !== "Escape" || document.querySelector("[role='alertdialog'], [role='listbox']")) return;
+      if (event.key !== "Escape" || document.querySelector("[role='alertdialog'], [role='listbox'], [role='menu']"))
+        return;
       event.preventDefault();
       clearSelection();
     };

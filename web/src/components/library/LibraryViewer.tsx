@@ -99,7 +99,7 @@ export function LibraryViewer({ items, index, onIndex, onClose, onNearEnd, onDel
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.ctrlKey || event.metaKey || event.altKey || isTyping(event.target)) return;
       // An open dropdown or the delete dialog handles its own keys.
-      if (document.querySelector("[role='listbox'], [role='alertdialog']")) return;
+      if (document.querySelector("[role='listbox'], [role='menu'], [role='alertdialog']")) return;
       const viewer = useViewer.getState();
       const actions: Record<string, () => void> = {
         Escape: () => (viewer.infoOpen ? viewer.setInfoOpen(false) : onClose()),
