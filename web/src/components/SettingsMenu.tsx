@@ -19,6 +19,7 @@ import {
   parseFont,
   parseLibraryBlur,
 } from "../lib/preferences";
+import { useCheckpointMemory } from "../stores/checkpointMemory";
 import { usePreferences } from "../stores/preferences";
 import { useSettings, type SectionId } from "../stores/settings";
 import { IconButton } from "./IconButton";
@@ -202,6 +203,19 @@ function PanelSections() {
   );
 }
 
+function Checkpoints() {
+  const enabled = useCheckpointMemory((s) => s.enabled);
+  const setEnabled = useCheckpointMemory((s) => s.setEnabled);
+  return (
+    <>
+      <Heading>Checkpoints</Heading>
+      <Row id="checkpoint-memory-label" label="Remember settings per checkpoint" help={HELP.checkpointMemory}>
+        <Toggle checked={enabled} onChange={setEnabled} labelledBy="checkpoint-memory-label" />
+      </Row>
+    </>
+  );
+}
+
 function Library() {
   const blur = usePreferences((s) => s.libraryBlur);
   const setBlur = usePreferences((s) => s.setLibraryBlur);
@@ -330,6 +344,8 @@ export function SettingsMenu() {
           <Appearance />
           <Divider />
           <PanelSections />
+          <Divider />
+          <Checkpoints />
           <Divider />
           <Library />
           <Divider />

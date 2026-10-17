@@ -28,6 +28,8 @@ export const HELP = {
   batchCount: "How many images to make in a row. Each one uses the next seed, so every image is different.",
   livePreview:
     "How often the quick, low-detail look at the image is refreshed while it is being made. Every step shows the image sharpening, at no noticeable cost. This is Forge's own setting, so the classic page uses it too.",
+  checkpointMemory:
+    "Each checkpoint keeps its own Size and Sampling settings. Switching to a checkpoint brings back what you last used with it. Prompt and LoRAs stay as they are.",
   libraryBlur:
     "Blurs previews in the Library until you point at them. Likely NSFW is a guess from words in each image's prompt, so it can miss some.",
   panelSections:
