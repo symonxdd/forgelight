@@ -24,3 +24,6 @@ data/
 
 # Local design explorations (icon concepts and notes)
 design/
+
+# Research and Stage 0 notes from before development (local only)
+forge-redesign/
