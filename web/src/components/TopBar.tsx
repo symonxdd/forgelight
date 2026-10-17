@@ -1,5 +1,7 @@
 import type { ConnectionState } from "../api/queries";
 import { useView, type View } from "../stores/view";
+import { useState } from "react";
+import { FlameCard } from "./about/FlameCard";
 import { LogoMark } from "./Logo";
 import { ConnectionStatus } from "./ConnectionStatus";
 import { SettingsMenu } from "./SettingsMenu";
@@ -32,13 +34,31 @@ function ViewSwitch() {
   );
 }
 
+/** The logo, which plays the flame card from About when clicked. */
+function FlameButton() {
+  const [open, setOpen] = useState(false);
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        aria-label="Light the flame"
+        className="-m-1 grid place-items-center rounded-md p-1 text-accent hover:brightness-125"
+      >
+        <LogoMark className="size-5" />
+      </button>
+      {open && <FlameCard onDone={() => setOpen(false)} />}
+    </>
+  );
+}
+
 /** Three columns, so the screen switch sits exactly in the middle whatever the sides hold. */
 export function TopBar({ connection }: { connection: ConnectionState }) {
   return (
     <header className="grid h-12 shrink-0 grid-cols-[1fr_auto_1fr] items-center gap-4 border-b border-line bg-canvas px-4">
       <div className="flex min-w-0 items-center gap-4">
         <span className="flex shrink-0 items-center gap-2">
-          <LogoMark className="size-5 text-accent" />
+          <FlameButton />
           <span className="text-[15px] font-semibold tracking-tight text-fg-strong">Forgelight</span>
         </span>
       </div>
