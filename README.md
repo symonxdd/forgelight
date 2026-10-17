@@ -42,11 +42,9 @@ And more.
 
 ## Installation
 
-Coming soon: the repository isn't public yet.
-
 1. **From Forge (easiest):** open **Extensions → Install from URL**, paste `https://github.com/symonxdd/forgelight` and click **Install**.
-2. **With Git:** inside `webui\extensions`, run `git clone https://github.com/symonxdd/forgelight`.
-3. **As a ZIP:** unzip the latest release into `webui\extensions\forgelight`.
+2. **With Git:** inside `<Forge installation>\webui\extensions`, run `git clone https://github.com/symonxdd/forgelight`.
+3. **As a ZIP:** on this page, click **Code → Download ZIP** and unzip it into `<Forge installation>\webui\extensions`.
 
 Then restart Forge: close its black console window and start Forge again the usual way. Forgelight is now at `http://127.0.0.1:7860/forgelight`.
 
