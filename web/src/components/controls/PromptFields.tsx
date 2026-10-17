@@ -1,4 +1,4 @@
-import { ArrowDownToLine, ArrowUpToLine, ChevronRight, Eraser, PencilLine, X } from "lucide-react";
+import { ArrowDownToLine, ArrowUpToLine, ChevronRight, Eraser, X } from "lucide-react";
 import { Collapsible } from "radix-ui";
 import { useState } from "react";
 import { HELP } from "../../lib/help";
@@ -112,7 +112,6 @@ export function PromptFields({ connected }: { connected: boolean }) {
       className="flex flex-col gap-3 rounded-xl border border-accent/45 bg-surface p-4 shadow-[0_0_0_0_transparent] focus-within:border-accent/80 focus-within:shadow-[0_0_0_3px_color-mix(in_srgb,var(--accent)_18%,transparent)] motion-safe:transition-[border-color,box-shadow] motion-safe:duration-200"
     >
       <div className="flex h-6 items-center gap-1.5">
-        <PencilLine className="size-4 shrink-0 text-accent" aria-hidden />
         <label htmlFor="prompt" className="text-[13px] font-medium text-fg-strong">
           Prompt
         </label>
