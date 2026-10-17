@@ -19,6 +19,7 @@ export const FONT_KEY = "forgelight.font";
 export const OLED_KEY = "forgelight.oled";
 export const CIVITAI_SITE_KEY = "forgelight.civitaiSite";
 export const LIBRARY_BLUR_KEY = "forgelight.libraryBlur";
+export const LIBRARY_STACKS_KEY = "forgelight.libraryStacks";
 
 /** Which Library previews are blurred until pointed at. */
 export const LIBRARY_BLUR_CHOICES = [

@@ -12,9 +12,19 @@ export interface LibraryItem {
   infotext: string;
 }
 
-export interface DayGroup {
+export interface DayGroup<T> {
   key: string;
   label: string;
+  items: T[];
+}
+
+/** Images made together: one batch, or the same settings generated again soon after. */
+export interface Batch {
+  /** The id of its newest image. */
+  key: string;
+  /** Its newest image's date, for sorting it into a day. */
+  mtime: number;
+  /** Newest first. */
   items: LibraryItem[];
 }
 
@@ -39,8 +49,8 @@ export function dayLabel(date: Date, now: Date): string {
 }
 
 /** Splits a newest-first list into days, keeping the order. */
-export function groupByDay(items: readonly LibraryItem[], now: Date = new Date()): DayGroup[] {
-  const groups: DayGroup[] = [];
+export function groupByDay<T extends { mtime: number }>(items: readonly T[], now: Date = new Date()): DayGroup<T>[] {
+  const groups: DayGroup<T>[] = [];
   for (const item of items) {
     const date = new Date(item.mtime * 1000);
     const key = dayKey(date);
@@ -71,4 +81,41 @@ export function seedOf(item: LibraryItem): number {
 /** The file name without its folders: "00012-1234.png". */
 export function fileName(item: LibraryItem): string {
   return item.id.slice(item.id.lastIndexOf("/") + 1);
+}
+
+// Settings that differ inside one batch: each image gets the next seed and its place.
+const PER_IMAGE = new Set(["Seed", "Batch pos"]);
+// Same settings again after a longer break count as a new session.
+const BATCH_GAP_SECONDS = 15 * 60;
+
+/** What images of one batch share: everything in their settings but the seed. */
+export function batchKey(item: LibraryItem): string | null {
+  if (!item.infotext) return null;
+  const parsed = parseInfotext(item.infotext);
+  const params = parsed.params.filter(([label]) => !PER_IMAGE.has(label));
+  return JSON.stringify([parsed.prompt, parsed.negativePrompt, params]);
+}
+
+/**
+ * Groups a newest-first list into batches: neighbors with the same settings apart
+ * from the seed, saved within a few minutes of each other.
+ */
+export function groupBatches(items: readonly LibraryItem[]): Batch[] {
+  const batches: Batch[] = [];
+  let lastKey: string | null = null;
+  for (const item of items) {
+    const key = batchKey(item);
+    const last = batches[batches.length - 1];
+    const previous = last?.items[last.items.length - 1];
+    const close = previous !== undefined && Math.abs(previous.mtime - item.mtime) <= BATCH_GAP_SECONDS;
+    if (last && key !== null && key === lastKey && close) last.items.push(item);
+    else batches.push({ key: item.id, mtime: item.mtime, items: [item] });
+    lastKey = key;
+  }
+  return batches;
+}
+
+/** Every image on its own, for when batches aren't stacked. */
+export function singles(items: readonly LibraryItem[]): Batch[] {
+  return items.map((item) => ({ key: item.id, mtime: item.mtime, items: [item] }));
 }

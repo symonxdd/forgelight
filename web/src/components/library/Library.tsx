@@ -1,12 +1,13 @@
-import { Check, ChevronDown, ImageIcon, LoaderCircle, Search, Trash2, X } from "lucide-react";
+import { Check, ChevronDown, ImageIcon, Layers, LoaderCircle, Search, Trash2, X } from "lucide-react";
 import { Select } from "radix-ui";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useModels } from "../../api/forgelight";
 import { useLibrary } from "../../api/library";
-import { fileName, groupByDay, thumbUrl, type LibraryItem } from "../../lib/library";
+import { fileName, groupBatches, groupByDay, singles, thumbUrl, type Batch } from "../../lib/library";
 import { displayName, tidyName } from "../../lib/modelNames";
 import { looksNsfw } from "../../lib/nsfw";
 import { usePreferences } from "../../stores/preferences";
+import { Hint } from "../Hint";
 import { DeleteDialog } from "./DeleteDialog";
 import { LibraryViewer } from "./LibraryViewer";
 
@@ -121,7 +122,8 @@ function LoadMore({ onVisible, watch }: { onVisible: () => void; watch: number }
 }
 
 interface TileProps {
-  item: LibraryItem;
+  /** One image, or a stacked batch shown by its newest image. */
+  batch: Batch;
   selected: boolean;
   /** Once anything is selected, a click selects instead of opening. */
   selecting: boolean;
@@ -130,7 +132,10 @@ interface TileProps {
   onToggle: (range: boolean) => void;
 }
 
-function Tile({ item, selected, selecting, onOpen, onToggle }: TileProps) {
+function Tile({ batch, selected, selecting, onOpen, onToggle }: TileProps) {
+  const item = batch.items[0]!;
+  const count = batch.items.length;
+  const name = count > 1 ? `batch of ${count} images` : fileName(item);
   const blurMode = usePreferences((s) => s.libraryBlur);
   const blurred = useMemo(
     () => blurMode === "all" || (blurMode === "nsfw" && looksNsfw(item.infotext)),
@@ -142,9 +147,9 @@ function Tile({ item, selected, selecting, onOpen, onToggle }: TileProps) {
         type="button"
         onClick={(e) => (selecting ? onToggle(e.shiftKey) : onOpen())}
         data-library-id={item.id}
-        aria-label={`Open ${fileName(item)}`}
+        aria-label={`Open ${name}`}
         className={`block size-full overflow-hidden rounded-lg outline-offset-2 focus-visible:outline-2 focus-visible:outline-accent ${
-          selected ? "bg-accent/25 ring-2 ring-accent" : "bg-raised"
+          selected ? "bg-accent/25 ring-2 ring-accent ring-inset" : "bg-raised"
         }`}
       >
         <img
@@ -161,12 +166,18 @@ function Tile({ item, selected, selecting, onOpen, onToggle }: TileProps) {
                 : "group-hover:brightness-110"
           }`}
         />
+        {count > 1 && (
+          <span className="absolute right-2 bottom-2 flex items-center gap-1 rounded-md bg-black/60 px-1.5 py-0.5 text-[11.5px] font-medium text-white tabular-nums backdrop-blur-sm">
+            <Layers className="size-3" aria-hidden />
+            {count}
+          </span>
+        )}
       </button>
       <button
         type="button"
         role="checkbox"
         aria-checked={selected}
-        aria-label={`Select ${fileName(item)}`}
+        aria-label={`Select ${name}`}
         onClick={(e) => onToggle(e.shiftKey)}
         className={`absolute top-2 left-2 grid size-5 place-items-center rounded-md border-[1.5px] shadow-sm motion-safe:transition-opacity motion-safe:duration-150 ${
           selected
@@ -232,7 +243,12 @@ export function Library() {
       .flatMap((page) => page.items)
       .filter((item) => !removed.has(item.id) && !seen.has(item.id) && seen.add(item.id));
   }, [pages, removed]);
-  const groups = useMemo(() => groupByDay(items), [items]);
+  const stacks = usePreferences((s) => s.libraryStacks);
+  const setStacks = usePreferences((s) => s.setLibraryStacks);
+  // Batches are always known, for the image view's strip; the grid stacks them only if wanted.
+  const batches = useMemo(() => groupBatches(items), [items]);
+  const batchOf = useMemo(() => new Map(batches.flatMap((b) => b.items.map((i) => [i.id, b] as const))), [batches]);
+  const groups = useMemo(() => groupByDay(stacks ? batches : singles(items)), [stacks, batches, items]);
   const latest = pages[pages.length - 1];
   const total = latest?.total ?? 0;
   const models = pages[0]?.models ?? [];
@@ -247,21 +263,25 @@ export function Library() {
     const id = openId;
     setOpenId(null);
     // Back in the grid, keep the place of the image last shown.
+    const tileId = (stacks && id && batchOf.get(id)?.key) || id;
     requestAnimationFrame(() =>
-      document.querySelector<HTMLElement>(`[data-library-id="${CSS.escape(id ?? "")}"]`)?.focus(),
+      document.querySelector<HTMLElement>(`[data-library-id="${CSS.escape(tileId ?? "")}"]`)?.focus(),
     );
-  }, [openId]);
+  }, [openId, stacks, batchOf]);
 
-  const toggle = (id: string, range: boolean) => {
+  /** Selects or unselects a tile's images: one image, or a whole stacked batch. */
+  const toggle = (ids: string[], range: boolean) => {
     const next = new Set(selected);
+    const id = ids[0]!;
     const from = anchor ? items.findIndex((item) => item.id === anchor) : -1;
     const to = items.findIndex((item) => item.id === id);
     if (range && from !== -1 && to !== -1) {
       for (const item of items.slice(Math.min(from, to), Math.max(from, to) + 1)) next.add(item.id);
-    } else if (next.has(id)) {
-      next.delete(id);
+      for (const each of ids) next.add(each);
+    } else if (ids.every((each) => next.has(each))) {
+      for (const each of ids) next.delete(each);
     } else {
-      next.add(id);
+      for (const each of ids) next.add(each);
     }
     setSelected(next);
     setAnchor(id);
@@ -344,14 +364,19 @@ export function Library() {
               </span>
             </h2>
             <div className="grid grid-cols-[repeat(auto-fill,minmax(10rem,1fr))] gap-2">
-              {group.items.map((item) => (
+              {group.items.map((batch) => (
                 <Tile
-                  key={item.id}
-                  item={item}
-                  selected={selected.has(item.id)}
+                  key={batch.key}
+                  batch={batch}
+                  selected={batch.items.every((item) => selected.has(item.id))}
                   selecting={selectedCount > 0}
-                  onOpen={() => setOpenId(item.id)}
-                  onToggle={(range) => toggle(item.id, range)}
+                  onOpen={() => setOpenId(batch.key)}
+                  onToggle={(range) =>
+                    toggle(
+                      batch.items.map((item) => item.id),
+                      range,
+                    )
+                  }
                 />
               ))}
             </div>
@@ -368,6 +393,21 @@ export function Library() {
       <div className="flex flex-wrap items-center gap-2 border-b border-line px-4 py-3">
         <SearchBox value={input} onChange={changeInput} />
         <ModelFilter value={model} models={models} onChange={changeModel} />
+        <Hint label={stacks ? "Show every image on its own" : "Stack images made together"}>
+          <button
+            type="button"
+            onClick={() => setStacks(!stacks)}
+            aria-pressed={stacks}
+            className={`flex h-8 items-center gap-1.5 rounded-md border px-2.5 text-[13px] ${
+              stacks
+                ? "border-line-strong bg-raised text-fg-strong"
+                : "border-line text-muted hover:border-line-strong hover:text-fg-strong"
+            }`}
+          >
+            <Layers className="size-3.5" aria-hidden />
+            Stacks
+          </button>
+        </Hint>
         {selectedCount > 0 ? (
           <div className="ml-auto flex items-center gap-1.5">
             <span className="mr-1 text-[13px] text-fg-strong tabular-nums">
@@ -406,6 +446,7 @@ export function Library() {
           onClose={close}
           onNearEnd={loadMore}
           onDelete={deleteOpen}
+          batch={batchOf.get(items[openIndex]!.id)?.items ?? []}
         />
       )}
       <DeleteDialog ids={pendingDelete?.ids ?? null} onClose={() => setPendingDelete(null)} onDeleted={onDeleted} />

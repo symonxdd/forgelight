@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { dayKey, dayLabel, fileName, groupByDay, imageUrl, seedOf, type LibraryItem } from "./library";
+import { dayKey, dayLabel, fileName, groupBatches, groupByDay, imageUrl, seedOf, type LibraryItem } from "./library";
 
 function item(id: string, date: Date, infotext = ""): LibraryItem {
   return { id, width: 832, height: 1216, mtime: date.getTime() / 1000, bytes: 1, infotext };
@@ -49,5 +49,32 @@ describe("library items", () => {
     const image = item("txt2img/2026-10-16/00001 a&b.png", new Date(1000));
     expect(imageUrl(image)).toBe("/forgelight/api/library/image?id=txt2img%2F2026-10-16%2F00001%20a%26b.png&v=1");
     expect(fileName(image)).toBe("00001 a&b.png");
+  });
+});
+
+describe("groupBatches", () => {
+  const at = (minutes: number) => new Date(2026, 9, 17, 12, minutes);
+  const settings = (seed: number, prompt = "a cat") => `${prompt}
+Steps: 25, Seed: ${seed}, Size: 832x1216`;
+
+  it("stacks neighbors whose settings differ only in the seed", () => {
+    const batches = groupBatches([
+      item("c", at(30), settings(3)),
+      item("b", at(29), settings(2)),
+      item("a", at(28), settings(1)),
+      item("x", at(20), settings(9, "a dog")),
+    ]);
+    expect(batches.map((b) => b.items.map((i) => i.id))).toEqual([["c", "b", "a"], ["x"]]);
+    expect(batches[0]?.key).toBe("c");
+  });
+
+  it("splits the same settings after a long break, and never groups images without settings", () => {
+    const batches = groupBatches([
+      item("b", at(50), settings(2)),
+      item("a", at(10), settings(1)),
+      item("n2", at(9)),
+      item("n1", at(9)),
+    ]);
+    expect(batches.map((b) => b.items.length)).toEqual([1, 1, 1, 1]);
   });
 });

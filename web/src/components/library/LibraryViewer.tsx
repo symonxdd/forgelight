@@ -1,7 +1,7 @@
 import { ArrowLeft, ChevronLeft, ChevronRight, FolderOpen, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useRevealImage } from "../../api/library";
-import { imageUrl, seedOf, type LibraryItem } from "../../lib/library";
+import { imageUrl, seedOf, thumbUrl, type LibraryItem } from "../../lib/library";
 import type { SessionImage } from "../../stores/session";
 import { useView } from "../../stores/view";
 import { useViewer } from "../../stores/viewer";
@@ -53,10 +53,12 @@ interface LibraryViewerProps {
   /** Called near the end of what's loaded, so stepping on never runs dry. */
   onNearEnd: () => void;
   onDelete: () => void;
+  /** The images made together with this one, newest first; a strip shows them when there are several. */
+  batch: LibraryItem[];
 }
 
 /** One Library image over the grid, with the same zoom, info and settings reuse as the Generate screen. */
-export function LibraryViewer({ items, index, onIndex, onClose, onNearEnd, onDelete }: LibraryViewerProps) {
+export function LibraryViewer({ items, index, onIndex, onClose, onNearEnd, onDelete, batch }: LibraryViewerProps) {
   const ref = useRef<HTMLDivElement>(null);
   const item = items[index]!;
   const infoOpen = useViewer((s) => s.infoOpen);
@@ -134,6 +136,7 @@ export function LibraryViewer({ items, index, onIndex, onClose, onNearEnd, onDel
           width={image.width}
           height={image.height}
           alt={`Image from ${when(item)}`}
+          onBackgroundClick={onClose}
         />
         <div className="absolute top-3 left-3 flex items-center gap-2">
           <button
@@ -148,6 +151,31 @@ export function LibraryViewer({ items, index, onIndex, onClose, onNearEnd, onDel
             {when(item)}
           </span>
         </div>
+        {batch.length > 1 && (
+          <div
+            role="group"
+            aria-label="Made together"
+            className="absolute top-3 left-1/2 flex max-w-[min(60%,40rem)] -translate-x-1/2 items-center gap-1.5 overflow-x-auto rounded-lg border border-line bg-surface p-1.5 shadow-lg shadow-black/10"
+          >
+            <span className="shrink-0 px-1.5 text-[12px] whitespace-nowrap text-muted tabular-nums">
+              {batch.findIndex((b) => b.id === item.id) + 1} of {batch.length}
+            </span>
+            {batch.map((other) => (
+              <button
+                key={other.id}
+                type="button"
+                onClick={() => onIndex(items.findIndex((i) => i.id === other.id))}
+                aria-label={`Show image ${batch.indexOf(other) + 1} of ${batch.length}`}
+                aria-current={other.id === item.id}
+                className={`aspect-[3/4] h-12 shrink-0 overflow-hidden rounded-md outline-offset-1 ${
+                  other.id === item.id ? "outline-2 outline-accent" : "opacity-55 hover:opacity-100"
+                }`}
+              >
+                <img src={thumbUrl(other)} alt="" draggable={false} className="size-full object-cover object-top" />
+              </button>
+            ))}
+          </div>
+        )}
         {index > 0 && <StepButton side="left" onClick={() => step(-1)} />}
         {index < items.length - 1 && <StepButton side="right" onClick={() => step(1)} />}
         <ViewerToolbar

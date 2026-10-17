@@ -3,6 +3,7 @@ import {
   CIVITAI_SITE_KEY,
   FONT_KEY,
   LIBRARY_BLUR_KEY,
+  LIBRARY_STACKS_KEY,
   OLED_KEY,
   THEME_KEY,
   parseCivitaiSite,
@@ -29,11 +30,14 @@ interface PreferencesState {
   font: FontId;
   civitaiSite: CivitaiSite;
   libraryBlur: LibraryBlur;
+  /** Library shows each batch as one stacked tile. On until switched off. */
+  libraryStacks: boolean;
   setTheme: (theme: Theme) => void;
   setOled: (oled: boolean) => void;
   setFont: (font: FontId) => void;
   setCivitaiSite: (site: CivitaiSite) => void;
   setLibraryBlur: (blur: LibraryBlur) => void;
+  setLibraryStacks: (stacks: boolean) => void;
 }
 
 const systemDark = window.matchMedia("(prefers-color-scheme: dark)");
@@ -47,6 +51,7 @@ export const usePreferences = create<PreferencesState>((set) => ({
   font: parseFont(readStored(FONT_KEY)),
   civitaiSite: parseCivitaiSite(readStored(CIVITAI_SITE_KEY)),
   libraryBlur: parseLibraryBlur(readStored(LIBRARY_BLUR_KEY)),
+  libraryStacks: readStored(LIBRARY_STACKS_KEY) !== "false",
   setTheme: (theme) => {
     writeStored(THEME_KEY, theme);
     set({ theme, themeChosen: true });
@@ -66,6 +71,10 @@ export const usePreferences = create<PreferencesState>((set) => ({
   setLibraryBlur: (libraryBlur) => {
     writeStored(LIBRARY_BLUR_KEY, libraryBlur);
     set({ libraryBlur });
+  },
+  setLibraryStacks: (libraryStacks) => {
+    writeStored(LIBRARY_STACKS_KEY, String(libraryStacks));
+    set({ libraryStacks });
   },
 }));
 
