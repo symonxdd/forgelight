@@ -50,7 +50,6 @@ function BatchStepper() {
           collisionPadding={12}
           className="z-50 max-w-64 rounded-lg border border-line bg-surface px-3 py-2.5 text-[12.5px] leading-relaxed text-fg shadow-lg shadow-black/15"
         >
-          <span className="font-medium text-fg-strong">Images. </span>
           {HELP.batchCount}
         </Tooltip.Content>
       </Tooltip.Portal>
