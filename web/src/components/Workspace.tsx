@@ -60,8 +60,8 @@ export function Workspace({ connection }: { connection: ConnectionState }) {
   // With a menu open, the panel edges must not react to the pointer passing over them.
   const overlayOpen = useOverlayOpen();
   const showPanel = useHasPanelSections();
-  // v4: the prompt moved to the middle, so the settings column starts narrow again.
-  const layout = useDefaultLayout({ id: "forgelight.workspace.v4", storage, onlySaveAfterUserInteractions: true });
+  // v5: a wider settings column by default.
+  const layout = useDefaultLayout({ id: "forgelight.workspace.v5", storage, onlySaveAfterUserInteractions: true });
 
   return (
     <Group
@@ -74,7 +74,9 @@ export function Workspace({ connection }: { connection: ConnectionState }) {
     >
       {showPanel && (
         <>
-          <Panel id="controls" defaultSize={340} minSize={280} maxSize={560}>
+          {/* A share of the window rather than fixed pixels: about 480 pixels on a large monitor,
+              narrower on a laptop, where the image needs the room. */}
+          <Panel id="controls" defaultSize="23.5" minSize={280} maxSize={560}>
             <ControlsPanel />
           </Panel>
           <ResizeHandle />
