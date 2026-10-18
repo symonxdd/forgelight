@@ -1,4 +1,5 @@
 import { BookA, Search, X } from "lucide-react";
+import { Collapsible } from "radix-ui";
 import type { LucideIcon } from "lucide-react";
 import { CHAPTERS, GLOSSARY_ID } from "../../lib/guide";
 import { useGuide } from "../../stores/guide";
@@ -68,6 +69,7 @@ export function GuideSidebar() {
   const page = useGuide((s) => s.page);
   const searching = useGuide((s) => s.query.trim() !== "");
   const open = useGuide((s) => s.open);
+  const activeTopic = useGuide((s) => s.activeTopic);
 
   return (
     <aside className="flex w-64 shrink-0 flex-col gap-4 overflow-y-auto border-r border-line px-3 py-4">
@@ -76,24 +78,33 @@ export function GuideSidebar() {
         {CHAPTERS.map((chapter) => {
           const active = !searching && chapter.id === page;
           return (
-            <div key={chapter.id}>
+            <Collapsible.Root key={chapter.id} open={active}>
               <PageButton id={chapter.id} title={chapter.title} icon={chapter.icon} active={active} />
-              {active && (
+              {/* Slides open and shut, so switching chapters reads as one list giving way to the next. */}
+              <Collapsible.Content className="collapsible overflow-hidden">
                 <ul className="mt-0.5 mb-1.5 ml-[17px] flex flex-col border-l border-line">
-                  {chapter.topics.map((topic) => (
-                    <li key={topic.id}>
-                      <button
-                        type="button"
-                        onClick={() => open(`${chapter.id}/${topic.id}`)}
-                        className="w-full truncate py-1 pr-2 pl-3.5 text-left text-[12.5px] text-muted hover:text-fg-strong"
-                      >
-                        {topic.title}
-                      </button>
-                    </li>
-                  ))}
+                  {chapter.topics.map((topic) => {
+                    const reading = active && topic.id === activeTopic;
+                    return (
+                      <li key={topic.id}>
+                        <button
+                          type="button"
+                          onClick={() => open(`${chapter.id}/${topic.id}`)}
+                          aria-current={reading ? "location" : undefined}
+                          className={`-ml-px w-full truncate border-l py-1 pr-2 pl-3.5 text-left text-[12.5px] ${
+                            reading
+                              ? "border-accent font-medium text-fg-strong"
+                              : "border-transparent text-muted hover:text-fg-strong"
+                          }`}
+                        >
+                          {topic.title}
+                        </button>
+                      </li>
+                    );
+                  })}
                 </ul>
-              )}
-            </div>
+              </Collapsible.Content>
+            </Collapsible.Root>
           );
         })}
         <div className="my-1.5 h-px bg-line" />

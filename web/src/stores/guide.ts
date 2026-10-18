@@ -17,6 +17,9 @@ interface GuideState {
   focusTopic: string | null;
   /** The topic just scrolled to, outlined for a moment. */
   highlighted: string | null;
+  /** The topic being read, marked in the chapter list and the progress bar. */
+  activeTopic: string | null;
+  setActiveTopic: (topic: string | null) => void;
   /** Opens a page, or a topic given as "chapter/topic". Clears the search. */
   open: (target: string) => void;
   setQuery: (query: string) => void;
@@ -34,15 +37,17 @@ export const useGuide = create<GuideState>((set) => ({
   query: "",
   focusTopic: null,
   highlighted: null,
+  activeTopic: null,
   peek: null,
   open: (target) => {
     const [page, topic] = target.split("/");
     if (!page || !PAGES.has(page)) return;
     // Replaced rather than pushed: Back leaves the guide instead of stepping through chapters.
     window.history.replaceState(null, "", `#guide/${page}`);
-    set({ page, query: "", focusTopic: topic ?? null });
+    set({ page, query: "", focusTopic: topic ?? null, activeTopic: topic ?? null });
   },
   setQuery: (query) => set({ query }),
+  setActiveTopic: (topic) => set({ activeTopic: topic }),
   openPeek: (topic) => set({ peek: topic }),
   closePeek: () => set({ peek: null }),
   markFocused: (topic) => set({ focusTopic: null, highlighted: topic }),
