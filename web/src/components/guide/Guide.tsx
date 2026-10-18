@@ -24,11 +24,21 @@ interface Reading {
   within: number;
 }
 
-function reading(scroller: HTMLElement, chapter: GuideChapter): Reading {
+/**
+ * The reading line starts near the top of the view and glides down to its bottom edge as
+ * the page nears its end. The last topics can never scroll up to a fixed line, so a fixed
+ * line would stall and then jump to the end; this one reaches the end exactly at the bottom.
+ */
+function readingLine(scroller: HTMLElement): number {
   const max = scroller.scrollHeight - scroller.clientHeight;
-  // At the very end, the last topic may never reach the line; it has been read.
-  if (max > 0 && scroller.scrollTop >= max - 2) return { topic: chapter.topics.at(-1)?.id ?? null, within: 1 };
-  const line = scroller.getBoundingClientRect().top + READING_LINE;
+  const progress = max > 0 ? Math.min(1, scroller.scrollTop / max) : 1;
+  const view = scroller.getBoundingClientRect();
+  // Squared, so the line stays near the top for most of the page and moves mostly at the end.
+  return view.top + READING_LINE + (view.height - READING_LINE) * progress * progress;
+}
+
+function reading(scroller: HTMLElement, chapter: GuideChapter): Reading {
+  const line = readingLine(scroller);
   let current: Reading = { topic: chapter.topics[0]?.id ?? null, within: 0 };
   for (const topic of chapter.topics) {
     const card = document.getElementById(`topic-${topic.id}`)?.getBoundingClientRect();
@@ -59,7 +69,7 @@ export function Guide() {
   const markFocused = useGuide((s) => s.markFocused);
   const highlighted = useGuide((s) => s.highlighted);
   const clearHighlight = useGuide((s) => s.clearHighlight);
-  const main = useRef<HTMLElement>(null);
+  const main = useRef<HTMLDivElement>(null);
   // While a jump scrolls, the clicked topic stays marked instead of each one passed on the way.
   const jumping = useRef(false);
   const jumpTimer = useRef(0);
@@ -134,11 +144,12 @@ export function Guide() {
   }, [chapter]);
 
   return (
-    <div className="flex min-h-0 flex-1">
-      <GuideSidebar />
-      <main ref={main} className="min-w-0 flex-1 overflow-y-auto">
-        {/* Wider on large monitors, still an easy line length to read. */}
-        <div className="mx-auto max-w-208 px-8 pt-8 pb-16 2xl:max-w-240">
+    // One scroll area for the whole page, so the wheel works anywhere, with the chapter list
+    // and the text as one centered group: on wide screens the list sits right beside the text.
+    <div ref={main} className="min-h-0 flex-1 overflow-y-auto">
+      <div className="mx-auto flex max-w-272 2xl:max-w-304">
+        <GuideSidebar />
+        <main className="min-w-0 flex-1 px-8 pt-8 pb-16">
           {searching ? (
             <SearchResults query={query} />
           ) : page === GLOSSARY_ID || !chapter ? (
@@ -146,8 +157,8 @@ export function Guide() {
           ) : (
             <ChapterView key={chapter.id} chapter={chapter} highlighted={highlighted} />
           )}
-        </div>
-      </main>
+        </main>
+      </div>
     </div>
   );
 }

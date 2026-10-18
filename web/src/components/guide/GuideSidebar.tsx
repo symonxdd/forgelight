@@ -72,7 +72,7 @@ export function GuideSidebar() {
   const activeTopic = useGuide((s) => s.activeTopic);
 
   return (
-    <aside className="flex w-64 shrink-0 flex-col gap-4 overflow-y-auto border-r border-line px-3 py-4">
+    <aside className="sticky top-0 flex h-[calc(100dvh-3rem)] w-64 shrink-0 flex-col gap-4 self-start overflow-y-auto border-r border-line px-3 py-4">
       <SearchBox />
       <nav aria-label="Guide chapters" className="flex flex-col gap-0.5">
         {CHAPTERS.map((chapter) => {
