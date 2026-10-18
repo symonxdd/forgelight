@@ -1,5 +1,6 @@
 import { Tooltip } from "radix-ui";
 import type { ComponentPropsWithRef, ReactNode } from "react";
+import { useTooltipOpen } from "./tooltipFocus";
 
 interface IconButtonProps extends ComponentPropsWithRef<"button"> {
   label: string;
@@ -10,6 +11,7 @@ interface IconButtonProps extends ComponentPropsWithRef<"button"> {
 
 /** A square icon-only button. Its label is the accessible name and, by default, its tooltip. */
 export function IconButton({ label, children, className = "", tooltip = true, ...props }: IconButtonProps) {
+  const tip = useTooltipOpen();
   const button = (
     <button
       type="button"
@@ -22,8 +24,10 @@ export function IconButton({ label, children, className = "", tooltip = true, ..
   );
   if (!tooltip) return button;
   return (
-    <Tooltip.Root>
-      <Tooltip.Trigger asChild>{button}</Tooltip.Trigger>
+    <Tooltip.Root {...tip.root}>
+      <Tooltip.Trigger asChild {...tip.trigger}>
+        {button}
+      </Tooltip.Trigger>
       <Tooltip.Portal>
         <Tooltip.Content
           side="bottom"

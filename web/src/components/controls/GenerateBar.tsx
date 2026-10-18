@@ -8,17 +8,19 @@ import { useSettings } from "../../stores/settings";
 import { CheckpointPicker } from "../CheckpointPicker";
 import { ProgressText } from "../ProgressText";
 import { Hint } from "../Hint";
+import { useTooltipOpen } from "../tooltipFocus";
 
 const MAX_BATCH = 8;
 
 function BatchStepper() {
+  const tip = useTooltipOpen();
   const batchCount = useSettings((s) => s.batchCount);
   const update = useSettings((s) => s.update);
   const button =
     "grid size-7 place-items-center rounded text-muted hover:bg-raised hover:text-fg-strong disabled:opacity-30 disabled:hover:bg-transparent";
   return (
-    <Tooltip.Root>
-      <Tooltip.Trigger asChild>
+    <Tooltip.Root {...tip.root}>
+      <Tooltip.Trigger asChild {...tip.trigger}>
         <div role="group" aria-label="Number of images" className="flex h-9 items-center rounded-lg border border-line">
           <button
             type="button"

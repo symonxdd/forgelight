@@ -1,5 +1,6 @@
 import { Info } from "lucide-react";
 import { Tooltip } from "radix-ui";
+import { useTooltipOpen } from "./tooltipFocus";
 
 interface InfoTipProps {
   /** What the tip explains, for screen readers: "About CFG scale". */
@@ -13,9 +14,10 @@ interface InfoTipProps {
 
 /** A small info icon that explains a setting on hover or keyboard focus. */
 export function InfoTip({ topic, text, note, side = "right" }: InfoTipProps) {
+  const tip = useTooltipOpen();
   return (
-    <Tooltip.Root>
-      <Tooltip.Trigger asChild>
+    <Tooltip.Root {...tip.root}>
+      <Tooltip.Trigger asChild {...tip.trigger}>
         <button
           type="button"
           aria-label={`About ${topic}`}

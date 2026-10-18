@@ -1,5 +1,6 @@
 import { Tooltip } from "radix-ui";
 import type { ReactElement, ReactNode } from "react";
+import { useTooltipOpen } from "./tooltipFocus";
 
 interface HintProps {
   /** Nothing is shown when empty, so a hint can depend on state. */
@@ -13,10 +14,13 @@ interface HintProps {
  * Never use the browser's own title attribute instead.
  */
 export function Hint({ label, children, side = "bottom" }: HintProps) {
+  const tip = useTooltipOpen();
   if (label === null || label === undefined || label === "") return children;
   return (
-    <Tooltip.Root>
-      <Tooltip.Trigger asChild>{children}</Tooltip.Trigger>
+    <Tooltip.Root {...tip.root}>
+      <Tooltip.Trigger asChild {...tip.trigger}>
+        {children}
+      </Tooltip.Trigger>
       <Tooltip.Portal>
         <Tooltip.Content
           side={side}

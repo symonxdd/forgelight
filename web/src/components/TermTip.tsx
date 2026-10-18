@@ -1,5 +1,6 @@
 import { Tooltip } from "radix-ui";
 import type { ReactNode } from "react";
+import { useTooltipOpen } from "./tooltipFocus";
 
 interface TermTipProps {
   children: ReactNode;
@@ -13,9 +14,10 @@ interface TermTipProps {
  * pointed at, and both the word and its underline light up while it is.
  */
 export function TermTip({ children, text, note }: TermTipProps) {
+  const tip = useTooltipOpen();
   return (
-    <Tooltip.Root>
-      <Tooltip.Trigger asChild>
+    <Tooltip.Root {...tip.root}>
+      <Tooltip.Trigger asChild {...tip.trigger}>
         <span
           tabIndex={0}
           className="cursor-help underline decoration-current/45 decoration-dotted underline-offset-[3px] outline-none hover:text-accent hover:decoration-accent focus-visible:text-accent focus-visible:decoration-accent"
