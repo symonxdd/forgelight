@@ -36,6 +36,8 @@ export const HELP = {
     "How much larger the final image is than the size set above. 1.5× is a common choice; larger needs more time and graphics memory.",
   hiresUpscaler:
     "The method that enlarges the image before it is drawn over again. R-ESRGAN 4x+ suits most images, R-ESRGAN 4x+ Anime6B suits anime and illustration. Latent upscalers enlarge inside the model and need a higher Detail to look sharp.",
+  addStartImage:
+    "Makes a new version of an existing image, guided by the prompt. An image can also be dropped onto the Generate screen, or pasted with Ctrl+V anywhere on it.",
   img2imgStrength:
     "How much the new image may differ from the starting image (called denoising strength in Forge). Low values keep the picture and change details; high values keep only the rough layout and colors. 0.4 to 0.6 suits most changes.",
   hiresDenoise:
@@ -65,6 +67,7 @@ export const HELP = {
  * how to say it, spelled with everyday words rather than phonetic symbols.
  */
 export const HELP_NOTES = {
+  addStartImage: "Works with PNG, JPEG, WebP, AVIF, BMP and GIF (the first frame).",
   checkpoint:
     "Why the name: while a model is trained, its progress is saved at regular points, much like save points in a game. Each saved file is a checkpoint, a snapshot of everything the model has learned up to that moment. The file picked here is one of those snapshots.",
   sampling:

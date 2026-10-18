@@ -1,5 +1,6 @@
 import { Info } from "lucide-react";
 import { Tooltip } from "radix-ui";
+import type { ReactElement } from "react";
 import { guideTopicFor } from "../lib/guide/helpLinks";
 import { useGuide } from "../stores/guide";
 import { useTooltipOpen } from "./tooltipFocus";
@@ -48,6 +49,45 @@ export function InfoTip({ topic, text, note, side = "right" }: InfoTipProps) {
           {text}
           {note && <span className="mt-2 block text-[11.5px] leading-relaxed text-muted">{note}</span>}
           {guide && <span className="mt-2 block text-[11.5px] text-faint">Click for more</span>}
+        </Tooltip.Content>
+      </Tooltip.Portal>
+    </Tooltip.Root>
+  );
+}
+
+/**
+ * The info tip's card for a button that needs more than a short label: a bold title,
+ * an explanation and an optional side note in smaller gray print.
+ */
+export function ExplainTip({
+  title,
+  text,
+  note,
+  side = "top",
+  children,
+}: {
+  title: string;
+  text: string;
+  note?: string;
+  side?: "top" | "right" | "bottom" | "left";
+  children: ReactElement;
+}) {
+  const tip = useTooltipOpen();
+  return (
+    <Tooltip.Root {...tip.root}>
+      <Tooltip.Trigger asChild {...tip.trigger}>
+        {children}
+      </Tooltip.Trigger>
+      <Tooltip.Portal>
+        <Tooltip.Content
+          side={side}
+          sideOffset={6}
+          collisionPadding={12}
+          className="z-50 max-w-72 rounded-lg border border-line bg-surface px-3 py-2.5 text-[12.5px] leading-relaxed text-fg shadow-lg shadow-black/15"
+        >
+          <span className="mb-1 block font-medium text-fg-strong">{title}</span>
+          {text}
+          {note && <span className="mt-2 block text-[11.5px] leading-relaxed text-muted">{note}</span>}
         </Tooltip.Content>
       </Tooltip.Portal>
     </Tooltip.Root>

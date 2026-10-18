@@ -1,9 +1,10 @@
 import { ImagePlus, X } from "lucide-react";
 import { useRef } from "react";
-import { HELP } from "../../lib/help";
+import { HELP, HELP_NOTES } from "../../lib/help";
 import { useSettings } from "../../stores/settings";
 import { attachStartImage, removeStartImage, useStartImage } from "../../stores/startImage";
 import { Hint } from "../Hint";
+import { ExplainTip } from "../InfoTip";
 import { NumberSlider } from "./NumberSlider";
 
 /** The attached starting image with its Strength, at the top of the prompt card. */
@@ -55,19 +56,19 @@ export function StartImageRow() {
 export function AddImageButton() {
   const input = useRef<HTMLInputElement>(null);
   const hasImage = useStartImage((s) => s.image !== null);
-  const label = hasImage ? "Replace the starting image" : "Add a starting image (or drop or paste one)";
+  const title = hasImage ? "Replace the starting image (img2img)" : "Add a starting image (img2img)";
   return (
     <>
-      <Hint label={label}>
+      <ExplainTip title={title} text={HELP.addStartImage} note={HELP_NOTES.addStartImage}>
         <button
           type="button"
           onClick={() => input.current?.click()}
-          aria-label={label}
+          aria-label={title}
           className="grid size-9 shrink-0 place-items-center rounded-lg border border-line text-muted hover:border-line-strong hover:text-fg-strong"
         >
           <ImagePlus className="size-4" aria-hidden />
         </button>
-      </Hint>
+      </ExplainTip>
       <input
         ref={input}
         type="file"
