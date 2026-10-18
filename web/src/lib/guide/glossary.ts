@@ -23,7 +23,7 @@ export const GLOSSARY: GlossaryTerm[] = [
   { term: "Civitai", meaning: "The largest community site for image models.", topic: "getting-models/civitai" },
   {
     term: "Clip skip",
-    meaning: "Skipping the last text encoder layers; Forge handles it.",
+    meaning: "Skipping the last text encoder layers. Forge handles it.",
     topic: "settings/clip-skip",
   },
   {
@@ -33,7 +33,7 @@ export const GLOSSARY: GlossaryTerm[] = [
   },
   {
     term: "Denoising strength",
-    meaning: "How much hires fix may change the image; Detail in Forgelight.",
+    meaning: "How much hires fix may change the image. Called Detail in Forgelight.",
     topic: "settings/hires-fix",
   },
   { term: "Diffusion", meaning: "Making an image by removing noise step by step.", topic: "basics/stable-diffusion" },
@@ -44,7 +44,7 @@ export const GLOSSARY: GlossaryTerm[] = [
   { term: "Forge", meaning: "The program that loads models and makes images.", topic: "basics/forge" },
   {
     term: "fp16",
-    meaning: "Numbers stored at half precision: smaller files, same images.",
+    meaning: "16-bit numbers: half the file size, same images.",
     topic: "getting-models/choosing",
   },
   { term: "Generation data", meaning: "The recipe saved inside an image.", topic: "recreating/generation-data" },
@@ -69,7 +69,7 @@ export const GLOSSARY: GlossaryTerm[] = [
   { term: "Prompt", meaning: "The description of the image to make.", topic: "prompting/prompt" },
   {
     term: "Pruned",
-    meaning: "A model with training leftovers removed; same images.",
+    meaning: "A model with training leftovers removed. Same images.",
     topic: "getting-models/choosing",
   },
   { term: "RAM", meaning: "The computer's main memory.", topic: "hardware/system-memory" },
@@ -87,10 +87,10 @@ export const GLOSSARY: GlossaryTerm[] = [
     topic: "basics/how-an-image-is-made",
   },
   { term: "Textual Inversion", meaning: "Another name for an embedding.", topic: "models/embedding" },
-  { term: "Token", meaning: "A word piece; prompts are read in chunks of 75.", topic: "prompting/prompt" },
+  { term: "Token", meaning: "A word piece. Prompts are read in chunks of 75.", topic: "prompting/prompt" },
   { term: "Trigger words", meaning: "Words that bring out a LoRA's effect.", topic: "prompting/trigger-words" },
   { term: "Upscaler", meaning: "A model that enlarges images and sharpens detail.", topic: "models/upscaler" },
   { term: "VAE", meaning: "The part that turns the result into pixels.", topic: "models/vae" },
   { term: "VRAM", meaning: "Memory on the graphics card.", topic: "hardware/graphics-memory" },
-  { term: "Weight", meaning: "How much a bracketed word counts in the prompt.", topic: "prompting/weights" },
+  { term: "Weight", meaning: "How much a word in parentheses counts in the prompt.", topic: "prompting/weights" },
 ];

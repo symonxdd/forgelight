@@ -35,7 +35,7 @@ export const hardware: GuideChapter = {
         ],
       },
       points: [
-        "Compressed Flux means versions such as NF4 or GGUF, which shrink the model at a small cost in quality.",
+        "Compressed Flux means versions in special formats named NF4 or GGUF, which shrink the model at a small cost in quality.",
         "NVIDIA cards are the standard for this software. AMD and Intel cards need other setups.",
       ],
       related: ["models/base-models"],

@@ -29,17 +29,21 @@ export const models: GuideChapter = {
       summary:
         "Checkpoints, LoRAs and embeddings are built for one family. Mixing families does not work: the add-on has no effect or makes a mess.",
       table: {
-        head: ["Family", "Native size", "Notes"],
+        head: ["Family", "Trained at", "Notes"],
         rows: [
           ["SD 1.5", "512 × 512", "Older and small. Huge library of add-ons."],
           ["SDXL", "1024 × 1024", "The main family today. Good detail and prompt understanding."],
-          ["Pony", "1024 × 1024", "Built on SDXL. Tag prompts with score tags, such as score_9."],
+          [
+            "Pony",
+            "1024 × 1024",
+            "Built on SDXL. Tag prompts (short keywords) that start with quality tags such as score_9.",
+          ],
           ["Illustrious, NoobAI", "1024 × 1024", "Built on SDXL. Anime and illustration, tag prompts."],
           ["Flux", "1024 × 1024", "Newer and much larger. Sentence prompts. Needs a lot of memory."],
         ],
       },
       points: [
-        "Native size means the pixel count the family was trained at. Other shapes with about the same number of pixels work too, such as 832 × 1216 for SDXL.",
+        "The size a family was trained at is its native size. Other shapes with about the same number of pixels work too, such as 832 × 1216 for SDXL.",
         "Pony and Illustrious LoRAs are technically SDXL, but they work best on checkpoints of their own branch.",
         "Civitai shows the family as Base Model on every model page.",
       ],
@@ -55,7 +59,7 @@ export const models: GuideChapter = {
         "LoRA stands for Low-Rank Adaptation, the training method.",
         "Usually 10 to 300 MB.",
         "Strength sets how much it affects the image. Most work well between 0.5 and 1.",
-        "Many need trigger words in the prompt to show their effect.",
+        "Many need trigger words, special words from their training, in the prompt to show their effect.",
       ],
       folder: "webui\\models\\Lora",
       forgelight: "Add LoRA in the prompt card. Each LoRA becomes a chip with its own strength.",
@@ -85,7 +89,7 @@ export const models: GuideChapter = {
         "Also called Textual Inversion, after the training method.",
         "The name comes from how models read text: every word becomes a list of numbers, called an embedding. This file holds such a list for a new word.",
         "Usually only a few KB to a few hundred KB.",
-        "Often used in the negative prompt (negative embeddings) to steer away from common flaws such as bad hands.",
+        "Often used in the negative prompt, the list of things to avoid, to steer away from common flaws such as bad hands. These are called negative embeddings.",
         "Must match the checkpoint's family: an SD 1.5 embedding does nothing on an SDXL checkpoint.",
         "Forge reads this folder when a checkpoint loads, so a new file works after switching checkpoints or restarting Forge.",
       ],
@@ -97,9 +101,10 @@ export const models: GuideChapter = {
     {
       id: "vae",
       title: "VAE",
-      summary: "The part that turns the model's working result into visible pixels. It runs at the end of every image.",
+      summary:
+        "The model works on a compressed version of the image. The VAE turns that into visible pixels at the end of every image.",
       points: [
-        "VAE stands for variational autoencoder.",
+        "VAE stands for variational autoencoder, the name of the technique.",
         "Most checkpoints carry one inside (baked in), so nothing extra is needed.",
         "A separate VAE helps when images look gray, washed out or blotchy, or when the checkpoint page asks for one.",
         "SDXL VAE is the standard one for the SDXL family, already inside nearly every SDXL checkpoint.",
@@ -114,8 +119,8 @@ export const models: GuideChapter = {
       title: "Upscaler",
       summary: "A model that enlarges an image and sharpens its details while doing so.",
       points: [
-        "Common ones: 4x-UltraSharp, Remacri, R-ESRGAN 4x+ Anime6B. Most belong to the ESRGAN family.",
-        "Forge also has simple built-in methods such as Lanczos, which only stretch the image.",
+        "Common ones: 4x-UltraSharp, Remacri, R-ESRGAN 4x+ Anime6B. Most belong to a family called ESRGAN, named after the method they use.",
+        "Forge also has simple built-in resize methods such as Lanczos, which only stretch the image.",
         "Forge lists a new upscaler file after a restart.",
       ],
       folder: "webui\\models\\ESRGAN",
@@ -131,13 +136,17 @@ export const models: GuideChapter = {
         head: ["Type", "What it is", "In Forge"],
         rows: [
           ["Hypernetwork", "An older add-on type, replaced by LoRAs", "No effect"],
-          ["ControlNet, Poses, CLIP Vision", "Guide pose and composition from a reference image", "Classic page"],
+          [
+            "ControlNet, Poses, CLIP Vision",
+            "Guide pose and composition from a reference image",
+            "Yes, on the classic page",
+          ],
           ["Detection", "Finds faces or hands to redraw them in more detail", "With the ADetailer extension"],
           ["Wildcards", "Word lists, one picked at random per image", "With the Dynamic Prompts extension"],
-          ["Text Encoder, UNet, CLIP", "Separate parts of large models such as Flux", "Classic page"],
+          ["Text Encoder, UNet, CLIP", "Separate parts of large models such as Flux", "Yes, on the classic page"],
           ["Motion", "Animation modules", "No"],
-          ["Workflows, ComfyUI Workflows", "Recipes for the program ComfyUI", "No"],
-          ["VLM, LLM", "Language and vision models for text tasks", "No"],
+          ["Workflows, ComfyUI Workflows", "Recipes for ComfyUI, another image generation program", "No"],
+          ["VLM, LLM", "Vision language models and large language models, for text tasks", "No"],
           ["Aesthetic Gradient", "An old add-on type", "No"],
         ],
       },

@@ -14,7 +14,7 @@ export const recreating: GuideChapter = {
         "The recipe of an image: prompt, negative prompt, models and settings. Forge saves it inside every image file it makes.",
       points: [
         "On Civitai, an image page shows it under Generation data, with Resources used listing the models.",
-        "Images saved by Forge carry it too, readable on the classic page under PNG Info.",
+        "Images saved by Forge carry it too, readable on the classic page in the PNG Info tab.",
         "Some sites strip this data when an image is uploaded, so not every image has it.",
       ],
       forgelight: "Use these settings, in the image details of the viewer and the Library, applies an image's recipe.",
@@ -63,7 +63,7 @@ export const recreating: GuideChapter = {
       summary: "With everything matched, the result is usually very close, but rarely identical.",
       points: [
         "Civitai's own online generator runs different software than Forge, so the same seed draws different noise.",
-        "Graphics card models and software versions cause tiny differences that can grow during sampling.",
+        "Graphics card models and software versions cause tiny differences that can grow while the image is made.",
         "Samplers with “a” or “SDE” in the name react to these differences the most.",
         "Missing resources, or a newer version of a model, shift the result further.",
       ],

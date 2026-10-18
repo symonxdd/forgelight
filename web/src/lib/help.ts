@@ -19,7 +19,7 @@ export const HELP = {
   sampling:
     "How the image is made: the checkpoint starts from pure random noise and removes a little of it at every step until a picture appears. These settings choose the method, the number of steps and how closely the prompt is followed.",
   sampler:
-    "The method used to remove noise at each step. Samplers reach slightly different results and suit different step counts. DPM++ 2M is a dependable all-round choice.",
+    "The method used to remove noise at each step. Samplers reach slightly different results and suit different step counts. DPM++ 2M is a dependable all-around choice.",
   scheduleType:
     "How the noise removal is spread across the steps. Karras removes more early on and refines gently at the end, which often looks cleaner at lower step counts.",
   steps:

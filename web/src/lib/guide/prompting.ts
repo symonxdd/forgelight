@@ -23,7 +23,7 @@ export const prompting: GuideChapter = {
       id: "prompt-styles",
       title: "Tags or sentences",
       summary:
-        "Model families learned from different kinds of captions, so each prefers its own prompt style. The model page usually shows it.",
+        "Model families learned from images described in different ways, so each prefers its own prompt style. The model page usually shows it.",
       table: {
         head: ["Family", "Prompt style", "Example start"],
         rows: [
@@ -33,7 +33,10 @@ export const prompting: GuideChapter = {
           ["Flux", "Natural sentences", "A lighthouse on a cliff at dusk, lit softly"],
         ],
       },
-      points: ["Tags follow the naming of Danbooru, an anime image site the models learned from: 1girl, solo, smile."],
+      points: [
+        "Tags are short keywords separated by commas. They follow the naming of Danbooru, an anime image site the models learned from: 1girl, solo, smile.",
+        "Score and quality tags steer the model toward the best-rated images it learned from.",
+      ],
       related: ["models/base-models"],
       keywords: ["tags", "danbooru", "booru", "score_9", "masterpiece", "quality tags", "sentences"],
     },
@@ -42,7 +45,7 @@ export const prompting: GuideChapter = {
       title: "Negative prompt",
       summary: "What the image should avoid. Every step is steered away from it.",
       points: [
-        "Common entries: lowres, blurry, bad anatomy, extra fingers, watermark, text.",
+        "Common entries: lowres (low resolution), blurry, bad anatomy, extra fingers, watermark, text.",
         "Negative embeddings pack a whole list of flaws into one word.",
         "Very long negative prompts can flatten the image. A short, targeted list works best.",
       ],
@@ -51,8 +54,9 @@ export const prompting: GuideChapter = {
     },
     {
       id: "weights",
-      title: "Weights and brackets",
-      summary: "Brackets make a word count more or less. The number says by how much.",
+      title: "Word weights",
+      summary:
+        "Parentheses ( ) make a word count more, square brackets [ ] make it count less. A number sets exactly how much.",
       table: {
         head: ["Written as", "Effect"],
         rows: [
@@ -64,7 +68,7 @@ export const prompting: GuideChapter = {
       },
       points: [
         "Values between 0.5 and 1.5 are safe. Beyond that, images tend to distort.",
-        "To write real brackets, as in character names, put a backslash before each: Sparkle \\(Honkai: Star Rail\\).",
+        "To write real parentheses, as in character names, put a backslash \\ before each: Sparkle \\(Honkai: Star Rail\\).",
       ],
       keywords: ["weight", "emphasis", "attention", "brackets", "parentheses", "escape", "backslash"],
     },

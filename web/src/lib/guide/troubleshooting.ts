@@ -11,7 +11,7 @@ export const troubleshooting: GuideChapter = {
       id: "out-of-memory",
       title: "Out of memory",
       summary:
-        "Forge reports “CUDA out of memory” when an image needs more graphics memory than is free. Nothing is damaged; the image just fails.",
+        "Forge reports “CUDA out of memory” when an image needs more graphics memory than is free. CUDA is the NVIDIA software that runs the calculations. Nothing is damaged; the image just fails.",
       points: [
         "Lower the size or the hires fix Upscale by value.",
         "Make one image at a time instead of a batch.",
@@ -40,8 +40,8 @@ export const troubleshooting: GuideChapter = {
       summary: "Usually a VAE problem: the last stage that turns the result into pixels.",
       points: [
         "Washed out or gray: the checkpoint may lack a VAE. Use the one its page recommends.",
-        "Black image: an SD 1.5 VAE on an SDXL checkpoint, or the other way round, or a calculation error with half precision.",
-        "Use a VAE from the same family as the checkpoint, or none when the checkpoint has one built in.",
+        "Black image: a VAE from the wrong family, such as an SD 1.5 VAE on an SDXL checkpoint, or the other way around.",
+        "Some older SDXL VAEs also turn images black; a fixed version, often named fp16-fix, solves it.",
       ],
       related: ["models/vae"],
       keywords: ["gray", "grey", "washed out", "black", "faded", "nan", "vae"],
@@ -88,7 +88,7 @@ export const troubleshooting: GuideChapter = {
       summary: "The status at the top right shows whether Forgelight reaches Forge.",
       points: [
         "Forge not running: start it with the Forgelight desktop shortcut. The page reconnects by itself.",
-        "Forge API is off: Forge was started without the --api option. The desktop shortcut always adds it.",
+        "Forge API is off: Forge was started without the --api launch option (a setting given to Forge as it starts). The desktop shortcut always adds it.",
         "Forge failed to start: its command window shows the error and stays open to read.",
       ],
       related: ["basics/forge"],

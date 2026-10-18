@@ -13,7 +13,7 @@ export const settings: GuideChapter = {
       summary:
         "The width and height in pixels. Each model family has a native size it was trained at, and works best close to it.",
       points: [
-        "SDXL-based models: about one megapixel, such as 1024 × 1024 or 832 × 1216.",
+        "SDXL-based models: about one megapixel (a million pixels), such as 1024 × 1024 or 832 × 1216.",
         "SD 1.5 models: about 512 × 512, such as 512 × 768.",
         "Much larger sizes tend to repeat subjects: two heads, extra people. Hires fix is the better route to large images.",
         "Larger images need more time and graphics memory.",
@@ -27,7 +27,10 @@ export const settings: GuideChapter = {
       title: "Steps",
       summary:
         "How many times the noise is refined into the image. More steps add detail up to a point, then only time.",
-      points: ["20 to 30 suits most SDXL checkpoints.", "Some fast models (Lightning, Turbo, Hyper) need only 4 to 8."],
+      points: [
+        "20 to 30 suits most SDXL checkpoints.",
+        "Fast versions of models, named Lightning, Turbo or Hyper, need only 4 to 8.",
+      ],
       related: ["settings/sampler"],
       keywords: ["steps", "iterations", "lightning", "turbo", "hyper"],
     },
@@ -50,9 +53,9 @@ export const settings: GuideChapter = {
       summary:
         "The sampler is the method that removes noise at each step. The schedule type decides how the removal is spread across the steps.",
       points: [
-        "DPM++ 2M with Karras is a dependable all-round choice.",
+        "DPM++ 2M as sampler with Karras as schedule type is a dependable all-around choice.",
         "Euler a is simple and popular for anime models.",
-        "Samplers with “a” (ancestral) or “SDE” add fresh noise at each step, so the image keeps changing with the step count.",
+        "Samplers with “a” (ancestral) or “SDE” (stochastic differential equation, the math behind them) in the name add fresh noise at each step, so the image keeps changing with the step count.",
         "Model pages often name a recommended pair. It is a good starting point.",
       ],
       related: ["settings/steps"],
@@ -66,9 +69,9 @@ export const settings: GuideChapter = {
       points: [
         "Random by default, so every image differs.",
         "Keeping a seed and changing one setting shows exactly what that setting does.",
-        "Images in a batch use the next seeds in a row.",
+        "Images in a batch (several made in a row) use the next seeds in a row.",
       ],
-      forgelight: "The recycle button in Seed reuses the seed of the image on screen.",
+      forgelight: "The recycle button next to Seed reuses the seed of the image on screen.",
       related: ["recreating/steps"],
       keywords: ["seed", "random", "reproduce", "same image"],
     },
@@ -76,7 +79,7 @@ export const settings: GuideChapter = {
       id: "hires-fix",
       title: "Hires fix",
       summary:
-        "Draws the image at the native size first, then enlarges it and draws over it again. Gives large images with clean detail.",
+        "Hires is short for high resolution. Hires fix draws the image at the native size first, then enlarges it and draws over it again, for large images with clean detail.",
       points: [
         "Upscale by: 1.5 is a common choice. More needs more time and graphics memory.",
         "Upscaler: the model that does the enlarging. R-ESRGAN 4x+ suits most images, R-ESRGAN 4x+ Anime6B suits anime.",
@@ -90,7 +93,7 @@ export const settings: GuideChapter = {
       id: "clip-skip",
       title: "Clip skip",
       summary:
-        "Skips the last layers of the text encoder. Some model pages recommend 2. Forge already uses 2 for SDXL-based models.",
+        "Skips the last processing layers of the text encoder, which is called CLIP. Some model pages recommend 2. Forge already uses 2 for SDXL-based models.",
       forgelight: "No control needed: Forge applies the right value for SDXL-based models by itself.",
       keywords: ["clip skip", "clip", "text encoder"],
     },
