@@ -142,7 +142,74 @@ def model_of(infotext: str) -> str | None:
     return match.group(1).strip() if match else None
 
 
-def listing(query: str, model: str, offset: int, limit: int) -> dict:
+# Words that mark a prompt as adult. Only the prompt counts: negative prompts often list
+# "nsfw" precisely to avoid it. A guess, so images without such words may still be adult.
+_ADULT_WORDS = (
+    "nsfw",
+    "rating_explicit",
+    "rating_questionable",
+    "explicit",
+    "nude",
+    "nudity",
+    "naked",
+    "topless",
+    "bottomless",
+    "uncensored",
+    "sex",
+    "sexual",
+    "hetero",
+    "penis",
+    "pussy",
+    "vagina",
+    "vulva",
+    "genitals",
+    "nipples",
+    "areola",
+    "areolae",
+    "cum",
+    "cumshot",
+    "ejaculation",
+    "fellatio",
+    "blowjob",
+    "handjob",
+    "paizuri",
+    "anal",
+    "penetration",
+    "masturbation",
+    "orgasm",
+    "erection",
+    "testicles",
+    "futanari",
+    "ahegao",
+    "bdsm",
+    "bondage",
+    "porn",
+    "hentai",
+)
+# Whole words only, allowing booru-style underscores and weights: "(nude:1.2)".
+_ADULT = re.compile(r"(?<![a-z])(" + "|".join(_ADULT_WORDS) + r")(?![a-z])", re.IGNORECASE)
+_PARAMS_LINE = re.compile(r"^\s*Steps: ")
+
+
+def prompt_of(infotext: str) -> str:
+    """The prompt part of an image's settings text, without negative prompt and settings."""
+    lines = infotext.strip().split("\n")
+    if lines and _PARAMS_LINE.match(lines[-1]):
+        lines.pop()
+    for index, line in enumerate(lines):
+        if line.startswith("Negative prompt:"):
+            return "\n".join(lines[:index])
+    return "\n".join(lines)
+
+
+def looks_nsfw(infotext: str) -> bool:
+    return bool(_ADULT.search(prompt_of(infotext)))
+
+
+RATINGS = ("all", "sfw", "nsfw")
+
+
+def listing(query: str, model: str, offset: int, limit: int, rating: str = "all") -> dict:
     images = scan()
     models: dict[str, int] = {}
     for image in images:
@@ -150,10 +217,12 @@ def listing(query: str, model: str, offset: int, limit: int) -> dict:
             models[name] = models.get(name, 0) + 1
 
     words = query.lower().split()
-    if words or model:
+    if words or model or rating != "all":
 
         def matches(image: dict) -> bool:
             if model and model_of(image["infotext"]) != model:
+                return False
+            if rating != "all" and looks_nsfw(image["infotext"]) != (rating == "nsfw"):
                 return False
             haystack = f"{image['infotext']}\n{image['id']}".lower()
             return all(word in haystack for word in words)
@@ -171,7 +240,10 @@ def listing(query: str, model: str, offset: int, limit: int) -> dict:
         "total": len(images),
         "days": days,
         "offset": offset,
-        "items": [{k: v for k, v in image.items() if k != "path"} for image in page],
+        "items": [
+            {**{k: v for k, v in image.items() if k != "path"}, "nsfw": looks_nsfw(image["infotext"])}
+            for image in page
+        ],
         "models": [{"name": n, "count": c} for n, c in sorted(models.items(), key=lambda m: -m[1])],
     }
 

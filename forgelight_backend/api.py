@@ -82,6 +82,7 @@ def library_list(request: Request, _body: Any) -> dict:
     return library.listing(
         query=params.get("q", ""),
         model=params.get("model", ""),
+        rating=params.get("rating", "all") if params.get("rating") in library.RATINGS else "all",
         offset=_int(params.get("offset"), 0, 0, 10_000_000),
         limit=_int(params.get("limit"), 100, 1, 500),
     )
