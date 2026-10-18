@@ -82,27 +82,33 @@ export function GuideSidebar() {
               <PageButton id={chapter.id} title={chapter.title} icon={chapter.icon} active={active} />
               {/* Slides open and shut, so switching chapters reads as one list giving way to the next. */}
               <Collapsible.Content className="guide-list overflow-hidden">
-                <ul className="mt-0.5 mb-1.5 ml-[17px] flex flex-col border-l border-line">
-                  {chapter.topics.map((topic) => {
-                    const reading = active && topic.id === activeTopic;
-                    return (
-                      <li key={topic.id}>
-                        <button
-                          type="button"
-                          onClick={() => open(`${chapter.id}/${topic.id}`)}
-                          aria-current={reading ? "location" : undefined}
-                          className={`-ml-px w-full truncate border-l py-1 pr-2 pl-3.5 text-left text-[12.5px] ${
-                            reading
-                              ? "border-accent font-medium text-fg-strong"
-                              : "border-transparent text-muted hover:text-fg-strong"
-                          }`}
-                        >
-                          {topic.title}
-                        </button>
-                      </li>
-                    );
-                  })}
-                </ul>
+                <div data-topic-list={chapter.id} className="relative mt-0.5 mb-1.5 ml-[17px]">
+                  {/* Reading progress: the line fills in the accent color down to the topic being read. */}
+                  <span
+                    data-reading-fill
+                    aria-hidden
+                    className="absolute top-0 -left-px z-10 h-0 w-0.5 rounded-full bg-accent"
+                  />
+                  <ul className="flex flex-col border-l border-line">
+                    {chapter.topics.map((topic) => {
+                      const reading = active && topic.id === activeTopic;
+                      return (
+                        <li key={topic.id} data-topic-row={topic.id}>
+                          <button
+                            type="button"
+                            onClick={() => open(`${chapter.id}/${topic.id}`)}
+                            aria-current={reading ? "location" : undefined}
+                            className={`w-full truncate py-1 pr-2 pl-3.5 text-left text-[12.5px] ${
+                              reading ? "font-medium text-fg-strong" : "text-muted hover:text-fg-strong"
+                            }`}
+                          >
+                            {topic.title}
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
               </Collapsible.Content>
             </Collapsible.Root>
           );

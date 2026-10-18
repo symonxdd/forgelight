@@ -4,13 +4,12 @@ import { useGuide } from "../../stores/guide";
 import { ChapterView } from "./ChapterView";
 import { GlossaryView } from "./GlossaryView";
 import { GuideSidebar } from "./GuideSidebar";
-import { ReadingProgress } from "./ReadingProgress";
 import { SearchResults } from "./SearchResults";
 
 /** How long a topic opened from a link keeps its outline, to show where it is. */
 const HIGHLIGHT_MS = 1600;
 /** A topic counts as being read once its card's top passes this far below the top edge. */
-const READING_LINE = 120;
+const READING_LINE = 96;
 /** Longest a smooth jump may take before the reading marker follows the scroll again. */
 const JUMP_MS = 1200;
 
@@ -18,18 +17,38 @@ function reducedMotion(): boolean {
   return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 }
 
-/** The topic whose card has most recently passed the reading line. */
-function topicInView(scroller: HTMLElement, chapter: GuideChapter): string | null {
+interface Reading {
+  /** The topic whose card has most recently passed the reading line. */
+  topic: string | null;
+  /** How far through that topic's card the reading line is, 0 to 1. */
+  within: number;
+}
+
+function reading(scroller: HTMLElement, chapter: GuideChapter): Reading {
   const max = scroller.scrollHeight - scroller.clientHeight;
-  // At the very end, the last topic may never reach the line; it is the one being read.
-  if (max > 0 && scroller.scrollTop >= max - 2) return chapter.topics.at(-1)?.id ?? null;
+  // At the very end, the last topic may never reach the line; it has been read.
+  if (max > 0 && scroller.scrollTop >= max - 2) return { topic: chapter.topics.at(-1)?.id ?? null, within: 1 };
   const line = scroller.getBoundingClientRect().top + READING_LINE;
-  let current = chapter.topics[0]?.id ?? null;
+  let current: Reading = { topic: chapter.topics[0]?.id ?? null, within: 0 };
   for (const topic of chapter.topics) {
-    const card = document.getElementById(`topic-${topic.id}`);
-    if (card && card.getBoundingClientRect().top <= line) current = topic.id;
+    const card = document.getElementById(`topic-${topic.id}`)?.getBoundingClientRect();
+    if (card && card.top <= line) {
+      current = { topic: topic.id, within: Math.min(1, (line - card.top) / Math.max(card.height, 1)) };
+    }
   }
   return current;
+}
+
+/**
+ * Fills the chapter list's line in the accent color down to the topic being read, and
+ * through that topic's row as far as its card has been read.
+ */
+function drawProgress(chapterId: string, { topic, within }: Reading) {
+  const list = document.querySelector<HTMLElement>(`[data-topic-list="${chapterId}"]`);
+  const fill = list?.querySelector<HTMLElement>("[data-reading-fill]");
+  const row = topic ? list?.querySelector<HTMLElement>(`[data-topic-row="${topic}"]`) : null;
+  if (!fill || !row) return;
+  fill.style.height = `${row.offsetTop + row.offsetHeight * within}px`;
 }
 
 /** Short explanations of Forge, models and settings, as chapters with a search. */
@@ -41,7 +60,6 @@ export function Guide() {
   const highlighted = useGuide((s) => s.highlighted);
   const clearHighlight = useGuide((s) => s.clearHighlight);
   const main = useRef<HTMLElement>(null);
-  const progress = useRef<HTMLDivElement>(null);
   // While a jump scrolls, the clicked topic stays marked instead of each one passed on the way.
   const jumping = useRef(false);
   const jumpTimer = useRef(0);
@@ -83,24 +101,17 @@ export function Guide() {
   }, [highlighted, clearHighlight]);
 
   // Reading progress and the topic being read, updated once per frame while scrolling.
+  // Written straight to the page, so scrolling never re-renders the chapter.
   useEffect(() => {
     const scroller = main.current;
     if (!scroller || !chapter) return;
     let frame = 0;
     const update = () => {
       frame = 0;
-      const max = scroller.scrollHeight - scroller.clientHeight;
-      const percent = Math.round((max > 0 ? scroller.scrollTop / max : 1) * 100);
-      const bar = progress.current;
-      if (bar) {
-        bar.querySelector<HTMLElement>("[data-fill]")?.style.setProperty("width", `${percent}%`);
-        const label = bar.querySelector<HTMLElement>("[data-percent]");
-        if (label) label.textContent = `${percent}%`;
-        bar.setAttribute("aria-valuenow", String(percent));
-      }
+      const now = reading(scroller, chapter);
+      drawProgress(chapter.id, now);
       if (jumping.current) return;
-      const topic = topicInView(scroller, chapter);
-      if (useGuide.getState().activeTopic !== topic) useGuide.getState().setActiveTopic(topic);
+      if (useGuide.getState().activeTopic !== now.topic) useGuide.getState().setActiveTopic(now.topic);
     };
     const onScroll = () => {
       frame ||= requestAnimationFrame(update);
@@ -127,18 +138,13 @@ export function Guide() {
       <GuideSidebar />
       <main ref={main} className="min-w-0 flex-1 overflow-y-auto">
         {/* Wider on large monitors, still an easy line length to read. */}
-        <div className={`mx-auto max-w-208 px-8 pb-16 2xl:max-w-240 ${chapter ? "" : "pt-8"}`}>
+        <div className="mx-auto max-w-208 px-8 pt-8 pb-16 2xl:max-w-240">
           {searching ? (
             <SearchResults query={query} />
           ) : page === GLOSSARY_ID || !chapter ? (
             <GlossaryView />
           ) : (
-            <>
-              <ReadingProgress ref={progress} chapter={chapter} />
-              <div className="pt-4">
-                <ChapterView key={chapter.id} chapter={chapter} highlighted={highlighted} />
-              </div>
-            </>
+            <ChapterView key={chapter.id} chapter={chapter} highlighted={highlighted} />
           )}
         </div>
       </main>

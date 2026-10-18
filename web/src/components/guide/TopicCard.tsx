@@ -104,7 +104,7 @@ export function TopicCard({ topic, highlighted = false, onOpenTopic, anchor = tr
     <section
       id={anchor ? `topic-${topic.id}` : undefined}
       aria-labelledby={titleId}
-      className={`flex scroll-mt-20 flex-col gap-4 rounded-xl border bg-surface p-5 text-[13.5px] leading-relaxed text-fg ${
+      className={`flex scroll-mt-6 flex-col gap-4 rounded-xl border bg-surface p-5 text-[13.5px] leading-relaxed text-fg ${
         highlighted ? "border-accent" : "border-line"
       }`}
     >
