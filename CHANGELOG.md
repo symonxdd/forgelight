@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.0.0 (2026-10-18)
+
 **Forgelight 1.0.0 is the first release: a calm, minimal interface for Stable Diffusion WebUI Forge.** It runs inside Forge as an [extension](https://github.com/AUTOMATIC1111/stable-diffusion-webui/wiki/Extensions), at `http://127.0.0.1:7860/forgelight`, and generates images through Forge's own API, so the results match the classic page exactly. The classic page stays available for everything Forgelight does not cover (yet).
 
 ### 🆕 New
