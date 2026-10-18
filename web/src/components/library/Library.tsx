@@ -420,11 +420,10 @@ export function Library() {
               Stacks
             </button>
           </Hint>
-          {!library.isPending && (
-            <span className="ml-2 text-[12.5px] text-muted tabular-nums">
-              {total === 1 ? "1 image" : `${total.toLocaleString("en-US")} images`}
-            </span>
-          )}
+          {/* A fixed width, so a changing count ("13 images", "0 images") never shifts the centered bar. */}
+          <span className="ml-2 w-24 text-[12.5px] text-muted tabular-nums">
+            {library.isPending ? "" : total === 1 ? "1 image" : `${total.toLocaleString("en-US")} images`}
+          </span>
         </div>
       </div>
       <div className={`min-h-0 flex-1 overflow-y-auto ${selectedCount > 0 ? "pb-20" : ""}`}>{body}</div>
