@@ -1,0 +1,32 @@
+# Claude Code project instructions (internal, never tracked)
+CLAUDE.md
+.claude/
+
+# The built interface. Main holds source only; GitHub builds page/ for every push and
+# publishes it on the release branch, which is what people install.
+page/
+
+# Dependencies and build caches.
+node_modules/
+*.tsbuildinfo
+.eslintcache
+coverage/
+
+# Python
+__pycache__/
+*.pyc
+
+# Logs and OS files
+*.log
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Forgelight runtime data (Civitai lookups, preferences, launcher)
+data/
+
+# Local design explorations (icon concepts and notes)
+design/
+
+# Research and Stage 0 notes from before development (local only)
+forge-redesign-research/

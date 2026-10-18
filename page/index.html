@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" type="image/svg+xml" href="/forgelight/favicon.svg" />
+    <title>Forgelight</title>
+    <script>
+      // Applies the saved theme and font before the first paint, so the page
+      // never flashes the wrong colors. Keys match src/lib/preferences.ts.
+      (function () {
+        var theme = null;
+        var font = null;
+        var oled = null;
+        try {
+          theme = localStorage.getItem("forgelight.theme");
+          font = localStorage.getItem("forgelight.font");
+          oled = localStorage.getItem("forgelight.oled");
+        } catch (e) {}
+        if (theme !== "light" && theme !== "dark") {
+          theme = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+        }
+        document.documentElement.dataset.theme = theme;
+        // OLED (pure black) is on the first time dark mode is used, until switched off.
+        if (theme === "dark" && oled !== "false") document.documentElement.dataset.oled = "";
+        if (font) document.documentElement.dataset.font = font;
+      })();
+    </script>
+    <script type="module" crossorigin src="/forgelight/assets/index-BaMTucoN.js"></script>
+    <link rel="stylesheet" crossorigin href="/forgelight/assets/index-C8qrvR4S.css">
+  </head>
+  <body>
+    <div id="root"></div>
+  </body>
+</html>
