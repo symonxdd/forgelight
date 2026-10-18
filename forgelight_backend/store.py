@@ -15,6 +15,14 @@ DATA = ROOT / "data"
 _lock = threading.Lock()
 
 
+def version() -> str:
+    """Forgelight's version, kept in the interface's package.json."""
+    try:
+        return json.loads((ROOT / "web" / "package.json").read_text(encoding="utf-8"))["version"]
+    except (OSError, ValueError, KeyError):
+        return "unknown"
+
+
 def read(name: str, default: Any) -> Any:
     try:
         return json.loads((DATA / name).read_text(encoding="utf-8"))

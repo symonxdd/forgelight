@@ -6,7 +6,6 @@ package take effect without restarting Forge (see reloader.py).
 
 from __future__ import annotations
 
-import json
 from typing import Any, Callable
 
 from fastapi import HTTPException, Request
@@ -14,18 +13,11 @@ from fastapi.responses import FileResponse
 
 from . import library, loading, models, startup
 from .security import require_own_page, require_same_origin
-from .store import ROOT
+from .store import ROOT, version
 
 PAGE = ROOT / "page"
 
 Handler = Callable[[Request, Any], Any]
-
-
-def _version() -> str:
-    try:
-        return json.loads((ROOT / "web" / "package.json").read_text(encoding="utf-8"))["version"]
-    except (OSError, ValueError, KeyError):
-        return "unknown"
 
 
 def _startup_state() -> dict:
@@ -42,7 +34,7 @@ def status(_request: Request, _body: Any) -> dict:
 
     return {
         "name": "forgelight",
-        "version": _version(),
+        "version": version(),
         "built": (PAGE / "index.html").is_file(),
         "api_enabled": bool(cmd_opts.api),
     }
@@ -71,6 +63,11 @@ def desktop_shortcut(_request: Request, _body: Any) -> dict:
     except (RuntimeError, OSError) as error:
         raise HTTPException(status_code=500, detail=str(error)) from error
     return _startup_state()
+
+
+def stop_forge(_request: Request, _body: Any) -> dict:
+    startup.stop_forge()
+    return {"ok": True}
 
 
 def _int(value: str | None, default: int, low: int, high: int) -> int:
@@ -131,6 +128,7 @@ ROUTES: dict[tuple[str, str], Handler] = {
     ("GET", "startup"): startup_state,
     ("POST", "startup/open-on-start"): open_on_start,
     ("POST", "startup/desktop-shortcut"): desktop_shortcut,
+    ("POST", "forge/stop"): stop_forge,
     ("GET", "loading"): loading_state,
     ("GET", "library"): library_list,
     ("GET", "library/image"): library_image,
