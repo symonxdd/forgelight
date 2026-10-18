@@ -12,6 +12,7 @@ import { Hint } from "../Hint";
 import { InfoTip } from "../InfoTip";
 import { GenerateBar } from "./GenerateBar";
 import { LoraChips } from "./LoraChips";
+import { StartImageRow } from "./StartImage";
 
 // Heights per state, as whole literals so Tailwind finds them: lines of text plus the padding.
 const HEIGHTS = {
@@ -217,6 +218,7 @@ export function PromptFields({ connected }: { connected: boolean }) {
           editing ? `absolute inset-x-0 ${above ? "top-0" : "bottom-0"}` : ""
         }`}
       >
+        <StartImageRow />
         <div className="flex h-6 items-center gap-1.5">
           <label htmlFor="prompt" className="text-[13px] font-medium text-fg-strong">
             Prompt

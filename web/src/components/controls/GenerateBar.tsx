@@ -7,6 +7,7 @@ import { useSession } from "../../stores/session";
 import { useSettings } from "../../stores/settings";
 import { CheckpointPicker } from "../CheckpointPicker";
 import { ProgressText } from "../ProgressText";
+import { AddImageButton } from "./StartImage";
 import { Hint } from "../Hint";
 import { useTooltipOpen } from "../tooltipFocus";
 
@@ -120,6 +121,7 @@ export function GenerateBar({ connected }: { connected: boolean }) {
 
   return (
     <div className="flex items-center gap-2">
+      <AddImageButton />
       <CheckpointPicker enabled={connected} />
       <div className="ml-auto flex shrink-0 items-center gap-2">
         <BatchStepper />

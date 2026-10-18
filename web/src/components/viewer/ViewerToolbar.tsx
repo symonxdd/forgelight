@@ -1,6 +1,8 @@
-import { Download, Info, Maximize, Minimize } from "lucide-react";
+import { Download, ImagePlus, Info, Maximize, Minimize } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import type { SessionImage } from "../../stores/session";
+import { startFromImage } from "../../stores/startImage";
+import { useView } from "../../stores/view";
 import { currentScale, toggleFullscreen, useViewer } from "../../stores/viewer";
 import { Hint } from "../Hint";
 import { IconButton } from "../IconButton";
@@ -84,6 +86,18 @@ export function ViewerToolbar({ image, extra }: { image: SessionImage | undefine
             <Download className="size-4" aria-hidden />
           </a>
         </Hint>
+      )}
+      {image && (
+        <IconButton
+          label="Use as starting image"
+          onClick={() => {
+            // From the Library, this also goes back to Generate, where the image is attached.
+            useView.getState().setView("generate");
+            void startFromImage(image.url);
+          }}
+        >
+          <ImagePlus className="size-4" aria-hidden />
+        </IconButton>
       )}
       {extra}
       <IconButton label={fullscreen ? "Exit fullscreen (F)" : "Fullscreen (F)"} onClick={toggleFullscreen}>

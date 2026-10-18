@@ -1,6 +1,8 @@
 import { Group, Panel, Separator, useDefaultLayout, type LayoutStorage } from "react-resizable-panels";
 import type { ConnectionState } from "../api/queries";
+import { ImagePlus } from "lucide-react";
 import { useOverlayOpen } from "../hooks/useOverlayOpen";
+import { useStartImageInput } from "../hooks/useStartImageInput";
 import { usePreferences } from "../stores/preferences";
 import { useHasPanelSections } from "../stores/settings";
 import { Messages } from "./controls/Messages";
@@ -40,6 +42,7 @@ function ResizeHandle() {
  */
 function Stage({ connection }: { connection: ConnectionState }) {
   const above = usePreferences((s) => s.promptPosition) === "above";
+  const { dragging, dropTarget } = useStartImageInput();
   const composer = (
     <div className={`shrink-0 px-4 ${above ? "pt-4" : "pt-1"} pb-2.5`}>
       <div className="relative mx-auto flex w-full max-w-3xl flex-col gap-2.5">
@@ -59,7 +62,15 @@ function Stage({ connection }: { connection: ConnectionState }) {
     </div>
   );
   return (
-    <div className="flex h-full flex-col bg-viewer">
+    <div {...dropTarget} className="relative flex h-full flex-col bg-viewer">
+      {dragging && (
+        <div className="pointer-events-none absolute inset-3 z-40 grid place-items-center rounded-xl border-2 border-dashed border-accent bg-canvas/80">
+          <p className="flex items-center gap-2 text-[14px] font-medium text-fg-strong">
+            <ImagePlus className="size-5 text-accent" aria-hidden />
+            Drop to use as the starting image
+          </p>
+        </div>
+      )}
       {above && composer}
       <div className="min-h-0 flex-1">
         <Viewer connection={connection} />

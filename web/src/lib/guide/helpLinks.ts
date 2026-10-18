@@ -22,6 +22,7 @@ export const HELP_TOPICS: Partial<Record<HelpKey, string>> = {
   hiresScale: "settings/hires-fix",
   hiresUpscaler: "models/upscaler",
   hiresDenoise: "settings/hires-fix",
+  img2imgStrength: "settings/image-to-image",
   civitaiSite: "getting-models/civitai",
   civitai: "getting-models/civitai",
 };

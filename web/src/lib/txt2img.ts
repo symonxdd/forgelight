@@ -21,6 +21,8 @@ export interface GenerationSettings {
   hiresUpscaler: string;
   /** Forge's "denoising strength": how much the second pass may change. */
   hiresDenoise: number;
+  /** Image to image: how much the new image may differ from the starting image (Forge's denoising strength). */
+  img2imgStrength: number;
 }
 
 export const DEFAULT_SETTINGS: GenerationSettings = {
@@ -39,6 +41,7 @@ export const DEFAULT_SETTINGS: GenerationSettings = {
   hiresScale: 1.5,
   hiresUpscaler: "R-ESRGAN 4x+",
   hiresDenoise: 0.4,
+  img2imgStrength: 0.6,
 };
 
 /** The size after hires fix, computed the way Forge does. */
@@ -74,11 +77,11 @@ function hiresFields(settings: GenerationSettings) {
 }
 
 /**
- * Builds an explicit txt2img request. Two Forge shortcuts are deliberately avoided:
- * `infotext` crashes on every request in original Forge, and `override_settings`
+ * The fields txt2img and img2img requests share. Two Forge shortcuts are deliberately
+ * avoided: `infotext` crashes on every request in original Forge, and `override_settings`
  * leaves settings that were at their default value changed in memory afterwards.
  */
-export function buildTxt2imgRequest(settings: GenerationSettings, taskId: string) {
+export function commonFields(settings: GenerationSettings, taskId: string) {
   return {
     prompt: promptWithLoras(settings.prompt, settings.loras),
     negative_prompt: settings.negativePrompt,
@@ -95,8 +98,11 @@ export function buildTxt2imgRequest(settings: GenerationSettings, taskId: string
     save_images: true,
     send_images: true,
     force_task_id: taskId,
-    ...hiresFields(settings),
   };
+}
+
+export function buildTxt2imgRequest(settings: GenerationSettings, taskId: string) {
+  return { ...commonFields(settings, taskId), ...hiresFields(settings) };
 }
 
 export interface GeneratedImage {

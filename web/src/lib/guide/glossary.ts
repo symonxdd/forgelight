@@ -33,7 +33,7 @@ export const GLOSSARY: GlossaryTerm[] = [
   },
   {
     term: "Denoising strength",
-    meaning: "How much hires fix may change the image. Called Detail in Forgelight.",
+    meaning: "How much hires fix or image to image may change the image. Detail or Strength in Forgelight.",
     topic: "settings/hires-fix",
   },
   { term: "Diffusion", meaning: "Making an image by removing noise step by step.", topic: "basics/stable-diffusion" },
@@ -55,6 +55,12 @@ export const GLOSSARY: GlossaryTerm[] = [
     topic: "getting-models/hugging-face",
   },
   { term: "Illustrious", meaning: "An SDXL-based family for anime and illustration.", topic: "models/base-models" },
+  {
+    term: "Image to image",
+    meaning: "Making a new version of an existing image, guided by the prompt.",
+    topic: "settings/image-to-image",
+  },
+  { term: "Img2img", meaning: "Short for image to image.", topic: "settings/image-to-image" },
   { term: "LoRA", meaning: "A small add-on that teaches a checkpoint one thing.", topic: "models/lora" },
   { term: "LyCORIS", meaning: "A group of LoRA variants, used the same way.", topic: "models/lycoris-dora" },
   { term: "Merge", meaning: "A checkpoint mixed from other checkpoints.", topic: "models/checkpoint" },

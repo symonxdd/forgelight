@@ -83,6 +83,7 @@ function pickSettings(s: GenerationSettings): GenerationSettings {
     hiresScale: s.hiresScale,
     hiresUpscaler: s.hiresUpscaler,
     hiresDenoise: s.hiresDenoise,
+    img2imgStrength: s.img2imgStrength,
   };
 }
 

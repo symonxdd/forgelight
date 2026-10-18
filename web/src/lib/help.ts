@@ -36,6 +36,8 @@ export const HELP = {
     "How much larger the final image is than the size set above. 1.5× is a common choice; larger needs more time and graphics memory.",
   hiresUpscaler:
     "The method that enlarges the image before it is drawn over again. R-ESRGAN 4x+ suits most images, R-ESRGAN 4x+ Anime6B suits anime and illustration. Latent upscalers enlarge inside the model and need a higher Detail to look sharp.",
+  img2imgStrength:
+    "How much the new image may differ from the starting image (called denoising strength in Forge). Low values keep the picture and change details; high values keep only the rough layout and colors. 0.4 to 0.6 suits most changes.",
   hiresDenoise:
     "How much the second pass may change the image (called denoising strength in Forge). Low keeps it close to the original; high adds more detail but can alter faces, hands or the composition. 0.3 to 0.5 suits most images.",
   checkpointMemory:

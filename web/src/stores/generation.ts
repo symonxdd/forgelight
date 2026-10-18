@@ -2,10 +2,12 @@ import { forgePost } from "../api/client";
 import { request, type LoadingState, type ModelEntry } from "../api/forgelight";
 import { queryClient } from "../api/queryClient";
 import { randomTaskId } from "../lib/format";
+import { buildImg2imgRequest } from "../lib/img2img";
 import { nextLoadStep } from "../lib/progress";
 import { buildTxt2imgRequest, friendlyError, hiresSize, parseTxt2imgResult } from "../lib/txt2img";
 import { useSession, type Job, type JobPhase, type SessionImage } from "./session";
 import { currentSettings } from "./settings";
+import { useStartImage } from "./startImage";
 
 const POLL_MS = 400;
 
@@ -85,6 +87,8 @@ export function isRunning(): boolean {
 export async function generate(): Promise<void> {
   if (isRunning()) return;
   const settings = withInstalledLoras(currentSettings());
+  // With a starting image attached, Generate makes a new version of it (img2img, no hires fix).
+  const startImage = useStartImage.getState().image;
   const taskId = randomTaskId();
   const { setJob, addImages } = useSession.getState();
 
@@ -99,7 +103,8 @@ export async function generate(): Promise<void> {
     width: settings.width,
     height: settings.height,
     batchCount: settings.batchCount,
-    hires: settings.hiresEnabled ? hiresSize(settings.width, settings.height, settings.hiresScale) : null,
+    hires:
+      settings.hiresEnabled && !startImage ? hiresSize(settings.width, settings.height, settings.hiresScale) : null,
     loading: null,
     loadingKnown: false,
     stopping: false,
@@ -107,7 +112,9 @@ export async function generate(): Promise<void> {
   const stopPolling = pollProgress(taskId);
 
   try {
-    const result = await forgePost("/sdapi/v1/txt2img", buildTxt2imgRequest(settings, taskId));
+    const result = startImage
+      ? await forgePost("/sdapi/v1/img2img", buildImg2imgRequest(settings, startImage.dataUrl, taskId))
+      : await forgePost("/sdapi/v1/txt2img", buildTxt2imgRequest(settings, taskId));
     const images: SessionImage[] = parseTxt2imgResult(result?.images ?? [], result?.info ?? "").map((img) => ({
       id: crypto.randomUUID(),
       url: base64ToObjectUrl(img.base64),

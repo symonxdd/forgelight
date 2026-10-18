@@ -90,6 +90,39 @@ export const settings: GuideChapter = {
       keywords: ["hires", "high resolution", "upscale", "denoising strength", "detail", "second pass"],
     },
     {
+      id: "image-to-image",
+      title: "Image to image",
+      summary:
+        "Starts from an existing image instead of pure noise, and makes a new version of it guided by the prompt. Often called img2img.",
+      table: {
+        head: ["Strength", "Result"],
+        rows: [
+          ["0.2 to 0.35", "Small touch-ups: cleaner details, same picture"],
+          ["0.4 to 0.6", "A clear variation: same layout, new details and style"],
+          ["0.65 to 0.85", "A new take: rough layout and colors stay"],
+          ["0.9 and more", "Little of the starting image remains"],
+        ],
+      },
+      points: [
+        "Strength is called denoising strength in Forge: how much noise is added to the starting image before it is redrawn.",
+        "The prompt should describe the result, including what stays the same.",
+        "The new image takes the starting image's shape, at the checkpoint's native size.",
+        "Hires fix is not available here. For a larger result, use a larger size or upscale afterwards.",
+      ],
+      forgelight:
+        "Attach an image with the image button in the prompt card, by dropping or pasting it, or with Use as starting image on any result or Library image. Removing it goes back to text to image.",
+      related: ["settings/size", "settings/seed"],
+      keywords: [
+        "img2img",
+        "image to image",
+        "starting image",
+        "init image",
+        "denoising strength",
+        "strength",
+        "variation",
+      ],
+    },
+    {
       id: "clip-skip",
       title: "Clip skip",
       summary:

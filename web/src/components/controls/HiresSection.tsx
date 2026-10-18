@@ -3,6 +3,7 @@ import { useUpscalers } from "../../api/queries";
 import { HELP, HELP_NOTES } from "../../lib/help";
 import { hiresSize } from "../../lib/txt2img";
 import { useSettings } from "../../stores/settings";
+import { useStartImage } from "../../stores/startImage";
 import { Toggle } from "../Toggle";
 import { NumberSlider } from "./NumberSlider";
 import { Section } from "./Section";
@@ -20,21 +21,28 @@ export function HiresSection() {
   const upscalers = useUpscalers();
   const target = hiresSize(s.width, s.height, s.hiresScale);
   const enabled = s.hiresEnabled;
+  const hasStartImage = useStartImage((st) => st.image !== null);
 
   return (
     <Section
       title="Hires fix"
       icon={Expand}
       help={HELP.hiresFix}
-      summary={enabled ? `${s.hiresScale}× · ${target.width} × ${target.height}` : "Off"}
+      summary={hasStartImage ? "Not used" : enabled ? `${s.hiresScale}× · ${target.width} × ${target.height}` : "Off"}
       helpNote={HELP_NOTES.hiresFix}
       // The switch and the folding are independent: each does only its own thing.
       open={s.openSections.hires}
       onOpenChange={(open) => s.setSectionOpen("hires", open)}
       action={<Toggle checked={enabled} onChange={(hiresEnabled) => s.update({ hiresEnabled })} label="Hires fix" />}
     >
-      {!enabled && (
-        <p className="text-[12.5px] leading-relaxed text-muted">Off. These settings apply once it is switched on.</p>
+      {hasStartImage ? (
+        <p className="text-[12.5px] leading-relaxed text-muted">
+          Not used while a starting image is attached: image to image has no hires fix in Forge.
+        </p>
+      ) : (
+        !enabled && (
+          <p className="text-[12.5px] leading-relaxed text-muted">Off. These settings apply once it is switched on.</p>
+        )
       )}
       <div className="flex flex-col gap-1.5">
         <NumberSlider
