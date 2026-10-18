@@ -1,17 +1,19 @@
-# Builds the interface for every push to main and publishes a ready-to-install copy to the
-# "release" branch. Main holds source only, so each of its commits is consistent; each
-# release commit is main at one commit plus its built interface (page/), named after it.
-name: Release build
+# Releases a version when its tag (such as v0.2.0) is pushed:
+#   1. checks and builds the interface (page/), which main never contains;
+#   2. puts the ready-to-run copy (main at the tag, plus page/) on the "release" branch,
+#      which Forge's Install from URL and git clone use;
+#   3. creates the GitHub release "Forgelight 0.2.0" with its CHANGELOG section and the
+#      same copy as forgelight-0.2.0.zip.
+name: Release
 
 on:
   push:
-    branches: [main]
-  workflow_dispatch:
+    tags: ["v*.*.*"]
 
 permissions:
   contents: write
 
-# One at a time, in push order, so the release branch never skips back.
+# One release at a time, in order, so the release branch never skips back.
 concurrency:
   group: release
   cancel-in-progress: false
@@ -28,39 +30,56 @@ jobs:
           cache: npm
           cache-dependency-path: web/package-lock.json
 
-      - name: Install
-        working-directory: web
-        run: npm ci
+      - name: Tag matches the version in web/package.json
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          declared=$(node -p "require('./web/package.json').version")
+          if [ "$version" != "$declared" ]; then
+            echo "Tag $GITHUB_REF_NAME does not match version $declared in web/package.json."
+            exit 1
+          fi
+          echo "VERSION=$version" >> "$GITHUB_ENV"
 
-      # A release only goes out when every check passes.
-      - name: Check
+      - name: Check and build
         working-directory: web
         run: |
+          npm ci
           npm run typecheck
           npm run lint
           npm run format:check
           npm test
+          npm run build
 
-      - name: Build
-        working-directory: web
-        run: npm run build
-
-      - name: Publish to the release branch
+      - name: Update the release branch
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           source_commit=$(git rev-parse HEAD)
-          subject=$(git log -1 --format=%s)
           # page/ is ignored on main; the release copy includes it.
           git add --force page
           tree=$(git write-tree)
           parent=""
           if git fetch --depth=1 origin release 2>/dev/null; then
-            if [ "$(git rev-parse FETCH_HEAD^{tree})" = "$tree" ]; then
-              echo "Nothing changed since the last release build."
-              exit 0
-            fi
             parent="-p FETCH_HEAD"
           fi
-          commit=$(git commit-tree "$tree" $parent -m "Release build of ${source_commit:0:7}" -m "$subject" -m "Built from $source_commit on main.")
+          commit=$(git commit-tree "$tree" $parent -m "Forgelight $VERSION" -m "Built from $source_commit ($GITHUB_REF_NAME) on main.")
           git push origin "$commit:refs/heads/release"
+          # The ZIP holds the same files, in a forgelight folder ready to unzip into extensions.
+          git archive --format=zip --prefix=forgelight/ -o "forgelight-$VERSION.zip" "$commit"
+
+      - name: Create the GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # This version's section of CHANGELOG.md, from its heading to the next one.
+          awk -v v="$VERSION" '
+            /^## / { inside = (index($0, v) > 0); next }
+            inside { print }
+          ' CHANGELOG.md > notes.md 2>/dev/null || true
+          {
+            echo "**To install:** download **forgelight-$VERSION.zip** below and unzip it into \`<Forge installation>\\webui\\extensions\`, or use Forge's *Install from URL* with the branch \`release\` (see the README). The *Source code* downloads lack the built interface."
+            echo
+            cat notes.md
+          } > body.md
+          gh release create "$GITHUB_REF_NAME" "forgelight-$VERSION.zip" \
+            --title "Forgelight $VERSION" --notes-file body.md --verify-tag
