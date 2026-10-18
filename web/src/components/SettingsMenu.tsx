@@ -2,7 +2,7 @@ import { Check, ChevronRight, ExternalLink, LoaderCircle, Monitor, Power, Settin
 import { Popover } from "radix-ui";
 import { useState, type ReactNode } from "react";
 import { useCreateDesktopShortcut, useSetOpenOnStart, useStartup } from "../api/forgelight";
-import { useOptions, useSetOptions } from "../api/queries";
+import { useConnection, useOptions, useSetOptions } from "../api/queries";
 import { HELP } from "../lib/help";
 import {
   LIVE_PREVIEW_CHOICES,
@@ -229,6 +229,9 @@ function Startup({ onStopForge }: { onStopForge: () => void }) {
   const createShortcut = useCreateDesktopShortcut();
   const state = startup.data;
   const error = setOpenOnStart.error ?? createShortcut.error;
+  // Forge answers even without its API ("api-off"), and Forgelight's own stop works then too.
+  const connection = useConnection();
+  const forgeRunning = connection === "connected" || connection === "api-off";
 
   return (
     <>
@@ -263,11 +266,12 @@ function Startup({ onStopForge }: { onStopForge: () => void }) {
         <button
           type="button"
           onClick={onStopForge}
+          disabled={!forgeRunning}
           aria-describedby="stop-forge-label"
-          className="flex h-8 w-36 items-center justify-center gap-2 rounded-md border border-line text-[13px] text-fg hover:border-bad hover:text-bad"
+          className="flex h-8 w-36 items-center justify-center gap-2 rounded-md border border-line text-[13px] text-fg enabled:hover:border-bad enabled:hover:text-bad disabled:text-faint"
         >
           <Power className="size-3.5" aria-hidden />
-          Stop
+          {forgeRunning ? "Stop" : "Not running"}
         </button>
       </Row>
       {error && <p className="px-1 text-[12.5px] text-bad">{error.message}</p>}
