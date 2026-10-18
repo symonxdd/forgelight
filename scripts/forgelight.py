@@ -36,7 +36,9 @@ NOT_BUILT = """<!doctype html><meta charset="utf-8"><title>Forgelight</title>
 <body style="font:16px system-ui,sans-serif;max-width:36rem;margin:15vh auto;padding:0 20px">
 <h1 style="font-size:1.4rem">Forgelight isn't built yet</h1>
 <p>The interface files are missing from this extension's <code>page</code> folder.
-Run <code>npm run build</code> in its <code>web</code> folder, then reload this page.</p>
+This happens when Forgelight was installed from its <code>main</code> branch, which holds
+source code only. Install it from the <code>release</code> branch instead, or run
+<code>npm run build</code> in its <code>web</code> folder, then reload this page.</p>
 </body>"""
 
 
