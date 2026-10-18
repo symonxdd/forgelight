@@ -117,6 +117,11 @@ export function useCreateDesktopShortcut() {
   });
 }
 
+/** Shuts Forge down. The reply comes back before Forge exits. */
+export function useStopForge() {
+  return useMutation({ mutationFn: () => request<{ ok: boolean }>("forge/stop", {}) });
+}
+
 /** Asks Forge to rescan its Lora folder (new downloads), then reloads the list shown here. */
 export function useRefreshLoras() {
   const queryClient = useQueryClient();

@@ -50,6 +50,8 @@ export const HELP = {
     "When Forge starts, it opens Forgelight in the browser instead of the classic Forge page. Turning this off restores Forge's own behavior.",
   desktopShortcut:
     "A Forgelight icon on the desktop. Double-clicking it starts Forge with its API switched on and opens Forgelight. If Forge is already running, it just opens Forgelight.",
+  stopForge:
+    "Shuts Forge down, the same as pressing Ctrl+C in its window. When the desktop shortcut started Forge, its window closes too. Starting again works with the desktop shortcut.",
   civitaiSite:
     "Which address Civitai links open on. Both show the same models and pages; civitai.red also shows mature preview images.",
   civitai:

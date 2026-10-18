@@ -1,4 +1,4 @@
-import { Check, ChevronRight, ExternalLink, LoaderCircle, Monitor, Settings } from "lucide-react";
+import { Check, ChevronRight, ExternalLink, LoaderCircle, Monitor, Power, Settings } from "lucide-react";
 import { Popover } from "radix-ui";
 import { useState, type ReactNode } from "react";
 import { useCreateDesktopShortcut, useSetOpenOnStart, useStartup } from "../api/forgelight";
@@ -27,6 +27,7 @@ import { Signature } from "./about/Signature";
 import { IconButton } from "./IconButton";
 import { InfoTip } from "./InfoTip";
 import { SelectMenu, type MenuOption } from "./SelectMenu";
+import { StopForgeDialog } from "./StopForgeDialog";
 import { Toggle } from "./Toggle";
 
 /** A compact dropdown for the settings menu. */
@@ -222,7 +223,7 @@ function Civitai() {
   );
 }
 
-function Startup() {
+function Startup({ onStopForge }: { onStopForge: () => void }) {
   const startup = useStartup();
   const setOpenOnStart = useSetOpenOnStart();
   const createShortcut = useCreateDesktopShortcut();
@@ -258,6 +259,17 @@ function Startup() {
           {state?.desktopShortcut ? "Recreate" : "Create"}
         </button>
       </Row>
+      <Row id="stop-forge-label" label="Stop Forge" help={HELP.stopForge}>
+        <button
+          type="button"
+          onClick={onStopForge}
+          aria-describedby="stop-forge-label"
+          className="flex h-8 w-36 items-center justify-center gap-2 rounded-md border border-line text-[13px] text-fg hover:border-bad hover:text-bad"
+        >
+          <Power className="size-3.5" aria-hidden />
+          Stop
+        </button>
+      </Row>
       {error && <p className="px-1 text-[12.5px] text-bad">{error.message}</p>}
     </>
   );
@@ -266,6 +278,7 @@ function Startup() {
 export function SettingsMenu() {
   const [open, setOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
+  const [stopOpen, setStopOpen] = useState(false);
   return (
     <>
       <Popover.Root open={open} onOpenChange={setOpen}>
@@ -317,7 +330,12 @@ export function SettingsMenu() {
             <Divider />
             <Civitai />
             <Divider />
-            <Startup />
+            <Startup
+              onStopForge={() => {
+                setOpen(false);
+                setStopOpen(true);
+              }}
+            />
             <Divider />
             <div className="flex items-center px-1 py-1">
               <a
@@ -337,6 +355,7 @@ export function SettingsMenu() {
         </Popover.Portal>
       </Popover.Root>
       <AboutDialog open={aboutOpen} onOpenChange={setAboutOpen} />
+      <StopForgeDialog open={stopOpen} onOpenChange={setStopOpen} />
     </>
   );
 }
