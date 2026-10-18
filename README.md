@@ -31,7 +31,7 @@ Open `<Forge installation>\webui\webui-user.bat` in a text editor, change `set C
 
 ## Installation & how to use
 
-Install the latest released version, from the `release` branch or as a ZIP. The `main` branch holds source code only and does not run on its own.
+Each of the three ways below installs the latest released version. The `main` branch holds source code only and does not run on its own.
 
 1. **From Forge (easiest):** open **Extensions → Install from URL**, paste `https://github.com/symonxdd/forgelight`, type `release` under **Specific branch name** and click **Install**.
 2. **With Git:** inside `<Forge installation>\webui\extensions`, run `git clone -b release https://github.com/symonxdd/forgelight`.
@@ -57,9 +57,9 @@ Each version is listed on the [Releases page](https://github.com/symonxdd/forgel
 
 ## License
 
-Forgelight is free software under the [GNU Affero General Public License v3.0](LICENSE), the license Forge itself uses.
+Forgelight is free software under the [AGPL-3.0](LICENSE), the same license Forge uses.
 
-The name "Forgelight" and its logo are not covered by that license. Modified versions must use a different name and logo, as allowed by section 7(e) of the license.
+The license covers the code, not the name "Forgelight" or its logo. Modified versions may not use either and need a name and logo of their own (see section 7(e) of the license).
 
 ## Development
 
