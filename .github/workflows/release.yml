@@ -1,0 +1,66 @@
+# Builds the interface for every push to main and publishes a ready-to-install copy to the
+# "release" branch. Main holds source only, so each of its commits is consistent; each
+# release commit is main at one commit plus its built interface (page/), named after it.
+name: Release build
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+# One at a time, in push order, so the release branch never skips back.
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+
+      - name: Install
+        working-directory: web
+        run: npm ci
+
+      # A release only goes out when every check passes.
+      - name: Check
+        working-directory: web
+        run: |
+          npm run typecheck
+          npm run lint
+          npm run format:check
+          npm test
+
+      - name: Build
+        working-directory: web
+        run: npm run build
+
+      - name: Publish to the release branch
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          source_commit=$(git rev-parse HEAD)
+          subject=$(git log -1 --format=%s)
+          # page/ is ignored on main; the release copy includes it.
+          git add --force page
+          tree=$(git write-tree)
+          parent=""
+          if git fetch --depth=1 origin release 2>/dev/null; then
+            if [ "$(git rev-parse FETCH_HEAD^{tree})" = "$tree" ]; then
+              echo "Nothing changed since the last release build."
+              exit 0
+            fi
+            parent="-p FETCH_HEAD"
+          fi
+          commit=$(git commit-tree "$tree" $parent -m "Release build of ${source_commit:0:7}" -m "$subject" -m "Built from $source_commit on main.")
+          git push origin "$commit:refs/heads/release"
