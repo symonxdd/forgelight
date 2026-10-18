@@ -69,7 +69,19 @@ def set_open_on_start(enabled: bool) -> dict:
 LAUNCH_ENV = "FORGELIGHT_LAUNCH"
 
 
+# "2": the launcher runs from a copy. "1": an older launcher that runs the file itself.
+LAUNCH_FROM_COPY = "2"
+
+
 def started_from_shortcut() -> bool:
+    return os.environ.get(LAUNCH_ENV) in ("1", LAUNCH_FROM_COPY)
+
+
+def _launcher_in_use() -> bool:
+    """An older launcher started this Forge and reads its file until Forge exits.
+
+    Windows reads a running batch file line by line from disk, so rewriting it now would
+    make that window run pieces of the new file when Forge stops (even start Forge again)."""
     return os.environ.get(LAUNCH_ENV) == "1"
 
 
@@ -176,14 +188,24 @@ def _banner() -> list[str]:
     return [f"echo   {line}" if line else "echo." for line in lines]
 
 
+RUNNING_COPY = "start-forgelight.running.bat"
+
+
 def _launcher_text() -> str:
     webui, package = _forge_paths()
     url = f"http://127.0.0.1:{_port()}/forgelight/"
+    # Moves up to the line Forge's closing pause printed and clears it, so a clear
+    # Forgelight message takes its place.
+    replace_last_line = f"{ESC}[1A{ESC}[2K"
     lines = [
         "@echo off",
-        "title Forgelight",
         "rem Created by Forgelight. Starts Forge with its API switched on;",
         "rem Forgelight opens in the browser once Forge is ready.",
+        "rem It runs from a copy: Windows reads a running batch file line by line from disk,",
+        "rem and Forgelight updates this file when Forge starts.",
+        f'if /i not "%~nx0"=="{RUNNING_COPY}" '
+        f'(copy /y "%~f0" "%~dp0{RUNNING_COPY}" >nul & "%~dp0{RUNNING_COPY}" & exit /b)',
+        "title Forgelight",
         f'curl.exe -s -o NUL -m 2 "{url}api/status" && (start "" "{url}" & exit /b)',
         *_banner(),
     ]
@@ -192,17 +214,23 @@ def _launcher_text() -> str:
     lines += [
         f'cd /d "{webui}"',
         f"set COMMANDLINE_ARGS={_user_args(webui)}",
-        f"set {LAUNCH_ENV}=1",
-        "rem Forge's closing pause gets no input, so the window closes when Forgelight",
-        "rem stops Forge (exit code 0). After errors or Ctrl+C it stays open to read.",
+        f"set {LAUNCH_ENV}={LAUNCH_FROM_COPY}",
+        "rem Forge's closing pause gets no input, so it does not wait. Exit code 0 means",
+        "rem Forgelight stopped Forge: confirm and close. Otherwise keep the window to read.",
         "call webui.bat < nul",
-        "if %errorlevel% neq 0 (echo. & echo Forge stopped. Press any key to close this window. & pause >nul)",
+        f"if %errorlevel% equ 0 (echo {replace_last_line}[Forgelight] Forge has shut down. "
+        # Windows' own timeout: Forge's environment may put another program by that name first.
+        'This window closes in 3 seconds. & "%SystemRoot%\\System32\\timeout.exe" /t 3 /nobreak >nul & exit /b)',
+        f"echo {replace_last_line}[Forgelight] Forge stopped. Press any key to close this window.",
+        "pause >nul",
         "",
     ]
     return "\r\n".join(lines)
 
 
 def write_launcher() -> Path:
+    if _launcher_in_use():
+        return LAUNCHER
     DATA.mkdir(exist_ok=True)
     LAUNCHER.write_bytes(_launcher_text().encode("utf-8"))
     return LAUNCHER
@@ -213,6 +241,8 @@ def refresh_launcher() -> None:
 
     The desktop shortcut only points at this file, so it picks up the changes without
     being recreated. Writes nothing unless the user created the shortcut before."""
+    if _launcher_in_use():
+        return
     if LAUNCHER.is_file() and LAUNCHER.read_bytes() != _launcher_text().encode("utf-8"):
         write_launcher()
 
