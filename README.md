@@ -31,15 +31,15 @@ Open `<Forge installation>\webui\webui-user.bat` in a text editor, change `set C
 
 ## Installation & how to use
 
-Each of the three ways below installs the latest released version. The `main` branch holds source code only and does not run on its own.
+Each of the three ways below installs the latest released version, ready to run. The `main` branch holds the source code, which needs a build before Forge can use it (see [docs/architecture.md](docs/architecture.md)).
 
 1. **From Forge (easiest):** open **Extensions → Install from URL**, paste `https://github.com/symonxdd/forgelight`, type `release` under **Specific branch name** and click **Install**.
 2. **With Git:** inside `<Forge installation>\webui\extensions`, run `git clone -b release https://github.com/symonxdd/forgelight`.
 3. **As a ZIP:** on the [Releases page](https://github.com/symonxdd/forgelight/releases), download `forgelight-<version>.zip` (not the *Source code* files) and unzip it into `<Forge installation>\webui\extensions`.
 
-Then restart Forge: close its black console window and start Forge again the usual way. Forgelight is now at `http://127.0.0.1:7860/forgelight`.
+Then restart Forge: close the terminal window where Forge is running, and start Forge again the usual way. Forgelight is now at `http://127.0.0.1:7860/forgelight`.
 
-From there, the settings menu's **Desktop shortcut** creates a shortcut that starts Forge with its API switched on and opens Forgelight. Its **Guide** screen explains models, settings and prompting.
+In Forgelight's settings menu (the gear icon), the **Desktop shortcut** button puts a Forgelight shortcut on the desktop. Starting Forge with that shortcut switches the API on and opens Forgelight. The **Guide** screen explains models, settings and prompting.
 
 ## Nice to know
 
