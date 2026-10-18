@@ -10,6 +10,7 @@ import { ThemeSwitch } from "./ThemeSwitch";
 const VIEWS: { id: View; label: string }[] = [
   { id: "generate", label: "Generate" },
   { id: "library", label: "Library" },
+  { id: "guide", label: "Guide" },
 ];
 
 function ViewSwitch() {

@@ -1,9 +1,12 @@
 import { create } from "zustand";
 
-export type View = "generate" | "library";
+export type View = "generate" | "library" | "guide";
 
 function fromAddress(): View {
-  return window.location.hash === "#library" ? "library" : "generate";
+  const { hash } = window.location;
+  if (hash === "#library") return "library";
+  if (hash === "#guide" || hash.startsWith("#guide/")) return "guide";
+  return "generate";
 }
 
 interface ViewState {
@@ -17,7 +20,7 @@ export const useView = create<ViewState>((set, get) => ({
   setView: (view) => {
     if (view === get().view) return;
     const { pathname, search } = window.location;
-    window.history.pushState(null, "", view === "library" ? "#library" : `${pathname}${search}`);
+    window.history.pushState(null, "", view === "generate" ? `${pathname}${search}` : `#${view}`);
     set({ view });
   },
 }));

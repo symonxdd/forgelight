@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { generate, interrupt, isRunning, skip } from "../stores/generation";
 import { useSession } from "../stores/session";
+import { useView } from "../stores/view";
 import { toggleFullscreen, useViewer } from "../stores/viewer";
 
 function isTyping(target: EventTarget | null): boolean {
@@ -47,6 +48,8 @@ export function useShortcuts() {
         return;
       }
 
+      // The guide has no viewer; arrow keys there scroll the page.
+      if (useView.getState().view === "guide") return;
       if (isTyping(event.target) || !viewerHasKeyboard(event.target)) return;
       if (event.ctrlKey || event.metaKey || event.altKey) return;
       const viewer = useViewer.getState();
