@@ -32,7 +32,7 @@ export function Guide() {
     shown.current = { page, searching };
     if (focusTopic) {
       document.getElementById(`topic-${focusTopic}`)?.scrollIntoView({ block: "start" });
-      markFocused();
+      markFocused(focusTopic);
     } else if (changed) {
       main.current?.scrollTo({ top: 0 });
     }

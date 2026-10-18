@@ -1,6 +1,7 @@
 import { Tooltip } from "radix-ui";
 import { useConnection } from "./api/queries";
 import { Guide } from "./components/guide/Guide";
+import { GuidePeek } from "./components/guide/GuidePeek";
 import { Library } from "./components/library/Library";
 import { TopBar } from "./components/TopBar";
 import { Workspace } from "./components/Workspace";
@@ -18,6 +19,7 @@ export function App() {
       <div className="flex h-full flex-col">
         <TopBar connection={connection} />
         {view === "library" ? <Library /> : view === "guide" ? <Guide /> : <Workspace connection={connection} />}
+        <GuidePeek />
       </div>
     </Tooltip.Provider>
   );

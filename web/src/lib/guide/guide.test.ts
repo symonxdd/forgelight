@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { CHAPTERS, GLOSSARY, findTopic } from ".";
+import { HELP } from "../help";
+import { HELP_TOPICS, guideTopicFor } from "./helpLinks";
 import { searchGuide } from "./search";
 
 const ids = (query: string) => searchGuide(query, CHAPTERS).map((h) => `${h.chapter.id}/${h.topic.id}`);
@@ -9,6 +11,7 @@ describe("guide content", () => {
     const refs = [
       ...CHAPTERS.flatMap((c) => c.topics.flatMap((t) => t.related ?? [])),
       ...GLOSSARY.map((g) => g.topic),
+      ...Object.values(HELP_TOPICS),
     ];
     expect(refs.filter((ref) => findTopic(ref) === null)).toEqual([]);
   });
@@ -31,6 +34,13 @@ describe("guide content", () => {
     const text = JSON.stringify([CHAPTERS, GLOSSARY]);
     expect(text).not.toMatch(/[–—]/);
     expect(text).not.toMatch(/\b(you|your|we|our)\b/i);
+  });
+});
+
+describe("guideTopicFor", () => {
+  it("finds the topic for an info tip's text", () => {
+    expect(guideTopicFor(HELP.cfgScale)).toBe("settings/cfg-scale");
+    expect(guideTopicFor(HELP.font)).toBeUndefined();
   });
 });
 

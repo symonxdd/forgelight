@@ -20,8 +20,12 @@ interface GuideState {
   /** Opens a page, or a topic given as "chapter/topic". Clears the search. */
   open: (target: string) => void;
   setQuery: (query: string) => void;
+  /** A topic shown in the side panel over the current screen, opened from an info tip. */
+  peek: string | null;
+  openPeek: (topic: string) => void;
+  closePeek: () => void;
   /** Called once the topic is in view: it stays outlined until clearHighlight. */
-  markFocused: () => void;
+  markFocused: (topic: string) => void;
   clearHighlight: () => void;
 }
 
@@ -30,6 +34,7 @@ export const useGuide = create<GuideState>((set) => ({
   query: "",
   focusTopic: null,
   highlighted: null,
+  peek: null,
   open: (target) => {
     const [page, topic] = target.split("/");
     if (!page || !PAGES.has(page)) return;
@@ -38,7 +43,9 @@ export const useGuide = create<GuideState>((set) => ({
     set({ page, query: "", focusTopic: topic ?? null });
   },
   setQuery: (query) => set({ query }),
-  markFocused: () => set((s) => ({ focusTopic: null, highlighted: s.focusTopic })),
+  openPeek: (topic) => set({ peek: topic }),
+  closePeek: () => set({ peek: null }),
+  markFocused: (topic) => set({ focusTopic: null, highlighted: topic }),
   clearHighlight: () => set({ highlighted: null }),
 }));
 

@@ -65,8 +65,7 @@ function Table({ table }: { table: GuideTable }) {
   );
 }
 
-function Related({ refs }: { refs: string[] }) {
-  const open = useGuide((s) => s.open);
+function Related({ refs, onOpen }: { refs: string[]; onOpen: (ref: string) => void }) {
   return (
     <div className="flex flex-wrap items-center gap-1.5">
       <span className="mr-1 text-[12px] text-faint">Related</span>
@@ -77,7 +76,7 @@ function Related({ refs }: { refs: string[] }) {
           <button
             key={ref}
             type="button"
-            onClick={() => open(ref)}
+            onClick={() => onOpen(ref)}
             className="h-7 rounded-md border border-line px-2.5 text-[12.5px] text-muted hover:border-line-strong hover:text-fg-strong"
           >
             {found.topic.title}
@@ -89,17 +88,28 @@ function Related({ refs }: { refs: string[] }) {
 }
 
 /** One topic: the summary on its own answers the question, the rest adds detail. */
-export function TopicCard({ topic, highlighted }: { topic: GuideTopic; highlighted: boolean }) {
+interface TopicCardProps {
+  topic: GuideTopic;
+  highlighted?: boolean;
+  /** Where Related links lead; the guide screen by default, the same panel in the side panel. */
+  onOpenTopic?: (ref: string) => void;
+  /** Whether the card carries the id that topic links scroll to. Off in the side panel. */
+  anchor?: boolean;
+}
+
+export function TopicCard({ topic, highlighted = false, onOpenTopic, anchor = true }: TopicCardProps) {
+  const openInGuide = useGuide((s) => s.open);
+  const titleId = `topic-${topic.id}-title${anchor ? "" : "-peek"}`;
   return (
     <section
-      id={`topic-${topic.id}`}
-      aria-labelledby={`topic-${topic.id}-title`}
+      id={anchor ? `topic-${topic.id}` : undefined}
+      aria-labelledby={titleId}
       className={`flex scroll-mt-6 flex-col gap-4 rounded-xl border bg-surface p-5 text-[13.5px] leading-relaxed text-fg ${
         highlighted ? "border-accent" : "border-line"
       }`}
     >
       <div className="flex flex-col gap-1.5">
-        <h2 id={`topic-${topic.id}-title`} className="text-[15px] font-semibold tracking-tight text-fg-strong">
+        <h2 id={titleId} className="text-[15px] font-semibold tracking-tight text-fg-strong">
           {topic.title}
         </h2>
         <p className="text-[14px] text-fg-strong/90">{topic.summary}</p>
@@ -127,7 +137,9 @@ export function TopicCard({ topic, highlighted }: { topic: GuideTopic; highlight
           )}
         </div>
       )}
-      {topic.related && topic.related.length > 0 && <Related refs={topic.related} />}
+      {topic.related && topic.related.length > 0 && (
+        <Related refs={topic.related} onOpen={onOpenTopic ?? openInGuide} />
+      )}
     </section>
   );
 }

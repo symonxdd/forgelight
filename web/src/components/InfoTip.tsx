@@ -1,5 +1,7 @@
 import { Info } from "lucide-react";
 import { Tooltip } from "radix-ui";
+import { guideTopicFor } from "../lib/guide/helpLinks";
+import { useGuide } from "../stores/guide";
 import { useTooltipOpen } from "./tooltipFocus";
 
 interface InfoTipProps {
@@ -12,17 +14,26 @@ interface InfoTipProps {
   side?: "top" | "right" | "bottom" | "left";
 }
 
-/** A small info icon that explains a setting on hover or keyboard focus. */
+/**
+ * A small info icon that explains a setting on hover or keyboard focus. When the guide
+ * covers the setting, clicking the icon opens that topic in the guide's side panel.
+ */
 export function InfoTip({ topic, text, note, side = "right" }: InfoTipProps) {
   const tip = useTooltipOpen();
+  const openPeek = useGuide((s) => s.openPeek);
+  const guide = guideTopicFor(text);
   return (
     <Tooltip.Root {...tip.root}>
       <Tooltip.Trigger asChild {...tip.trigger}>
         <button
           type="button"
-          aria-label={`About ${topic}`}
+          aria-label={guide ? `About ${topic}, click for more in the guide` : `About ${topic}`}
           className="inline-grid size-4 shrink-0 place-items-center rounded-full text-faint hover:text-fg focus-visible:text-fg"
-          onClick={(e) => e.preventDefault()}
+          onClick={(e) => {
+            // Inside a label, a click would otherwise focus or toggle the labeled control.
+            e.preventDefault();
+            if (guide) openPeek(guide);
+          }}
         >
           <Info className="size-3.5" aria-hidden />
         </button>
@@ -36,6 +47,7 @@ export function InfoTip({ topic, text, note, side = "right" }: InfoTipProps) {
         >
           {text}
           {note && <span className="mt-2 block text-[11.5px] leading-relaxed text-muted">{note}</span>}
+          {guide && <span className="mt-2 block text-[11.5px] text-faint">Click for more</span>}
         </Tooltip.Content>
       </Tooltip.Portal>
     </Tooltip.Root>
