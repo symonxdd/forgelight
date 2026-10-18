@@ -1,7 +1,8 @@
 # Releases a version when its tag (such as v0.2.0) is pushed:
 #   1. checks and builds the interface (page/), which main never contains;
-#   2. puts the ready-to-run copy (main at the tag, plus page/) on the "release" branch,
-#      which Forge's Install from URL and git clone use;
+#   2. puts the ready-to-run copy on the "release" branch, which Forge's Install from URL
+#      and git clone use. It holds only what runs: the Python code, the built page/, the
+#      assets, README, CHANGELOG and license; no interface source code or docs;
 #   3. creates the GitHub release "Forgelight 0.2.0" with its CHANGELOG section and the
 #      same copy as forgelight-0.2.0.zip.
 name: Release
@@ -55,9 +56,14 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           source_commit=$(git rev-parse HEAD)
-          # page/ is ignored on main; the release copy includes it.
-          git add --force page
+          # Only what runs, assembled in a separate index. page/ is ignored on main, hence --force.
+          export GIT_INDEX_FILE="$RUNNER_TEMP/release-index"
+          git read-tree --empty
+          for path in scripts forgelight_backend page assets README.md CHANGELOG.md LICENSE .gitignore; do
+            if [ -e "$path" ]; then git add --force "$path"; fi
+          done
           tree=$(git write-tree)
+          unset GIT_INDEX_FILE
           parent=""
           if git fetch --depth=1 origin release 2>/dev/null; then
             parent="-p FETCH_HEAD"
