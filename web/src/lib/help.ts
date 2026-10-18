@@ -69,7 +69,8 @@ export const HELP = {
  * how to say it, spelled with everyday words rather than phonetic symbols.
  */
 export const HELP_NOTES = {
-  addStartImage: "Works with PNG, JPEG, WebP, BMP and GIF (its first frame). TIFF and SVG files are not supported.",
+  addStartImage:
+    "Works with PNG, JPEG, WebP, BMP and GIF (its first frame). TIFF, SVG and HEIC (iPhone photos) are not supported.",
   checkpoint:
     "Why the name: while a model is trained, its progress is saved at regular points, much like save points in a game. Each saved file is a checkpoint, a snapshot of everything the model has learned up to that moment. The file picked here is one of those snapshots.",
   sampling:

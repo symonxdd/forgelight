@@ -65,6 +65,15 @@ async function toPng(blob: Blob): Promise<StartImage> {
   return { url: URL.createObjectURL(png), dataUrl: await blobToDataUrl(png), width, height };
 }
 
+/** Why an image couldn't be opened. HEIC, the usual iPhone photo format, gets its own hint. */
+function unreadableMessage(blob: Blob): string {
+  const name = blob instanceof File ? blob.name.toLowerCase() : "";
+  if (/hei[cf]/.test(blob.type) || /\.hei[cf]$/.test(name)) {
+    return "HEIC photos, as iPhones take them, can't be opened in the browser. Save it as JPEG or PNG first.";
+  }
+  return "That file isn't an image Forgelight can open.";
+}
+
 /** The selected checkpoint's model family, if known, for its native size. */
 function currentArch(): string | undefined {
   const options = queryClient.getQueryData<Record<string, unknown>>(["options"]);
@@ -87,7 +96,7 @@ export async function attachStartImage(blob: Blob, confirmation?: string): Promi
   try {
     image = await toPng(blob);
   } catch {
-    session.setNotice({ tone: "warning", text: "That file isn't an image Forgelight can open." });
+    session.setNotice({ tone: "warning", text: unreadableMessage(blob) });
     return;
   }
   const previous = useStartImage.getState();
