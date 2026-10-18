@@ -63,9 +63,8 @@ export function SizeSection() {
         {SIZE_PRESETS.map((p) => {
           const active = p === preset;
           return (
-            <Hint label={`${p.width} × ${p.height}`}>
+            <Hint key={p.label} label={`${p.width} × ${p.height}`}>
               <button
-                key={p.label}
                 type="button"
                 role="radio"
                 aria-checked={active}
