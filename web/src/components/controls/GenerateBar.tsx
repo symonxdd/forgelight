@@ -21,7 +21,11 @@ function BatchStepper() {
   return (
     <Tooltip.Root {...tip.root}>
       <Tooltip.Trigger asChild {...tip.trigger}>
-        <div role="group" aria-label="Number of images" className="flex h-9 items-center rounded-lg border border-line">
+        <div
+          role="group"
+          aria-label="Number of images"
+          className="flex h-9 items-center rounded-lg border border-line px-1"
+        >
           <button
             type="button"
             className={button}
