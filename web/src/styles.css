@@ -180,6 +180,41 @@
   animation: collapsible-close 180ms cubic-bezier(0.4, 0, 1, 1);
 }
 
+/* The guide's chapter lists: one closes while another opens, so both share one duration and
+   one curve. The closing list then shrinks exactly as fast as the opening one grows, and the
+   chapters below glide instead of bouncing. */
+@keyframes guide-list-open {
+  from {
+    height: 0;
+    opacity: 0;
+  }
+  to {
+    height: var(--radix-collapsible-content-height);
+    opacity: 1;
+  }
+}
+@keyframes guide-list-close {
+  from {
+    height: var(--radix-collapsible-content-height);
+    opacity: 1;
+  }
+  to {
+    height: 0;
+    opacity: 0;
+  }
+}
+.guide-list[data-state="open"] {
+  animation: guide-list-open 280ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+.guide-list[data-state="closed"] {
+  animation: guide-list-close 280ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+@media (prefers-reduced-motion: reduce) {
+  .guide-list[data-state] {
+    animation: none;
+  }
+}
+
 /* Thin, quiet scrollbars: a slim rounded thumb, no track or arrows. */
 ::-webkit-scrollbar {
   width: 8px;

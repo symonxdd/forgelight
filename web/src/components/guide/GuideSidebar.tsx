@@ -81,7 +81,7 @@ export function GuideSidebar() {
             <Collapsible.Root key={chapter.id} open={active}>
               <PageButton id={chapter.id} title={chapter.title} icon={chapter.icon} active={active} />
               {/* Slides open and shut, so switching chapters reads as one list giving way to the next. */}
-              <Collapsible.Content className="collapsible overflow-hidden">
+              <Collapsible.Content className="guide-list overflow-hidden">
                 <ul className="mt-0.5 mb-1.5 ml-[17px] flex flex-col border-l border-line">
                   {chapter.topics.map((topic) => {
                     const reading = active && topic.id === activeTopic;
