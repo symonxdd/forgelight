@@ -9,7 +9,7 @@ The `main` branch holds source code only; the built interface (`page/`) is never
 - Past tense, describing the result: "Added a fullscreen viewer".
 - What changed for a person using Forgelight, never which file moved. Refactors, comment fixes and docs changes are left out.
 - Calm, neutral prose, without "you", "I" or "we".
-- Subsections `### 🆕 New`, `### 🐛 Fixed` and `### ✨ Improved`, in that order, only those with entries.
+- Subsections `### 🌱 New`, `### 🩹 Fixed` and `### 🌿 Improved`, in that order, only those with entries.
 - The opening sentence of the headline item in bold, then a short explanation.
 
 **The release type** follows [semantic versioning](https://semver.org):

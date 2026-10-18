@@ -4,9 +4,7 @@
 
 ## 1.0.0 (2026-10-18)
 
-**Forgelight 1.0.0 is the first release: a calm, minimal interface for Stable Diffusion WebUI Forge.** It runs inside Forge as an [extension](https://github.com/AUTOMATIC1111/stable-diffusion-webui/wiki/Extensions), at `http://127.0.0.1:7860/forgelight`, and generates images through Forge's own API, so the results match the classic page exactly. The classic page stays available for everything Forgelight does not cover (yet).
-
-### 🆕 New
+### 🌱 New
 
 - **Generate screen.** The image sits front and center, with the prompt card beneath it and Size, Sampling and Hires fix in a slim column beside it. Long prompts stay compact until clicked.
 - **LoRAs.** A picker with strengths, trigger words and details from Civitai, shown as chips in the prompt card.

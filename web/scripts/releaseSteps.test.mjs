@@ -5,7 +5,7 @@ const CHANGELOG = `# Changelog
 
 ## Unreleased
 
-### 🆕 New
+### 🌱 New
 
 - **Added inpainting.** Parts of an image can be redrawn.
 
@@ -30,7 +30,7 @@ describe("nextVersion", () => {
 
 describe("unreleasedNotes", () => {
   it("returns the notes between Unreleased and the next version", () => {
-    expect(unreleasedNotes(CHANGELOG)).toBe("### 🆕 New\n\n- **Added inpainting.** Parts of an image can be redrawn.");
+    expect(unreleasedNotes(CHANGELOG)).toBe("### 🌱 New\n\n- **Added inpainting.** Parts of an image can be redrawn.");
   });
 
   it("is empty when there is nothing to release", () => {
@@ -42,7 +42,7 @@ describe("unreleasedNotes", () => {
 describe("releaseChangelog", () => {
   it("names the version and opens a new Unreleased section", () => {
     const released = releaseChangelog(CHANGELOG, "1.1.0", "2026-11-02");
-    expect(released).toContain("## Unreleased\n\n## 1.1.0 (2026-11-02)\n\n### 🆕 New");
+    expect(released).toContain("## Unreleased\n\n## 1.1.0 (2026-11-02)\n\n### 🌱 New");
     expect(unreleasedNotes(released)).toBe("");
   });
 

@@ -77,15 +77,10 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          # This version's section of CHANGELOG.md, from its heading to the next one.
+          # The page shows only this version's section of CHANGELOG.md, from its heading to the next.
           awk -v v="$VERSION" '
             /^## / { inside = (index($0, v) > 0); next }
             inside { print }
           ' CHANGELOG.md > notes.md 2>/dev/null || true
-          {
-            echo "**To install:** download **forgelight-$VERSION.zip** below and unzip it into \`<Forge installation>\\webui\\extensions\`, or use Forge's *Install from URL* with the branch \`release\` (see the README). The *Source code* downloads lack the built interface."
-            echo
-            cat notes.md
-          } > body.md
           gh release create "$GITHUB_REF_NAME" "forgelight-$VERSION.zip" \
-            --title "Forgelight $VERSION" --notes-file body.md --verify-tag
+            --title "Forgelight $VERSION" --notes-file notes.md --verify-tag
