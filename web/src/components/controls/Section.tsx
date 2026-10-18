@@ -1,6 +1,7 @@
-import { ChevronRight, type LucideIcon } from "lucide-react";
+import { ChevronDown, type LucideIcon } from "lucide-react";
 import { Collapsible } from "radix-ui";
 import type { ReactNode } from "react";
+import { Hint } from "../Hint";
 import { InfoTip } from "../InfoTip";
 
 interface SectionProps {
@@ -19,6 +20,10 @@ interface SectionProps {
   children: ReactNode;
 }
 
+/**
+ * A card in the settings column. Only the arrow at the right folds it, so clicking the
+ * title or reaching for a switch never opens or closes it by accident.
+ */
 export function Section({
   title,
   icon: Icon,
@@ -32,28 +37,24 @@ export function Section({
 }: SectionProps) {
   return (
     <Collapsible.Root open={open} onOpenChange={onOpenChange} className="rounded-xl border border-line bg-surface">
-      <div className="flex items-center gap-2 px-4 py-3">
-        <Collapsible.Trigger className="group flex items-center gap-2 text-left">
-          <ChevronRight
-            className="size-3.5 shrink-0 text-faint group-data-[state=open]:rotate-90 motion-safe:transition-transform motion-safe:duration-200"
-            aria-hidden
-          />
-          <Icon className="size-4 shrink-0 text-muted" aria-hidden />
-          <span className="text-[13px] font-medium text-fg-strong">{title}</span>
-        </Collapsible.Trigger>
+      <div className="flex items-center gap-2 py-3 pr-2.5 pl-4">
+        <Icon className="size-4 shrink-0 text-muted" aria-hidden />
+        <h2 className="text-[13px] font-medium text-fg-strong">{title}</h2>
         {help && <InfoTip topic={title} text={help} note={helpNote} />}
-        <div className="ml-auto flex min-w-0 items-center gap-3">
-          {!open && summary && (
-            <button
-              type="button"
-              tabIndex={-1}
-              onClick={() => onOpenChange(true)}
-              className="min-w-0 truncate text-[12px] text-muted"
-            >
-              {summary}
-            </button>
-          )}
+        <div className="ml-auto flex min-w-0 items-center gap-2.5">
+          {!open && summary && <span className="min-w-0 truncate text-[12px] text-muted">{summary}</span>}
           {action}
+          <Hint label={open ? "Collapse" : "Expand"}>
+            <Collapsible.Trigger
+              aria-label={`${open ? "Collapse" : "Expand"} ${title}`}
+              className="group grid size-7 shrink-0 place-items-center rounded-md text-faint hover:bg-raised hover:text-fg-strong"
+            >
+              <ChevronDown
+                className="size-4 group-data-[state=open]:rotate-180 motion-safe:transition-transform motion-safe:duration-200"
+                aria-hidden
+              />
+            </Collapsible.Trigger>
+          </Hint>
         </div>
       </div>
       <Collapsible.Content className="collapsible overflow-hidden">
