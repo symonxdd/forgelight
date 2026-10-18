@@ -3,6 +3,7 @@ import {
   CIVITAI_SITE_KEY,
   FONT_KEY,
   LIBRARY_BLUR_KEY,
+  LIBRARY_RATING_KEY,
   LIBRARY_STACKS_KEY,
   OLED_KEY,
   PROMPT_POSITION_KEY,
@@ -10,6 +11,7 @@ import {
   parseCivitaiSite,
   parseFont,
   parseLibraryBlur,
+  parseLibraryRating,
   parseOled,
   parsePromptPosition,
   parseTheme,
@@ -20,6 +22,7 @@ import {
   type CivitaiSite,
   type FontId,
   type LibraryBlur,
+  type LibraryRating,
   type PromptPosition,
   type Theme,
 } from "../lib/preferences";
@@ -33,6 +36,7 @@ interface PreferencesState {
   font: FontId;
   civitaiSite: CivitaiSite;
   libraryBlur: LibraryBlur;
+  libraryRating: LibraryRating;
   /** Library shows each batch as one stacked tile. On until switched off. */
   libraryStacks: boolean;
   promptPosition: PromptPosition;
@@ -41,6 +45,7 @@ interface PreferencesState {
   setFont: (font: FontId) => void;
   setCivitaiSite: (site: CivitaiSite) => void;
   setLibraryBlur: (blur: LibraryBlur) => void;
+  setLibraryRating: (rating: LibraryRating) => void;
   setLibraryStacks: (stacks: boolean) => void;
   setPromptPosition: (position: PromptPosition) => void;
 }
@@ -56,6 +61,7 @@ export const usePreferences = create<PreferencesState>((set) => ({
   font: parseFont(readStored(FONT_KEY)),
   civitaiSite: parseCivitaiSite(readStored(CIVITAI_SITE_KEY)),
   libraryBlur: parseLibraryBlur(readStored(LIBRARY_BLUR_KEY)),
+  libraryRating: parseLibraryRating(readStored(LIBRARY_RATING_KEY)),
   libraryStacks: readStored(LIBRARY_STACKS_KEY) !== "false",
   promptPosition: parsePromptPosition(readStored(PROMPT_POSITION_KEY)),
   setTheme: (theme) => {
@@ -77,6 +83,10 @@ export const usePreferences = create<PreferencesState>((set) => ({
   setLibraryBlur: (libraryBlur) => {
     writeStored(LIBRARY_BLUR_KEY, libraryBlur);
     set({ libraryBlur });
+  },
+  setLibraryRating: (libraryRating) => {
+    writeStored(LIBRARY_RATING_KEY, libraryRating);
+    set({ libraryRating });
   },
   setLibraryStacks: (libraryStacks) => {
     writeStored(LIBRARY_STACKS_KEY, String(libraryStacks));

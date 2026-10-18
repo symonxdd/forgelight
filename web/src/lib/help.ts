@@ -44,6 +44,8 @@ export const HELP = {
     "How much the second pass may change the image (called denoising strength in Forge). Low keeps it close to the original; high adds more detail but can alter faces, hands or the composition. 0.3 to 0.5 suits most images.",
   checkpointMemory:
     "Each checkpoint keeps its own Size, Sampling and Hires fix settings. Switching to a checkpoint brings back what you last used with it. Prompt and LoRAs stay as they are.",
+  libraryContent:
+    "All, SFW and NSFW choose which images show; the blur hides previews until pointed at. Both use a guess from words in each image's prompt, such as nude or nsfw, so a few images may be sorted wrongly.",
   libraryBlur:
     "Blurs previews in the Library until you point at them. Likely NSFW is a guess from words in each image's prompt, so it can miss some.",
   panelSections:

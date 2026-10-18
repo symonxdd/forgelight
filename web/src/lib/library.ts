@@ -10,6 +10,8 @@ export interface LibraryItem {
   mtime: number;
   bytes: number;
   infotext: string;
+  /** Likely adult, guessed by the extension from words in the prompt. */
+  nsfw: boolean;
 }
 
 export interface DayGroup<T> {

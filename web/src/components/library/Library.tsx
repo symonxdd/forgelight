@@ -4,10 +4,10 @@ import { useModels } from "../../api/forgelight";
 import { useLibrary } from "../../api/library";
 import { fileName, groupBatches, groupByDay, singles, thumbUrl, type Batch } from "../../lib/library";
 import { displayName, tidyName } from "../../lib/modelNames";
-import { looksNsfw } from "../../lib/nsfw";
 import { usePreferences } from "../../stores/preferences";
 import { Hint } from "../Hint";
 import { SelectMenu } from "../SelectMenu";
+import { ContentFilter } from "./ContentFilter";
 import { DeleteDialog } from "./DeleteDialog";
 import { LibraryViewer } from "./LibraryViewer";
 
@@ -109,10 +109,7 @@ function Tile({ batch, selected, selecting, onOpen, onToggle }: TileProps) {
   const count = batch.items.length;
   const name = count > 1 ? `batch of ${count} images` : fileName(item);
   const blurMode = usePreferences((s) => s.libraryBlur);
-  const blurred = useMemo(
-    () => blurMode === "all" || (blurMode === "nsfw" && looksNsfw(item.infotext)),
-    [blurMode, item.infotext],
-  );
+  const blurred = blurMode === "all" || (blurMode === "nsfw" && item.nsfw);
   return (
     <div className="group relative aspect-[3/4]">
       <button
@@ -240,7 +237,9 @@ export function Library() {
     return () => clearTimeout(timer);
   }, [input]);
 
-  const library = useLibrary(query, model);
+  const rating = usePreferences((s) => s.libraryRating);
+  const setRating = usePreferences((s) => s.setLibraryRating);
+  const library = useLibrary(query, model, rating);
   const pages = useMemo(() => library.data?.pages ?? [], [library.data]);
   const items = useMemo(() => {
     // New images shift later pages by a few places; drop the repeats that causes.
@@ -327,7 +326,7 @@ export function Library() {
     setPendingDelete(null);
   };
 
-  const filtered = Boolean(query || model);
+  const filtered = Boolean(query || model || rating !== "all");
   let body;
   if (library.isPending) {
     body = (
@@ -347,10 +346,11 @@ export function Library() {
             onClick={() => {
               changeInput("");
               changeModel("");
+              setRating("all");
             }}
             className="h-8 rounded-md border border-line px-3 text-[13px] text-fg hover:bg-raised"
           >
-            Clear search
+            Show all images
           </button>
         }
       />
@@ -404,6 +404,7 @@ export function Library() {
         <div className="flex flex-wrap items-center justify-center gap-2">
           <SearchBox value={input} onChange={changeInput} />
           <ModelFilter value={model} models={models} onChange={changeModel} />
+          <ContentFilter />
           <Hint label={stacks ? "Show every image on its own" : "Stack images made together"}>
             <button
               type="button"

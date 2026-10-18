@@ -10,15 +10,7 @@ import {
   livePreviewSettings,
   type LivePreviewChoice,
 } from "../lib/livePreview";
-import {
-  CIVITAI_SITES,
-  FONTS,
-  LIBRARY_BLUR_CHOICES,
-  fontStack,
-  parseCivitaiSite,
-  parseFont,
-  parseLibraryBlur,
-} from "../lib/preferences";
+import { CIVITAI_SITES, FONTS, fontStack, parseCivitaiSite, parseFont } from "../lib/preferences";
 import { useCheckpointMemory } from "../stores/checkpointMemory";
 import { usePreferences } from "../stores/preferences";
 import { useSettings, type SectionId } from "../stores/settings";
@@ -160,24 +152,6 @@ function Checkpoints() {
       <Heading>Checkpoints</Heading>
       <Row id="checkpoint-memory-label" label="Remember per checkpoint" help={HELP.checkpointMemory}>
         <Toggle checked={enabled} onChange={setEnabled} labelledBy="checkpoint-memory-label" />
-      </Row>
-    </>
-  );
-}
-
-function Library() {
-  const blur = usePreferences((s) => s.libraryBlur);
-  const setBlur = usePreferences((s) => s.setLibraryBlur);
-  return (
-    <>
-      <Heading>Library</Heading>
-      <Row id="library-blur-label" label="Blur previews" help={HELP.libraryBlur}>
-        <Dropdown
-          value={blur}
-          options={LIBRARY_BLUR_CHOICES.map(({ id, label }) => ({ value: id, label }))}
-          onChange={(v) => setBlur(parseLibraryBlur(v))}
-          labelledBy="library-blur-label"
-        />
       </Row>
     </>
   );
@@ -327,8 +301,6 @@ export function SettingsMenu() {
             <PanelSections />
             <Divider />
             <Checkpoints />
-            <Divider />
-            <Library />
             <Divider />
             <LivePreview />
             <Divider />

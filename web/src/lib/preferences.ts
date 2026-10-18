@@ -20,6 +20,7 @@ export const OLED_KEY = "forgelight.oled";
 export const CIVITAI_SITE_KEY = "forgelight.civitaiSite";
 export const LIBRARY_BLUR_KEY = "forgelight.libraryBlur";
 export const LIBRARY_STACKS_KEY = "forgelight.libraryStacks";
+export const LIBRARY_RATING_KEY = "forgelight.libraryRating";
 export const PROMPT_POSITION_KEY = "forgelight.promptPosition";
 
 /** Where the prompt card sits on the Generate screen: under the image (default) or above it. */
@@ -31,15 +32,28 @@ export function parsePromptPosition(value: string | null): PromptPosition {
 
 /** Which Library previews are blurred until pointed at. */
 export const LIBRARY_BLUR_CHOICES = [
-  { id: "off", label: "Off" },
-  { id: "nsfw", label: "Likely NSFW" },
-  { id: "all", label: "All images" },
+  { id: "off", label: "No blur" },
+  { id: "nsfw", label: "Blur NSFW" },
+  { id: "all", label: "Blur all" },
 ] as const;
 
 export type LibraryBlur = (typeof LIBRARY_BLUR_CHOICES)[number]["id"];
 
 export function parseLibraryBlur(value: string | null): LibraryBlur {
   return value === "nsfw" || value === "all" ? value : "off";
+}
+
+/** Which images the Library shows; SFW and NSFW are a guess from each prompt's words. */
+export const LIBRARY_RATINGS = [
+  { id: "all", label: "All" },
+  { id: "sfw", label: "SFW" },
+  { id: "nsfw", label: "NSFW" },
+] as const;
+
+export type LibraryRating = (typeof LIBRARY_RATINGS)[number]["id"];
+
+export function parseLibraryRating(value: string | null): LibraryRating {
+  return value === "sfw" || value === "nsfw" ? value : "all";
 }
 
 /** Civitai runs the same site on two addresses; .red also shows mature preview images. */
