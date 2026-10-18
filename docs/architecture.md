@@ -46,6 +46,5 @@ The interface and Forge share one address, so the browser allows the interface t
 
 - `web/` has its own `package.json`. `npm run dev` starts Vite at `http://localhost:5173`, forwarding `/sdapi`, `/internal` and `/forgelight/api` to Forge at `127.0.0.1:7860`.
 - `npm run build` writes the finished interface to `page/` at the repository root, which the extension serves. `page/` is not tracked on `main`: each commit there is source only.
-- Every push to `main` runs the checks and a build on GitHub ([checks.yml](../.github/workflows/checks.yml)); nothing is released.
-- Releasing a version: set `version` in `web/package.json`, add its section to `CHANGELOG.md`, commit, then tag the commit `v<version>` and push the tag. [release.yml](../.github/workflows/release.yml) then checks and builds, puts the ready-to-run copy (`main` at the tag plus `page/`) on the `release` branch, and creates the GitHub release with that CHANGELOG section and the same copy as `forgelight-<version>.zip`.
+- Releases: see [releasing.md](releasing.md). Pushes to `main` only run the checks; a version tag builds and publishes.
 - Forge must be started with `--api`.
