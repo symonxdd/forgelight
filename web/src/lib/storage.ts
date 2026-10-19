@@ -24,3 +24,28 @@ export const safeStorage: StateStorage = {
     }
   },
 };
+
+/** sessionStorage that never throws: kept through reloads of this tab, gone once it closes. */
+export const tabStorage = {
+  getItem: (key: string): string | null => {
+    try {
+      return sessionStorage.getItem(key);
+    } catch {
+      return null;
+    }
+  },
+  setItem: (key: string, value: string): void => {
+    try {
+      sessionStorage.setItem(key, value);
+    } catch {
+      // ignore: full or unavailable, the session simply isn't kept
+    }
+  },
+  removeItem: (key: string): void => {
+    try {
+      sessionStorage.removeItem(key);
+    } catch {
+      // ignore
+    }
+  },
+};

@@ -1,11 +1,16 @@
-import { forgePost } from "../api/client";
+import { ForgeError, forgePost } from "../api/client";
 import { request, type LoadingState, type ModelEntry } from "../api/forgelight";
+import type { LibraryPage } from "../api/library";
 import { queryClient } from "../api/queryClient";
 import { randomTaskId } from "../lib/format";
 import { buildImg2imgRequest } from "../lib/img2img";
+import { imageUrl, seedOf } from "../lib/library";
+import { promptWithLoras } from "../lib/loras";
 import { nextLoadStep } from "../lib/progress";
+import { findJobResults, type PendingJob } from "../lib/sessionMemory";
 import { buildTxt2imgRequest, friendlyError, hiresSize, parseTxt2imgResult } from "../lib/txt2img";
 import { useSession, type Job, type JobPhase, type SessionImage } from "./session";
+import { clearPendingJob, readPendingJob, writePendingJob } from "./sessionMemory";
 import { currentSettings } from "./settings";
 import { useStartImage } from "./startImage";
 
@@ -21,8 +26,12 @@ function updateRunning(changes: Partial<Extract<Job, { status: "running" }>>) {
   if (job.status === "running") setJob({ ...job, ...changes });
 }
 
-/** Polls Forge's progress endpoint (the same one the classic page uses) until stopped. */
-function pollProgress(taskId: string) {
+/**
+ * Polls Forge's progress endpoint (the same one the classic page uses) until stopped.
+ * With `onEnd`, also watches for the task to end: `completed` is false when Forge doesn't
+ * know the task (it was restarted, or the task never arrived).
+ */
+function pollProgress(taskId: string, onEnd?: (completed: boolean) => void) {
   let stopped = false;
   let previewId = -1;
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -37,6 +46,11 @@ function pollProgress(taskId: string) {
         askLoading ? request<LoadingState>("loading").catch(() => null) : null,
       ]);
       if (stopped) return;
+      if (onEnd && (p.completed || (!p.active && !p.queued))) {
+        stopped = true;
+        onEnd(Boolean(p.completed));
+        return;
+      }
       const progress = p.progress ?? 0;
       const phase: JobPhase = !p.active ? "waiting" : progress > 0 || p.live_preview ? "sampling" : "preparing";
       const changes: Partial<Extract<Job, { status: "running" }>> = {
@@ -84,6 +98,27 @@ export function isRunning(): boolean {
   return useSession.getState().job.status === "running";
 }
 
+/** A job just started, or picked up again after a reload: nothing known about its progress yet. */
+function runningJob(pending: PendingJob): Job {
+  const { taskId, startedAt, width, height, batchCount, hires } = pending;
+  return {
+    status: "running",
+    taskId,
+    phase: "waiting",
+    progress: 0,
+    etaSeconds: null,
+    previewUrl: null,
+    startedAt,
+    width,
+    height,
+    batchCount,
+    hires,
+    loading: null,
+    loadingKnown: false,
+    stopping: false,
+  };
+}
+
 export async function generate(): Promise<void> {
   if (isRunning()) return;
   const settings = withInstalledLoras(currentSettings());
@@ -92,29 +127,37 @@ export async function generate(): Promise<void> {
   const taskId = randomTaskId();
   const { setJob, addImages } = useSession.getState();
 
-  setJob({
-    status: "running",
+  const pending: PendingJob = {
     taskId,
-    phase: "waiting",
-    progress: 0,
-    etaSeconds: null,
-    previewUrl: null,
     startedAt: Date.now(),
     width: settings.width,
     height: settings.height,
     batchCount: settings.batchCount,
     hires:
       settings.hiresEnabled && !startImage ? hiresSize(settings.width, settings.height, settings.hiresScale) : null,
-    loading: null,
-    loadingKnown: false,
-    stopping: false,
-  });
+    prompt: promptWithLoras(settings.prompt, settings.loras),
+  };
+  setJob(runningJob(pending));
+  writePendingJob(pending);
   const stopPolling = pollProgress(taskId);
 
+  let result;
   try {
-    const result = startImage
+    result = startImage
       ? await forgePost("/sdapi/v1/img2img", buildImg2imgRequest(settings, startImage.dataUrl, taskId))
       : await forgePost("/sdapi/v1/txt2img", buildTxt2imgRequest(settings, taskId));
+  } catch (error) {
+    stopPolling();
+    // Without an answer from Forge (the page is reloading, or the connection broke), the
+    // generation itself goes on: follow it by its task id. It stays remembered meanwhile,
+    // so a reload picks it up too.
+    if (!(error instanceof ForgeError)) return followJob(pending);
+    clearPendingJob();
+    setJob({ status: "error", message: friendlyError(error.message) });
+    return;
+  }
+
+  try {
     const images: SessionImage[] = parseTxt2imgResult(result?.images ?? [], result?.info ?? "").map((img) => ({
       id: crypto.randomUUID(),
       url: base64ToObjectUrl(img.base64),
@@ -133,7 +176,71 @@ export async function generate(): Promise<void> {
     setJob({ status: "error", message: friendlyError(error instanceof Error ? error.message : String(error)) });
   } finally {
     stopPolling();
+    clearPendingJob();
   }
+}
+
+const RESULT_TRIES = 6;
+const RESULT_RETRY_MS = 1000;
+
+/** The images a resumed job saved, read from the outputs folder once they show up there. */
+async function savedResults(job: PendingJob): Promise<SessionImage[]> {
+  let found: ReturnType<typeof findJobResults> = [];
+  for (let attempt = 0; attempt < RESULT_TRIES; attempt++) {
+    if (attempt > 0) await new Promise((resolve) => setTimeout(resolve, RESULT_RETRY_MS));
+    const page = await request<LibraryPage>(`library?offset=0&limit=${job.batchCount + 40}`);
+    found = findJobResults(page.items, job);
+    // A stopped batch saves fewer images, so after a few tries the ones found are all.
+    if (found.length >= job.batchCount) break;
+  }
+  return found.map((item) => ({
+    id: crypto.randomUUID(),
+    url: imageUrl(item),
+    width: job.width,
+    height: job.height,
+    seed: seedOf(item),
+    infotext: item.infotext,
+    createdAt: item.mtime * 1000,
+  }));
+}
+
+/**
+ * Follows a generation by its task id until Forge is done with it, then shows the images
+ * it saved. Used when the page lost the request's answer: after a reload, or a broken
+ * connection.
+ */
+function followJob(pending: PendingJob): void {
+  const { setJob, addImages, setNotice } = useSession.getState();
+  pollProgress(pending.taskId, (completed) => {
+    clearPendingJob();
+    void (async () => {
+      try {
+        const images = completed ? await savedResults(pending) : [];
+        addImages(images.reverse());
+        if (!completed) {
+          setNotice({ tone: "warning", text: "The generation was not found in Forge. Forge may have restarted." });
+        } else if (images.length === 0) {
+          setNotice({
+            tone: "warning",
+            text: "The generation finished, but its images weren't found in the outputs folder.",
+          });
+        } else {
+          void queryClient.invalidateQueries({ queryKey: ["library"] });
+        }
+      } catch {
+        setNotice({ tone: "warning", text: "The finished images could not be shown here. They are in the Library." });
+      }
+      setJob({ status: "idle" });
+    })();
+  });
+}
+
+/** Picks up a generation that was running when the page reloaded: Forge kept going. */
+export function resumeAfterReload(): void {
+  const pending = readPendingJob();
+  if (!pending || isRunning()) return;
+  useSession.getState().setJob(runningJob(pending));
+  followJob(pending);
 }
 
 /** Stops the whole job. Images already finished in a batch are still returned. */
