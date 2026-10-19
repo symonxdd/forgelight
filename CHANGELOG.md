@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### 🌿 Improved
+
+- **The prompt and the negative prompt moved into cards of their own, side by side.** Clicking into a prompt no longer shifts the screen: a card opens only when its text does not fit, gliding out over the image while everything else stays in place. The starting image, LoRAs, checkpoint and Generate share a card below them, the cards use more of the width on large screens, and the layout mirrors when the prompt is placed above the image.
+
 ## 1.0.0 (2026-10-18)
 
 ### 🌱 New
