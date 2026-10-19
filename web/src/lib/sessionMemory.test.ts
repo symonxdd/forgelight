@@ -13,6 +13,7 @@ function item(id: string, secondsAfterStart: number, infotext: string): LibraryI
     bytes: 1,
     infotext,
     nsfw: false,
+    favorite: false,
   };
 }
 

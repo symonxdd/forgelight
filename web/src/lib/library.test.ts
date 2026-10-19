@@ -2,7 +2,16 @@ import { describe, expect, it } from "vitest";
 import { dayKey, dayLabel, fileName, groupBatches, groupByDay, imageUrl, seedOf, type LibraryItem } from "./library";
 
 function item(id: string, date: Date, infotext = ""): LibraryItem {
-  return { id, width: 832, height: 1216, mtime: date.getTime() / 1000, bytes: 1, infotext, nsfw: false };
+  return {
+    id,
+    width: 832,
+    height: 1216,
+    mtime: date.getTime() / 1000,
+    bytes: 1,
+    infotext,
+    nsfw: false,
+    favorite: false,
+  };
 }
 
 const now = new Date(2026, 9, 17, 15, 0);

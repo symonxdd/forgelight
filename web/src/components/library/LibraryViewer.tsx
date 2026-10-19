@@ -1,6 +1,7 @@
 import { ArrowLeft, ChevronLeft, ChevronRight, FolderOpen, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useRevealImage } from "../../api/library";
+import { useToggleFavorite } from "../../hooks/useToggleFavorite";
 import { imageUrl, seedOf, thumbUrl, type LibraryItem } from "../../lib/library";
 import type { SessionImage } from "../../stores/session";
 import { useView } from "../../stores/view";
@@ -10,6 +11,7 @@ import { IconButton } from "../IconButton";
 import { ImageStage } from "../viewer/ImageStage";
 import { InfoDrawer } from "../viewer/InfoDrawer";
 import { ViewerToolbar } from "../viewer/ViewerToolbar";
+import { ViewerStar } from "./Favorites";
 
 function isTyping(target: EventTarget | null): boolean {
   return (
@@ -64,6 +66,7 @@ export function LibraryViewer({ items, index, onIndex, onClose, onNearEnd, onDel
   const infoOpen = useViewer((s) => s.infoOpen);
   const setView = useView((s) => s.setView);
   const reveal = useRevealImage();
+  const favorite = useToggleFavorite(item);
 
   // The Generate screen's info panel and toolbar work with this shape.
   const image: SessionImage = useMemo(
@@ -107,6 +110,8 @@ export function LibraryViewer({ items, index, onIndex, onClose, onNearEnd, onDel
         ArrowUp: () => step(-1),
         ArrowRight: () => step(1),
         ArrowDown: () => step(1),
+        s: favorite.toggle,
+        S: favorite.toggle,
       };
       const action = actions[event.key];
       if (action) {
@@ -116,7 +121,7 @@ export function LibraryViewer({ items, index, onIndex, onClose, onNearEnd, onDel
     };
     window.addEventListener("keydown", onKeyDown, true);
     return () => window.removeEventListener("keydown", onKeyDown, true);
-  }, [onClose, step]);
+  }, [onClose, step, favorite.toggle]);
 
   return (
     <div
@@ -182,6 +187,7 @@ export function LibraryViewer({ items, index, onIndex, onClose, onNearEnd, onDel
           image={image}
           extra={
             <>
+              <ViewerStar item={item} />
               <IconButton label="Show in folder" onClick={() => reveal.mutate(item.id)}>
                 <FolderOpen className="size-4" aria-hidden />
               </IconButton>

@@ -9,6 +9,7 @@ import { Hint } from "../Hint";
 import { SelectMenu } from "../SelectMenu";
 import { ContentFilter } from "./ContentFilter";
 import { DeleteDialog } from "./DeleteDialog";
+import { FavoritesToggle, TileStar } from "./Favorites";
 import { LibraryViewer } from "./LibraryViewer";
 
 const ALL = "__all";
@@ -160,6 +161,7 @@ function Tile({ batch, selected, selecting, onOpen, onToggle }: TileProps) {
       >
         <Check className="size-3.5" strokeWidth={3} aria-hidden />
       </button>
+      <TileStar item={item} />
     </div>
   );
 }
@@ -214,6 +216,7 @@ export function Library() {
   const [input, setInput] = useState("");
   const [query, setQuery] = useState("");
   const [model, setModel] = useState("");
+  const [favoritesOnly, setFavoritesOnly] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
   const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
   const [anchor, setAnchor] = useState<string | null>(null);
@@ -230,6 +233,10 @@ export function Library() {
     setModel(value);
     setSelected(new Set());
   };
+  const changeFavoritesOnly = (value: boolean) => {
+    setFavoritesOnly(value);
+    setSelected(new Set());
+  };
 
   // Search once typing pauses, not on every key.
   useEffect(() => {
@@ -239,7 +246,7 @@ export function Library() {
 
   const rating = usePreferences((s) => s.libraryRating);
   const setRating = usePreferences((s) => s.setLibraryRating);
-  const library = useLibrary(query, model, rating);
+  const library = useLibrary(query, model, rating, favoritesOnly);
   const pages = useMemo(() => library.data?.pages ?? [], [library.data]);
   const items = useMemo(() => {
     // New images shift later pages by a few places; drop the repeats that causes.
@@ -326,7 +333,7 @@ export function Library() {
     setPendingDelete(null);
   };
 
-  const filtered = Boolean(query || model || rating !== "all");
+  const filtered = Boolean(query || model || rating !== "all" || favoritesOnly);
   let body;
   if (library.isPending) {
     body = (
@@ -336,6 +343,8 @@ export function Library() {
     );
   } else if (library.isError) {
     body = <Message title="The Library couldn't be loaded" detail={library.error.message} />;
+  } else if (items.length === 0 && favoritesOnly && !query && !model && rating === "all") {
+    body = <Message title="No favorites yet" detail="The star in an image's corner adds it to the favorites." />;
   } else if (items.length === 0 && filtered) {
     body = (
       <Message
@@ -346,6 +355,7 @@ export function Library() {
             onClick={() => {
               changeInput("");
               changeModel("");
+              changeFavoritesOnly(false);
               setRating("all");
             }}
             className="h-8 rounded-md border border-line px-3 text-[13px] text-fg hover:bg-raised"
@@ -405,6 +415,7 @@ export function Library() {
           <SearchBox value={input} onChange={changeInput} />
           <ModelFilter value={model} models={models} onChange={changeModel} />
           <ContentFilter />
+          <FavoritesToggle on={favoritesOnly} onChange={changeFavoritesOnly} />
           <Hint label={stacks ? "Show every image on its own" : "Stack images made together"}>
             <button
               type="button"
