@@ -129,7 +129,6 @@ export function GenerateBar({ connected }: { connected: boolean }) {
           type="button"
           onClick={() => void generate()}
           disabled={!connected}
-          data-generate
           className="flex h-9 items-center gap-2 rounded-lg bg-primary px-4 text-[14px] font-medium text-on-primary hover:bg-primary-hover disabled:opacity-40"
         >
           Generate

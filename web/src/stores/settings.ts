@@ -9,12 +9,10 @@ export type SectionId = "loras" | "size" | "sampling" | "hires";
 const PANEL_SECTIONS: SectionId[] = ["size", "sampling", "hires"];
 
 interface SettingsState extends GenerationSettings {
-  negativeOpen: boolean;
   openSections: Record<SectionId, boolean>;
   /** Sections hidden with the pills above the panel. Their settings still apply. */
   hiddenSections: SectionId[];
   update: (changes: Partial<GenerationSettings>) => void;
-  setNegativeOpen: (open: boolean) => void;
   setSectionOpen: (id: SectionId, open: boolean) => void;
   toggleSectionHidden: (id: SectionId) => void;
 }
@@ -24,11 +22,9 @@ export const useSettings = create<SettingsState>()(
   persist(
     (set) => ({
       ...DEFAULT_SETTINGS,
-      negativeOpen: false,
       openSections: { loras: true, size: true, sampling: true, hires: true },
       hiddenSections: [],
       update: (changes) => set(changes),
-      setNegativeOpen: (negativeOpen) => set({ negativeOpen }),
       setSectionOpen: (id, open) => set((s) => ({ openSections: { ...s.openSections, [id]: open } })),
       toggleSectionHidden: (id) =>
         set((s) => ({
@@ -43,7 +39,6 @@ export const useSettings = create<SettingsState>()(
       storage: createJSONStorage(() => safeStorage),
       partialize: (s) => ({
         ...pickSettings(s),
-        negativeOpen: s.negativeOpen,
         openSections: s.openSections,
         hiddenSections: s.hiddenSections,
       }),

@@ -45,7 +45,7 @@ function Stage({ connection }: { connection: ConnectionState }) {
   const { dragging, dropTarget } = useStartImageInput();
   const composer = (
     <div className={`shrink-0 px-4 ${above ? "pt-4" : "pt-1"} pb-2.5`}>
-      <div className="relative mx-auto flex w-full max-w-3xl flex-col gap-2.5">
+      <div className="relative mx-auto flex w-full max-w-270 flex-col gap-2.5">
         <PromptFields connected={connection === "connected"} />
         <Tagline />
         {/* Messages float on the image side of the card, clear of the viewer's zoom bar. */}
