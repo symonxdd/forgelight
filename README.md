@@ -8,6 +8,9 @@ Forgelight runs inside Forge as an extension and is reachable at `http://127.0.0
 
 > **Status:** ready for everyday use.
 
+![The Generate screen: a mountain lake at dawn, with the prompt below it and the settings column on the left](docs/screenshots/generate-light.webp#gh-light-mode-only)
+![The Generate screen: a mountain lake at dawn, with the prompt below it and the settings column on the left](docs/screenshots/generate-dark.webp#gh-dark-mode-only)
+
 ## Features
 
 - A friendlier face for the [Forge](https://github.com/lllyasviel/stable-diffusion-webui-forge) engine
@@ -17,6 +20,23 @@ Forgelight runs inside Forge as an extension and is reachable at `http://127.0.0
 - No telemetry, no tracking
 
 And more.
+
+## Screenshots
+
+**Library:** every image Forge has made, grouped by day, with batches stacked together.
+
+![The Library: a grid of landscape and still life images grouped by day](docs/screenshots/library-light.webp#gh-light-mode-only)
+![The Library: a grid of landscape and still life images grouped by day](docs/screenshots/library-dark.webp#gh-dark-mode-only)
+
+**Image to image:** a starting image turned into a new version, here a summer valley turned to autumn.
+
+![Image to image: the starting image and its Strength in the prompt card, with the autumn result above](docs/screenshots/img2img-light.webp#gh-light-mode-only)
+![Image to image: the starting image and its Strength in the prompt card, with the autumn result above](docs/screenshots/img2img-dark.webp#gh-dark-mode-only)
+
+**Guide:** plain explanations of models, settings and prompting, with search and a glossary.
+
+![The Guide: the Settings chapter, open at the sampler and seed topics](docs/screenshots/guide-light.webp#gh-light-mode-only)
+![The Guide: the Settings chapter, open at the sampler and seed topics](docs/screenshots/guide-dark.webp#gh-dark-mode-only)
 
 ## Requirements
 
