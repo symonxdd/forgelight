@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.2.0 (2026-10-20)
+
 ### 🌱 New
 
 - **Existing images can now be enhanced or upscaled.** An Upscale button in the image view attaches the image to an Upscale card on the Generate screen. Enhance enlarges it and redraws it lightly at the larger size, the same as Hires fix but for an image that already exists, using that image's prompt and settings. Upscale only enlarges it within seconds, without redrawing, and saves it in Forge's extras folder with the original's settings. Both results appear in the Library.
