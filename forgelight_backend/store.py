@@ -15,12 +15,27 @@ DATA = ROOT / "data"
 _lock = threading.Lock()
 
 
-def version() -> str:
-    """Forgelight's version, kept in the interface's package.json."""
+def version_in(path: Path) -> str | None:
     try:
-        return json.loads((ROOT / "web" / "package.json").read_text(encoding="utf-8"))["version"]
-    except (OSError, ValueError, KeyError):
-        return "unknown"
+        found = json.loads(path.read_text(encoding="utf-8"))["version"]
+    except (OSError, ValueError, KeyError, TypeError):
+        return None
+    return found if isinstance(found, str) else None
+
+
+def source_version() -> str | None:
+    """The version in the interface's package.json; only a developer copy has the source."""
+    return version_in(ROOT / "web" / "package.json")
+
+
+def built_version() -> str | None:
+    """The version the build wrote into page/, which released copies carry."""
+    return version_in(ROOT / "page" / "version.json")
+
+
+def version() -> str:
+    """Forgelight's version: the source's in a developer copy, otherwise the built page's."""
+    return source_version() or built_version() or "unknown"
 
 
 def read(name: str, default: Any) -> Any:

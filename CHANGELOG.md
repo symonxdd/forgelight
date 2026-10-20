@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+## 1.3.0 (2026-10-20)
+
+### 🌱 New
+
+- **Added update notices and updates from within Forgelight.** Once a day, Forgelight reads the list of releases from GitHub and, when a newer version exists, shows a dot on the settings icon and a line in the settings menu. The update dialog lists what changed, with Skip this version, Later and Update. Nothing is downloaded or installed until Update is clicked, and favorites and preferences stay as they are. It works for installs from Forge's Extensions tab, with git and from the ZIP. The daily check can be switched off under Updates in the settings menu, and Check now in About checks at any time. Earlier versions cannot update themselves, so this version is installed the usual way once.
+
+### 🩹 Fixed
+
+- The desktop shortcut's window showed the version as "unknown" in installed copies; it now shows the real version.
+
 ## 1.2.0 (2026-10-20)
 
 ### 🌱 New
