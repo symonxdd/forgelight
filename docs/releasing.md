@@ -4,13 +4,7 @@ The `main` branch holds source code only; the built interface (`page/`) is never
 
 ## Before a release
 
-**The release notes** are written under `## Unreleased` at the top of [CHANGELOG.md](../CHANGELOG.md). They are what people read when deciding whether to update:
-
-- Past tense, describing the result: "Added a fullscreen viewer".
-- What changed for a person using Forgelight, never which file moved. Refactors, comment fixes and docs changes are left out.
-- Calm, neutral prose, without "you", "I" or "we".
-- Subsections `### 🌱 New`, `### 🩹 Fixed` and `### 🌿 Improved`, in that order, only those with entries.
-- The opening sentence of the headline item in bold, then a short explanation.
+**The release notes** go under `## Unreleased` at the top of [CHANGELOG.md](../CHANGELOG.md). The release script refuses to run without them, and the version's GitHub release page shows them.
 
 **The release type** follows [semantic versioning](https://semver.org):
 
