@@ -133,6 +133,7 @@ def state(check_if_due: bool = False) -> dict:
     return {
         "kind": kind,
         "installed": installed,
+        "built": built_version(),
         "auto": bool(saved["auto"]),
         "checking": _check_lock.locked(),
         "checkedAt": saved["checkedAt"],

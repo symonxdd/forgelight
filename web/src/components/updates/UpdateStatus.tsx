@@ -1,6 +1,6 @@
 import { CircleAlert, CircleCheck, LoaderCircle } from "lucide-react";
 import { useCheckUpdates, useUpdates } from "../../api/updates";
-import { checkedAgo, pageOutdated } from "../../lib/updates";
+import { checkedAgo, pageStatus } from "../../lib/updates";
 
 const LINE = "flex min-h-8 items-center gap-2 text-[12.5px]";
 
@@ -12,13 +12,28 @@ export function UpdateStatus({ onOpenUpdate }: { onOpenUpdate: () => void }) {
   if (!state) return null;
 
   if (state.kind === "developer") {
+    const page = pageStatus(state, __APP_VERSION__);
     return (
-      <div className={`${LINE} text-muted`}>
-        Developer copy · runs from the project folder
-        {pageOutdated(state, __APP_VERSION__) && (
-          <span className="text-bad">
-            The open page was built from {__APP_VERSION__}; run npm run build for {state.installed}.
-          </span>
+      <div className="flex flex-col gap-2 text-[12.5px]">
+        <span className="text-muted">Developer copy · runs from the project folder</span>
+        {page !== "current" && (
+          <div className="flex items-center gap-2.5 rounded-lg bg-raised px-3 py-2 leading-snug text-fg">
+            <CircleAlert className="size-3.5 shrink-0 text-bad" aria-hidden />
+            <span>
+              {page === "reload"
+                ? `Version ${state.built} is built. Reload the page to use it.`
+                : `This page is ${__APP_VERSION__}, the code is ${state.installed}. Run npm run build in the web folder, then reload.`}
+            </span>
+            {page === "reload" && (
+              <button
+                type="button"
+                onClick={() => window.location.reload()}
+                className="ml-auto h-7 shrink-0 rounded-md border border-line px-2.5 text-[12px] text-fg hover:bg-surface"
+              >
+                Reload
+              </button>
+            )}
+          </div>
         )}
       </div>
     );

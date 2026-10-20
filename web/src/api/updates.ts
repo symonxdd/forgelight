@@ -17,6 +17,8 @@ export interface ReleaseInfo {
 export interface UpdateState {
   kind: InstallKind;
   installed: string | null;
+  /** The version of the build in page/, which can be newer than the open page. */
+  built: string | null;
   /** The daily check is switched on. */
   auto: boolean;
   checking: boolean;

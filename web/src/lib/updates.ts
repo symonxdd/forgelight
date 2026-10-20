@@ -6,9 +6,13 @@ export function showsNotice(state: UpdateState | undefined): boolean {
   return !!latest && state.kind !== "developer" && latest.version !== state.skipped;
 }
 
-/** In a developer copy: the open page was built before the source's version changed. */
-export function pageOutdated(state: UpdateState | undefined, pageVersion: string): boolean {
-  return state?.kind === "developer" && !!state.installed && state.installed !== pageVersion;
+/**
+ * In a developer copy, whether the open page matches the source's version: "reload" when a
+ * newer build is already in page/, "rebuild" when the build itself is older than the source.
+ */
+export function pageStatus(state: UpdateState | undefined, pageVersion: string): "current" | "reload" | "rebuild" {
+  if (state?.kind !== "developer" || !state.installed || state.installed === pageVersion) return "current";
+  return state.built === state.installed ? "reload" : "rebuild";
 }
 
 /** "just now", "5 minutes ago", "3 hours ago", "2 days ago". */

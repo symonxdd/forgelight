@@ -74,7 +74,7 @@ function Row({
   help?: string;
   /** Faint text after the label, e.g. "2 active". */
   note?: string;
-  children: ReactNode;
+  children?: ReactNode;
 }) {
   return (
     <div className="flex min-h-9 items-center justify-between gap-3 px-1">
@@ -264,9 +264,7 @@ function Updates() {
     <>
       <Heading>Updates</Heading>
       {state?.kind === "developer" ? (
-        <Row id="developer-copy-label" label="Developer copy" help={HELP.developerCopy}>
-          <span className="text-[12.5px] text-faint">Runs from the project folder</span>
-        </Row>
+        <Row id="developer-copy-label" label="Developer copy" help={HELP.developerCopy} />
       ) : (
         <Row id="update-check-label" label="Check daily" help={HELP.updateCheck}>
           <Toggle

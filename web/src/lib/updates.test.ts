@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { UpdateState } from "../api/updates";
-import { checkedAgo, pageOutdated, showsNotice } from "./updates";
+import { checkedAgo, pageStatus, showsNotice } from "./updates";
 
 const release = { version: "1.3.0", date: "2026-10-25", notes: "", url: null };
 
@@ -8,6 +8,7 @@ function state(changes: Partial<UpdateState> = {}): UpdateState {
   return {
     kind: "zip",
     installed: "1.2.0",
+    built: "1.2.0",
     auto: true,
     checking: false,
     checkedAt: 0,
@@ -36,14 +37,20 @@ describe("showsNotice", () => {
   });
 });
 
-describe("pageOutdated", () => {
-  it("flags a developer copy whose page was built from an older version", () => {
-    expect(pageOutdated(state({ kind: "developer", installed: "1.2.0" }), "1.1.0")).toBe(true);
-    expect(pageOutdated(state({ kind: "developer", installed: "1.2.0" }), "1.2.0")).toBe(false);
+describe("pageStatus", () => {
+  const developer = (built: string) => state({ kind: "developer", installed: "1.3.0", built });
+
+  it("asks for a reload when the newer build is already there", () => {
+    expect(pageStatus(developer("1.3.0"), "1.2.0")).toBe("reload");
   });
 
-  it("ignores released copies", () => {
-    expect(pageOutdated(state({ installed: "1.2.0" }), "1.1.0")).toBe(false);
+  it("asks for a build when the build is older than the source", () => {
+    expect(pageStatus(developer("1.2.0"), "1.2.0")).toBe("rebuild");
+  });
+
+  it("stays quiet when the page matches, and for released copies", () => {
+    expect(pageStatus(developer("1.3.0"), "1.3.0")).toBe("current");
+    expect(pageStatus(state({ installed: "1.3.0" }), "1.2.0")).toBe("current");
   });
 });
 
