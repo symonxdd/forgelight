@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.3.1 (2026-10-20)
+
 ### 🌿 Improved
 
 - **Reorganized the settings menu into cards.** Its settings now sit in four groups (Appearance, Generating, Startup and Updates), with plain titles instead of capitals and divider lines. Checkpoint memory, live preview and Civitai links share the Generating card.
