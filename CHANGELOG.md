@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+### 🌱 New
+
+- **Existing images can now be enhanced or upscaled.** An Upscale button in the image view attaches the image to an Upscale card on the Generate screen. Enhance enlarges it and redraws it lightly at the larger size, the same as Hires fix but for an image that already exists, using that image's prompt and settings. Upscale only enlarges it within seconds, without redrawing, and saves it in Forge's extras folder with the original's settings. Both results appear in the Library.
+- Added favorites to the Library: a star on each image and in the image view (also the S key), and a Favorites filter. Stars are kept by Forgelight itself, so clearing the browser's data does not remove them.
+- A running generation now survives a page reload: the progress picks up where it was, and the finished images appear as usual. The Session strip also stays until the tab is closed.
+
+### 🩹 Fixed
+
+- The tooltips of the buttons below an image opened from the Library were hidden behind the image; they now show.
+
 ## 1.1.0 (2026-10-19)
 
 ### 🌿 Improved
