@@ -1,4 +1,4 @@
-import { ForgeError, forgePost } from "../api/client";
+import { ForgeError, forgePost, type PostResponse } from "../api/client";
 import { request, type LoadingState, type ModelEntry } from "../api/forgelight";
 import type { LibraryPage } from "../api/library";
 import { queryClient } from "../api/queryClient";
@@ -8,11 +8,14 @@ import { imageUrl, seedOf } from "../lib/library";
 import { promptWithLoras } from "../lib/loras";
 import { nextLoadStep } from "../lib/progress";
 import { findJobResults, type PendingJob } from "../lib/sessionMemory";
+import { seedFromInfotext } from "../lib/infotext";
 import { buildTxt2imgRequest, friendlyError, hiresSize, parseTxt2imgResult } from "../lib/txt2img";
+import { buildEnhanceRequest, buildExtrasRequest, upscaleTarget } from "../lib/upscale";
 import { useSession, type Job, type JobPhase, type SessionImage } from "./session";
 import { clearPendingJob, readPendingJob, writePendingJob } from "./sessionMemory";
 import { currentSettings } from "./settings";
 import { useStartImage } from "./startImage";
+import { useUpscale } from "./upscale";
 
 const POLL_MS = 400;
 
@@ -99,7 +102,7 @@ export function isRunning(): boolean {
 }
 
 /** A job just started, or picked up again after a reload: nothing known about its progress yet. */
-function runningJob(pending: PendingJob): Job {
+function runningJob(pending: PendingJob): Extract<Job, { status: "running" }> {
   const { taskId, startedAt, width, height, batchCount, hires } = pending;
   return {
     status: "running",
@@ -116,16 +119,22 @@ function runningJob(pending: PendingJob): Job {
     loading: null,
     loadingKnown: false,
     stopping: false,
+    enlarging: false,
   };
+}
+
+function errorMessage(error: unknown): string {
+  return friendlyError(error instanceof Error ? error.message : String(error));
 }
 
 export async function generate(): Promise<void> {
   if (isRunning()) return;
+  // With an image attached for upscaling, Generate enlarges it instead.
+  if (useUpscale.getState().source) return upscale();
   const settings = withInstalledLoras(currentSettings());
   // With a starting image attached, Generate makes a new version of it (img2img, no hires fix).
   const startImage = useStartImage.getState().image;
   const taskId = randomTaskId();
-  const { setJob, addImages } = useSession.getState();
 
   const pending: PendingJob = {
     taskId,
@@ -137,15 +146,28 @@ export async function generate(): Promise<void> {
       settings.hiresEnabled && !startImage ? hiresSize(settings.width, settings.height, settings.hiresScale) : null,
     prompt: promptWithLoras(settings.prompt, settings.loras),
   };
-  setJob(runningJob(pending));
+  useSession.getState().setJob(runningJob(pending));
+  await runGeneration(pending, () =>
+    startImage
+      ? forgePost("/sdapi/v1/img2img", buildImg2imgRequest(settings, startImage.dataUrl, taskId))
+      : forgePost("/sdapi/v1/txt2img", buildTxt2imgRequest(settings, taskId)),
+  );
+}
+
+type GenerationResult = PostResponse<"/sdapi/v1/txt2img"> | PostResponse<"/sdapi/v1/img2img">;
+
+/**
+ * Sends a generation to Forge, shows its progress, then its images. The job is remembered
+ * meanwhile, so a reload or a broken connection picks it up again.
+ */
+async function runGeneration(pending: PendingJob, send: () => Promise<GenerationResult>): Promise<void> {
+  const { setJob, addImages } = useSession.getState();
   writePendingJob(pending);
-  const stopPolling = pollProgress(taskId);
+  const stopPolling = pollProgress(pending.taskId);
 
   let result;
   try {
-    result = startImage
-      ? await forgePost("/sdapi/v1/img2img", buildImg2imgRequest(settings, startImage.dataUrl, taskId))
-      : await forgePost("/sdapi/v1/txt2img", buildTxt2imgRequest(settings, taskId));
+    result = await send();
   } catch (error) {
     stopPolling();
     // Without an answer from Forge (the page is reloading, or the connection broke), the
@@ -161,8 +183,8 @@ export async function generate(): Promise<void> {
     const images: SessionImage[] = parseTxt2imgResult(result?.images ?? [], result?.info ?? "").map((img) => ({
       id: crypto.randomUUID(),
       url: base64ToObjectUrl(img.base64),
-      width: settings.width,
-      height: settings.height,
+      width: pending.width,
+      height: pending.height,
       seed: img.seed,
       infotext: img.infotext,
       createdAt: Date.now(),
@@ -173,10 +195,78 @@ export async function generate(): Promise<void> {
     void queryClient.invalidateQueries({ queryKey: ["library"] });
     setJob({ status: "idle" });
   } catch (error) {
-    setJob({ status: "error", message: friendlyError(error instanceof Error ? error.message : String(error)) });
+    setJob({ status: "error", message: errorMessage(error) });
   } finally {
     stopPolling();
     clearPendingJob();
+  }
+}
+
+/**
+ * Enlarges the attached image with Forge's upscaler. Enhance then redraws it lightly at the
+ * new size, like hires fix, and Forge saves the result; Upscale only is saved by the
+ * extension, in Forge's extras folder.
+ */
+async function upscale(): Promise<void> {
+  const card = useUpscale.getState();
+  const source = card.source;
+  if (!source) return;
+  const { setJob, addImages } = useSession.getState();
+  const enhance = card.method === "enhance";
+  const target = upscaleTarget(source, enhance ? card.enhanceScale : card.upscaleScale, card.method);
+  const settings = withInstalledLoras(currentSettings());
+  const pending: PendingJob = {
+    taskId: randomTaskId(),
+    startedAt: Date.now(),
+    ...target,
+    batchCount: 1,
+    hires: null,
+    prompt: promptWithLoras(settings.prompt, settings.loras),
+  };
+  setJob({ ...runningJob(pending), enlarging: true });
+
+  let enlarged: string;
+  try {
+    const result = await forgePost(
+      "/sdapi/v1/extra-single-image",
+      buildExtrasRequest(source.dataUrl, target, card.upscaler),
+    );
+    if (!result?.image) throw new Error("Forge returned no image.");
+    enlarged = result.image;
+  } catch (error) {
+    setJob({ status: "error", message: errorMessage(error) });
+    return;
+  }
+
+  if (enhance) {
+    updateRunning({ enlarging: false });
+    return runGeneration(pending, () =>
+      forgePost("/sdapi/v1/img2img", buildEnhanceRequest(settings, enlarged, target, card.strength, pending.taskId)),
+    );
+  }
+
+  try {
+    const note = `Postprocess upscale to: ${target.width}x${target.height}, Postprocess upscaler: ${card.upscaler}`;
+    const saved = await request<{ id: string; infotext: string }>("library/save-upscaled", {
+      image: enlarged,
+      infotext: source.infotext,
+      note,
+      name: source.name,
+    });
+    addImages([
+      {
+        id: crypto.randomUUID(),
+        url: base64ToObjectUrl(enlarged),
+        ...target,
+        seed: seedFromInfotext(saved.infotext),
+        infotext: saved.infotext,
+        createdAt: Date.now(),
+      },
+    ]);
+    void queryClient.invalidateQueries({ queryKey: ["library"] });
+    setJob({ status: "idle" });
+  } catch (error) {
+    setJob({ status: "error", message: errorMessage(error) });
   }
 }
 

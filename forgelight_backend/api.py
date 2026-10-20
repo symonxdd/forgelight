@@ -125,6 +125,17 @@ def library_favorite(_request: Request, body: Any) -> dict:
         raise HTTPException(status_code=404, detail="That image isn't in Forge's output folders.") from error
 
 
+def library_save_upscaled(_request: Request, body: Any) -> dict:
+    body = body or {}
+    fields = [body.get(key) for key in ("image", "infotext", "note", "name")]
+    if not all(isinstance(value, str) for value in fields):
+        raise HTTPException(status_code=400, detail="Send the image, its settings, a note and its name.")
+    try:
+        return library.save_upscaled(*fields)
+    except (ValueError, OSError) as error:
+        raise HTTPException(status_code=500, detail=f"The upscaled image couldn't be saved: {error}") from error
+
+
 def library_delete(_request: Request, body: Any) -> dict:
     ids = (body or {}).get("ids")
     if not isinstance(ids, list) or not all(isinstance(i, str) for i in ids):
@@ -149,6 +160,7 @@ ROUTES: dict[tuple[str, str], Handler] = {
     ("POST", "library/reveal"): library_reveal,
     ("POST", "library/delete"): library_delete,
     ("POST", "library/favorite"): library_favorite,
+    ("POST", "library/save-upscaled"): library_save_upscaled,
 }
 
 

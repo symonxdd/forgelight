@@ -20,6 +20,7 @@ const job: RunningJob = {
   loading: null,
   loadingKnown: true,
   stopping: false,
+  enlarging: false,
 };
 
 const report = (changes: Partial<LoadingState>): LoadingState => ({

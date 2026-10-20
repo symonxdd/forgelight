@@ -38,6 +38,12 @@ export function parseInfotext(text: string): ParsedInfotext {
   return { prompt: promptLines.join("\n"), negativePrompt, params };
 }
 
+/** The seed in the settings text, or -1 when it has none. */
+export function seedFromInfotext(text: string): number {
+  const seed = Number(paramValue(parseInfotext(text), "Seed"));
+  return Number.isInteger(seed) ? seed : -1;
+}
+
 export function paramValue(parsed: ParsedInfotext, label: string): string | undefined {
   return parsed.params.find(([l]) => l === label)?.[1];
 }

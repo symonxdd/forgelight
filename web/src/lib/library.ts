@@ -1,4 +1,4 @@
-import { paramValue, parseInfotext } from "./infotext";
+import { parseInfotext, seedFromInfotext } from "./infotext";
 
 /** One image in Forge's output folders, as the Library lists it. */
 export interface LibraryItem {
@@ -78,8 +78,7 @@ export function thumbUrl(item: LibraryItem): string {
 
 /** The seed from the image's settings, or -1 when it has none. */
 export function seedOf(item: LibraryItem): number {
-  const seed = Number(paramValue(parseInfotext(item.infotext), "Seed"));
-  return Number.isInteger(seed) ? seed : -1;
+  return seedFromInfotext(item.infotext);
 }
 
 /** The file name without its folders: "00012-1234.png". */

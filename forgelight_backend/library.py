@@ -1,7 +1,9 @@
 """The image library: every image in Forge's output folders, newest first.
 
 Only reads the output folders; it never moves, changes or deletes an image
-(deleting moves it to the Recycle Bin, on the user's request). Each image's size
+(deleting moves it to the Recycle Bin, on the user's request). The one thing it
+adds there is an image the user upscaled with "Upscale only", saved as a new
+file in the extras folder, where Forge's own Extras tab saves. Each image's size
 and settings text are read once and kept in data/library.json, small preview
 images are made on demand into data/thumbs/, and starred images are listed in
 data/favorites.json.
@@ -9,7 +11,9 @@ data/favorites.json.
 
 from __future__ import annotations
 
+import base64
 import hashlib
+import io
 import os
 import re
 import threading
@@ -18,6 +22,7 @@ import uuid
 from pathlib import Path
 
 from PIL import Image
+from PIL.PngImagePlugin import PngInfo
 
 from . import store
 
@@ -381,6 +386,52 @@ def delete(image_ids: list[str]) -> dict:
         if starred & gone:
             store.write(FAVORITES_FILE, sorted(starred - gone))
     return {"deleted": len(gone), "failed": len(image_ids) - len(gone)}
+
+
+# The largest upscaled image accepted, in decoded bytes.
+MAX_UPSCALED_BYTES = 256 * 1024 * 1024
+
+
+def _next_number(folder: Path) -> int:
+    """Forge numbers the files in a folder; a new file takes the next number."""
+    numbers = [int(m.group(1)) for p in folder.iterdir() if (m := re.match(r"(\d+)-", p.name))]
+    return max(numbers, default=-1) + 1
+
+
+def save_upscaled(image_b64: str, infotext: str, note: str, source_name: str) -> dict:
+    """Saves an image enlarged by "Upscale only" as a new file in the extras folder.
+
+    It keeps the original's settings text with a note of the upscale added, and never
+    replaces an existing file.
+    """
+    global _scan
+    data = base64.b64decode(image_b64.split(",", 1)[-1], validate=True)
+    if len(data) > MAX_UPSCALED_BYTES:
+        raise ValueError("The upscaled image is too large to save.")
+    with Image.open(io.BytesIO(data)) as image:
+        image.load()
+        name, root = next(((n, r) for n, r in roots().items() if n in ("extras", "outputs")), (None, None))
+        if root is None:
+            raise FileNotFoundError("Forge has no folder for upscaled images.")
+        folder = root / time.strftime("%Y-%m-%d")
+        folder.mkdir(parents=True, exist_ok=True)
+        stem = re.sub(r"[^\w.-]+", "_", Path(source_name).stem)[:80].strip("._") or "upscaled"
+        settings = f"{infotext}, {note}" if infotext.strip() else note
+        info = PngInfo()
+        info.add_text("parameters", settings)
+        number = _next_number(folder)
+        while True:
+            path = folder / f"{number:05}-{stem}.png"
+            try:
+                # "x" creates the file only if it doesn't exist yet: nothing is ever overwritten.
+                with open(path, "xb") as file:
+                    image.save(file, "PNG", pnginfo=info)
+                break
+            except FileExistsError:
+                number += 1
+    with _lock:
+        _scan = None
+    return {"id": f"{name}/{path.relative_to(root).as_posix()}", "infotext": settings}
 
 
 def reveal(image_id: str) -> None:

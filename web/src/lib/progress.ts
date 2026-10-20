@@ -81,6 +81,7 @@ export function isRefining(job: RunningJob): boolean {
 /** The words shown on the progress bar while a job runs. */
 export function progressLabel(job: RunningJob, now = Date.now()): string {
   if (job.stopping) return "Stopping…";
+  if (job.enlarging) return "Enlarging…";
   if (isLoading(job) && job.loading) {
     const { stage, progress } = job.loading;
     return stage === "reading" && progress !== null

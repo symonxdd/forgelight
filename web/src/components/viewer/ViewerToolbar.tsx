@@ -1,7 +1,8 @@
-import { Download, ImagePlus, Info, Maximize, Minimize } from "lucide-react";
+import { Download, ImagePlus, ImageUpscale, Info, Maximize, Minimize } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import type { SessionImage } from "../../stores/session";
 import { startFromImage } from "../../stores/startImage";
+import { attachUpscale } from "../../stores/upscale";
 import { useView } from "../../stores/view";
 import { currentScale, toggleFullscreen, useViewer } from "../../stores/viewer";
 import { Hint } from "../Hint";
@@ -97,6 +98,19 @@ export function ViewerToolbar({ image, extra }: { image: SessionImage | undefine
           }}
         >
           <ImagePlus className="size-4" aria-hidden />
+        </IconButton>
+      )}
+      {image && (
+        <IconButton
+          label="Upscale"
+          onClick={() => {
+            useView.getState().setView("generate");
+            // Library images are named by their file, this session's by their seed.
+            const name = image.id.includes("/") ? image.id.slice(image.id.lastIndexOf("/") + 1) : `${image.seed}`;
+            void attachUpscale({ url: image.url, infotext: image.infotext, name });
+          }}
+        >
+          <ImageUpscale className="size-4" aria-hidden />
         </IconButton>
       )}
       {extra}

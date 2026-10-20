@@ -34,6 +34,8 @@ export type Job =
       /** Whether the extension has reported on loading at all; without it, the label guesses. */
       loadingKnown: boolean;
       stopping: boolean;
+      /** Forge is enlarging an image with an upscaler, which reports no progress. */
+      enlarging: boolean;
     }
   | { status: "error"; message: string };
 

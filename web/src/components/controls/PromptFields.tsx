@@ -10,6 +10,7 @@ import { GenerateBar } from "./GenerateBar";
 import { LoraChips } from "./LoraChips";
 import { PromptCard } from "./PromptCard";
 import { StartImageRow } from "./StartImage";
+import { UpscaleRow } from "./UpscaleRow";
 
 /** Offered whenever the prompt holds generation data, such as text copied from an image on Civitai. */
 function PastedDataBanner({ onDone }: { onDone: () => void }) {
@@ -99,6 +100,7 @@ export function PromptFields({ connected }: { connected: boolean }) {
   const actions = (
     <section aria-label="Generate" className="flex flex-col gap-3 rounded-xl border border-line bg-surface px-4 py-3">
       <StartImageRow />
+      <UpscaleRow />
       {showLoras && <LoraChips />}
       <GenerateBar connected={connected} />
     </section>

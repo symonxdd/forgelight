@@ -40,6 +40,14 @@ export const HELP = {
     "Makes a new version of an existing image, guided by the prompt. An image can also be dropped onto the Generate screen, or pasted with Ctrl+V anywhere on it.",
   img2imgStrength:
     "How much the new image may differ from the starting image (called denoising strength in Forge). Low values keep the picture and change details; high values keep only the rough layout and colors. 0.4 to 0.6 suits most changes.",
+  upscaleMethod:
+    "Enhance enlarges the image and then redraws it lightly at the larger size, for sharper, finer detail. It is the same as Hires fix, applied to an image that already exists, and uses that image's prompt and settings. Upscale only enlarges the image with the upscaler in a few seconds, without redrawing it: sharper than plain stretching, but without new detail.",
+  upscaleBy:
+    "How much larger the result is than the image. Larger takes more time; for Enhance it also needs more graphics memory.",
+  upscaleUpscaler:
+    "The method that enlarges the image. R-ESRGAN 4x+ suits most images, R-ESRGAN 4x+ Anime6B suits anime and illustration.",
+  enhanceDetail:
+    "How much the redraw may change the enlarged image (called denoising strength in Forge). Low keeps it close to the original; high adds more detail but can alter faces, hands or the composition. 0.3 to 0.5 suits most images.",
   hiresDenoise:
     "How much the second pass may change the image (called denoising strength in Forge). Low keeps it close to the original; high adds more detail but can alter faces, hands or the composition. 0.3 to 0.5 suits most images.",
   checkpointMemory:

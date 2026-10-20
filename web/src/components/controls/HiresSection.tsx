@@ -4,6 +4,7 @@ import { HELP, HELP_NOTES } from "../../lib/help";
 import { hiresSize } from "../../lib/txt2img";
 import { useSettings } from "../../stores/settings";
 import { useStartImage } from "../../stores/startImage";
+import { useUpscale } from "../../stores/upscale";
 import { Toggle } from "../Toggle";
 import { NumberSlider } from "./NumberSlider";
 import { Section } from "./Section";
@@ -22,13 +23,20 @@ export function HiresSection() {
   const target = hiresSize(s.width, s.height, s.hiresScale);
   const enabled = s.hiresEnabled;
   const hasStartImage = useStartImage((st) => st.image !== null);
+  const upscaling = useUpscale((st) => st.source !== null);
 
   return (
     <Section
       title="Hires fix"
       icon={Expand}
       help={HELP.hiresFix}
-      summary={hasStartImage ? "Not used" : enabled ? `${s.hiresScale}× · ${target.width} × ${target.height}` : "Off"}
+      summary={
+        hasStartImage || upscaling
+          ? "Not used"
+          : enabled
+            ? `${s.hiresScale}× · ${target.width} × ${target.height}`
+            : "Off"
+      }
       helpNote={HELP_NOTES.hiresFix}
       // The switch and the folding are independent: each does only its own thing.
       open={s.openSections.hires}
@@ -38,6 +46,10 @@ export function HiresSection() {
       {hasStartImage ? (
         <p className="text-[12.5px] leading-relaxed text-muted">
           Not used while a starting image is attached: image to image has no hires fix in Forge.
+        </p>
+      ) : upscaling ? (
+        <p className="text-[12.5px] leading-relaxed text-muted">
+          Not used while upscaling: the Upscale card has its own settings.
         </p>
       ) : (
         !enabled && (
