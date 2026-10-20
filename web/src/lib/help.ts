@@ -66,6 +66,10 @@ export const HELP = {
     "A Forgelight icon on the desktop. Double-clicking it starts Forge with its API switched on and opens Forgelight. If Forge is already running, it just opens Forgelight.",
   stopForge:
     "Shuts Forge down, the same as pressing Ctrl+C in its window. When the desktop shortcut started Forge, its window closes too. Starting again works with the desktop shortcut.",
+  updateCheck:
+    "Once a day, asks GitHub whether a newer version of Forgelight exists, and shows a dot on the settings icon when one does. Only version numbers and release notes are read. Nothing is downloaded or installed until Update is clicked.",
+  developerCopy:
+    "This copy runs straight from Forgelight's project folder, so it always has the newest code there. It does not check for updates and is never updated from here.",
   civitaiSite:
     "Which address Civitai links open on. Both show the same models and pages; civitai.red also shows mature preview images.",
   civitai:

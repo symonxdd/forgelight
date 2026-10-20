@@ -24,9 +24,18 @@ The interface and Forge share one address, so the browser allows the interface t
 
 - **Generation is Forge's job.** The interface only sends requests to Forge's official API. The extension never touches models, samplers, precision or memory management.
 - **Explicit requests.** Every generation request lists its settings explicitly. Forge's `infotext` shortcut crashes in original Forge and is not used.
-- **Almost no outside network.** Fonts and assets are bundled, and there is no telemetry. The interface talks to `127.0.0.1` only. The one outside destination is Civitai's API, which the extension asks once per model for its name, base model and trigger words, sending only a file fingerprint (or, as a last resort, the file name).
+- **Almost no outside network.** Fonts and assets are bundled, and there is no telemetry. The interface talks to `127.0.0.1` only. The extension has two outside destinations: Civitai's API, which it asks once per model for its name, base model and trigger words, sending only a file fingerprint (or, as a last resort, the file name); and GitHub, for updates (below).
 - **Reading Forge, never changing it.** Forge reports no progress while it loads a checkpoint. The extension's `loading` endpoint looks at the call stack of Forge's generating thread to name the current step, and while the file is read, counts the tensors already in memory against the file's header. It wraps or patches nothing.
 - **Light on the graphics card.** Chrome uses the graphics card to draw pages, and Forge uses the same card, with its limited memory, to make images. Flashy visual effects in the interface would take some of that memory away from Forge, so Forgelight keeps its visuals simple and its image grids use small thumbnails.
+
+## Updates
+
+`forgelight_backend/updates.py`. Nothing is downloaded or installed unless the user clicks **Update**.
+
+- **Check:** with **Check daily** on (settings menu, Updates), the extension reads the list of releases from `api.github.com` at most once a day while the page is open; **Check now** in About checks at once. Only version numbers, dates, notes and download sizes are read. A newer release shows a dot on the settings icon and a line in the menu; **Skip this version** hides it until a newer one appears.
+- **Update:** depends on how Forgelight was installed. A git install (the `release` branch) fetches that branch and resets to it, exactly as Forge's Extensions tab does. A ZIP install downloads the release's ZIP, checks its size and SHA256 checksum against GitHub's listing, unpacks it and swaps the files, putting the old ones back if anything fails. A developer copy (the repository, with `web/`) never updates itself.
+- **Addresses:** `api.github.com`, `github.com`, and GitHub's file servers `release-assets.githubusercontent.com` and `objects.githubusercontent.com`, where release downloads are forwarded. Forwards are followed by hand and any other address is refused. Requests carry a generic User-Agent and nothing else.
+- **After an update:** `data/` is never touched. The extension's code reloads on the next request, so a page reload finishes the update, unless the update changed `scripts/forgelight.py` or `reloader.py`, which Forge reads only at startup; the dialog then asks for a Forge restart.
 
 ## Interface stack
 

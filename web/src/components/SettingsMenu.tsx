@@ -3,6 +3,7 @@ import { Popover } from "radix-ui";
 import { useState, type ReactNode } from "react";
 import { useCreateDesktopShortcut, useSetOpenOnStart, useStartup } from "../api/forgelight";
 import { useConnection, useOptions, useSetOptions } from "../api/queries";
+import { useSetAutoCheck, useUpdates } from "../api/updates";
 import { HELP } from "../lib/help";
 import {
   LIVE_PREVIEW_CHOICES,
@@ -21,6 +22,8 @@ import { InfoTip } from "./InfoTip";
 import { SelectMenu, type MenuOption } from "./SelectMenu";
 import { StopForgeDialog } from "./StopForgeDialog";
 import { Toggle } from "./Toggle";
+import { UpdateDialog } from "./updates/UpdateDialog";
+import { UpdateDot, UpdateNotice } from "./updates/UpdateNotice";
 
 /** A compact dropdown for the settings menu. */
 function Dropdown({
@@ -253,16 +256,43 @@ function Startup({ onStopForge }: { onStopForge: () => void }) {
   );
 }
 
+function Updates() {
+  const updates = useUpdates();
+  const setAuto = useSetAutoCheck();
+  const state = updates.data;
+  return (
+    <>
+      <Heading>Updates</Heading>
+      {state?.kind === "developer" ? (
+        <Row id="developer-copy-label" label="Developer copy" help={HELP.developerCopy}>
+          <span className="text-[12.5px] text-faint">Runs from the project folder</span>
+        </Row>
+      ) : (
+        <Row id="update-check-label" label="Check daily" help={HELP.updateCheck}>
+          <Toggle
+            checked={state?.auto ?? false}
+            onChange={(enabled) => setAuto.mutate({ enabled })}
+            disabled={!state || setAuto.isPending}
+            labelledBy="update-check-label"
+          />
+        </Row>
+      )}
+    </>
+  );
+}
+
 export function SettingsMenu() {
   const [open, setOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
   const [stopOpen, setStopOpen] = useState(false);
+  const [updateOpen, setUpdateOpen] = useState(false);
   return (
     <>
       <Popover.Root open={open} onOpenChange={setOpen}>
         <Popover.Trigger asChild>
-          <IconButton label="Settings" tooltip={false}>
+          <IconButton label="Settings" tooltip={false} className="relative">
             <Settings className="size-4" aria-hidden />
+            <UpdateDot />
           </IconButton>
         </Popover.Trigger>
         <Popover.Portal>
@@ -295,6 +325,12 @@ export function SettingsMenu() {
               </div>
               <ChevronRight className="ml-auto size-4 text-faint group-hover:text-fg-strong" aria-hidden />
             </button>
+            <UpdateNotice
+              onOpen={() => {
+                setOpen(false);
+                setUpdateOpen(true);
+              }}
+            />
             <Divider />
             <Appearance />
             <Divider />
@@ -313,6 +349,8 @@ export function SettingsMenu() {
               }}
             />
             <Divider />
+            <Updates />
+            <Divider />
             <div className="flex items-center px-1 py-1">
               <a
                 href="/"
@@ -330,7 +368,15 @@ export function SettingsMenu() {
           </Popover.Content>
         </Popover.Portal>
       </Popover.Root>
-      <AboutDialog open={aboutOpen} onOpenChange={setAboutOpen} />
+      <AboutDialog
+        open={aboutOpen}
+        onOpenChange={setAboutOpen}
+        onOpenUpdate={() => {
+          setAboutOpen(false);
+          setUpdateOpen(true);
+        }}
+      />
+      <UpdateDialog open={updateOpen} onOpenChange={setUpdateOpen} />
       <StopForgeDialog open={stopOpen} onOpenChange={setStopOpen} />
     </>
   );

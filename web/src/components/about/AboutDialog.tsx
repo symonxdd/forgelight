@@ -2,6 +2,7 @@ import { Code, ExternalLink, Globe, X } from "lucide-react";
 import { Dialog } from "radix-ui";
 import { useState, type ReactNode } from "react";
 import { LogoMark } from "../Logo";
+import { UpdateStatus } from "../updates/UpdateStatus";
 import { FlameCard } from "./FlameCard";
 import { Signature } from "./Signature";
 
@@ -24,7 +25,15 @@ function LinkRow({ href, icon, children }: { href: string; icon: ReactNode; chil
 }
 
 /** Who made Forgelight and where it lives, signed the same way as Symon's other apps. */
-export function AboutDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
+export function AboutDialog({
+  open,
+  onOpenChange,
+  onOpenUpdate,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onOpenUpdate: () => void;
+}) {
   const [flame, setFlame] = useState(false);
 
   return (
@@ -57,6 +66,9 @@ export function AboutDialog({ open, onOpenChange }: { open: boolean; onOpenChang
               </Dialog.Title>
               <span className="text-[12px] text-muted tabular-nums">Version {__APP_VERSION__}</span>
             </div>
+          </div>
+          <div className="mt-3">
+            <UpdateStatus onOpenUpdate={onOpenUpdate} />
           </div>
 
           <p className="mt-4 text-[13.5px] leading-relaxed text-fg">

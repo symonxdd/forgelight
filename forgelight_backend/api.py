@@ -11,7 +11,7 @@ from typing import Any, Callable
 from fastapi import HTTPException, Request
 from fastapi.responses import FileResponse
 
-from . import library, loading, models, startup
+from . import library, loading, models, startup, updates
 from .security import require_own_page, require_same_origin
 from .store import ROOT, version
 
@@ -68,6 +68,44 @@ def desktop_shortcut(_request: Request, _body: Any) -> dict:
 def stop_forge(_request: Request, _body: Any) -> dict:
     startup.stop_forge()
     return {"ok": True}
+
+
+def updates_state(_request: Request, _body: Any) -> dict:
+    return updates.state(check_if_due=True)
+
+
+def _updates_call(action: Callable[[], dict]) -> dict:
+    try:
+        return action()
+    except updates.UpdateError as error:
+        raise HTTPException(status_code=error.status, detail=str(error)) from error
+    except OSError as error:
+        raise HTTPException(status_code=500, detail=f"The update couldn't be written: {error}") from error
+
+
+def updates_check(_request: Request, _body: Any) -> dict:
+    return _updates_call(updates.check_now)
+
+
+def updates_auto(_request: Request, body: Any) -> dict:
+    enabled = (body or {}).get("enabled")
+    if not isinstance(enabled, bool):
+        raise HTTPException(status_code=400, detail="Send whether the daily check is on.")
+    return updates.set_auto(enabled)
+
+
+def updates_skip(_request: Request, body: Any) -> dict:
+    version = (body or {}).get("version")
+    if version is not None and not isinstance(version, str):
+        raise HTTPException(status_code=400, detail="Send the version to skip.")
+    return updates.skip(version)
+
+
+def updates_install(_request: Request, body: Any) -> dict:
+    version = (body or {}).get("version")
+    if not isinstance(version, str):
+        raise HTTPException(status_code=400, detail="Send the version to install.")
+    return _updates_call(lambda: updates.install(version))
 
 
 def _int(value: str | None, default: int, low: int, high: int) -> int:
@@ -154,6 +192,11 @@ ROUTES: dict[tuple[str, str], Handler] = {
     ("POST", "startup/desktop-shortcut"): desktop_shortcut,
     ("POST", "forge/stop"): stop_forge,
     ("GET", "loading"): loading_state,
+    ("GET", "updates"): updates_state,
+    ("POST", "updates/check"): updates_check,
+    ("POST", "updates/auto"): updates_auto,
+    ("POST", "updates/skip"): updates_skip,
+    ("POST", "updates/install"): updates_install,
     ("GET", "library"): library_list,
     ("GET", "library/image"): library_image,
     ("GET", "library/thumb"): library_thumb,

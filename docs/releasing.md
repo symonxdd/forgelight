@@ -35,15 +35,18 @@ The script ([web/scripts/release.mjs](../web/scripts/release.mjs)):
 3. Asks for the release type and shows the resulting version.
 4. Shows the release notes and asks for a final go-ahead. Nothing has changed up to this point.
 5. Sets the version in `web/package.json`, turns `## Unreleased` into `## 1.2.0 (date)` with a new empty `## Unreleased` above it, commits `chore(build): release 1.2.0`, tags the commit `v1.2.0` and pushes `main` and the tag.
+6. Rebuilds the local `page/`, so a Forge that runs this working copy shows the new version.
 
 ## What GitHub does
 
 Pushing the tag starts [.github/workflows/release.yml](../.github/workflows/release.yml):
 
 1. Checks that the tag matches the version in `web/package.json`.
-2. Runs the checks and builds the interface into `page/`.
+2. Runs the checks and builds the interface into `page/`, including `page/version.json`, which tells the extension its version (the `release` branch has no `web/` folder) and lets installed copies compare themselves with newer releases.
 3. Commits the ready-to-run copy to the `release` branch: `scripts/`, `forgelight_backend/`, `page/`, `assets/`, the README, CHANGELOG and license. No interface source code or docs.
 4. Creates the GitHub release "Forgelight 1.2.0" with the version's CHANGELOG section and the same copy as `forgelight-1.2.0.zip`.
+
+Installed copies see the new release at their next daily check, or right away with **Check now** in About, and update from the update dialog (see [architecture.md](architecture.md#updates)).
 
 Progress shows under the repository's **Actions** tab, the result on the **Releases** page. Pushes to `main` without a tag only run the checks ([checks.yml](../.github/workflows/checks.yml)).
 

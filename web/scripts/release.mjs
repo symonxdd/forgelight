@@ -6,6 +6,7 @@
 // 4. Shows the notes under "## Unreleased" in CHANGELOG.md and asks to go ahead.
 // 5. Sets the version, dates the notes, commits "chore(build): release X.Y.Z",
 //    tags the commit vX.Y.Z and pushes main and the tag.
+// 6. Rebuilds the local page/, so a Forge that runs this working copy shows the new version.
 //
 // GitHub's release workflow takes it from the tag: it builds the interface and publishes
 // the release branch and the Releases page. See docs/releasing.md.
@@ -105,6 +106,13 @@ try {
     `The push failed; the release commit and tag ${tag} exist only on this computer.\n` +
       `Once the problem is solved, push them with:\n  git push origin main\n  git push origin ${tag}`,
   );
+}
+
+step("Rebuilding the local page");
+try {
+  run("npm run --silent build", WEB);
+} catch {
+  console.log("  The local build failed; the release itself is done. Run npm run build in web/ later.");
 }
 
 const repository = repositoryUrl();
