@@ -4,7 +4,7 @@ import { useState, type ReactNode } from "react";
 import { useCreateDesktopShortcut, useSetOpenOnStart, useStartup } from "../api/forgelight";
 import { useConnection, useOptions, useSetOptions } from "../api/queries";
 import { useSetAutoCheck, useUpdates } from "../api/updates";
-import { HELP } from "../lib/help";
+import { HELP, HELP_NOTES } from "../lib/help";
 import {
   LIVE_PREVIEW_CHOICES,
   currentLivePreview,
@@ -14,11 +14,11 @@ import {
 import { CIVITAI_SITES, FONTS, fontStack, parseCivitaiSite, parseFont } from "../lib/preferences";
 import { useCheckpointMemory } from "../stores/checkpointMemory";
 import { usePreferences } from "../stores/preferences";
-import { useSettings, type SectionId } from "../stores/settings";
 import { AboutDialog } from "./about/AboutDialog";
 import { Signature } from "./about/Signature";
 import { IconButton } from "./IconButton";
 import { InfoTip } from "./InfoTip";
+import { SectionsPicker } from "./SectionsPicker";
 import { SelectMenu, type MenuOption } from "./SelectMenu";
 import { StopForgeDialog } from "./StopForgeDialog";
 import { Toggle } from "./Toggle";
@@ -66,14 +66,14 @@ function Row({
   id,
   label,
   help,
-  note,
+  helpNote,
   children,
 }: {
   id: string;
   label: string;
   help?: string;
-  /** Faint text after the label, e.g. "2 active". */
-  note?: string;
+  /** Smaller, gray print under the explanation. */
+  helpNote?: string;
   children?: ReactNode;
 }) {
   return (
@@ -82,8 +82,7 @@ function Row({
         <span id={id} className="text-[13.5px] text-fg">
           {label}
         </span>
-        {help && <InfoTip topic={label} text={help} side="left" />}
-        {note && <span className="text-[12px] text-faint">{note}</span>}
+        {help && <InfoTip topic={label} text={help} note={helpNote} side="left" />}
       </span>
       {children}
     </div>
@@ -113,36 +112,9 @@ function Appearance() {
           <Toggle checked={oled === true} onChange={setOled} labelledBy="oled-label" />
         </Row>
       )}
-    </>
-  );
-}
-
-const SECTIONS: { id: SectionId; label: string }[] = [
-  { id: "loras", label: "LoRAs" },
-  { id: "size", label: "Size" },
-  { id: "sampling", label: "Sampling" },
-  { id: "hires", label: "Hires fix" },
-];
-
-/** Shows or hides sections of the Generate screen. The prompt is always shown. */
-function PanelSections() {
-  const hidden = useSettings((s) => s.hiddenSections);
-  const toggle = useSettings((s) => s.toggleSectionHidden);
-  const loraCount = useSettings((s) => s.loras.length);
-
-  return (
-    <>
-      <Heading help={HELP.panelSections}>Sections</Heading>
-      {SECTIONS.map(({ id, label }) => (
-        <Row
-          key={id}
-          id={`section-${id}-label`}
-          label={label}
-          note={id === "loras" && loraCount > 0 ? `${loraCount} active` : undefined}
-        >
-          <Toggle checked={!hidden.includes(id)} onChange={() => toggle(id)} labelledBy={`section-${id}-label`} />
-        </Row>
-      ))}
+      <Row id="sections-label" label="Sections" help={HELP.panelSections} helpNote={HELP_NOTES.panelSections}>
+        <SectionsPicker labelledBy="sections-label" />
+      </Row>
     </>
   );
 }
@@ -331,8 +303,6 @@ export function SettingsMenu() {
             />
             <Divider />
             <Appearance />
-            <Divider />
-            <PanelSections />
             <Divider />
             <Checkpoints />
             <Divider />

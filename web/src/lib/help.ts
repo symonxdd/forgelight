@@ -57,7 +57,7 @@ export const HELP = {
   libraryBlur:
     "Blurs previews in the Library until you point at them. Likely NSFW is a guess from words in each image's prompt, so it can miss some.",
   panelSections:
-    "Hides sections that rarely change, to keep the screen tidy. LoRAs sit in the prompt card; with Size, Sampling and Hires fix all hidden, the settings column disappears. Hidden sections still apply their settings to every image.",
+    "Controls which sections of the Generate screen are visible: LoRAs in the prompt card, and Size, Sampling and Hires fix in the left column.",
   oled: "Pure black instead of dark gray. On OLED screens black pixels are switched off, which gives deeper contrast and uses less power.",
   font: "The typeface used throughout Forgelight.",
   openOnStart:
@@ -81,6 +81,7 @@ export const HELP = {
  * how to say it, spelled with everyday words rather than phonetic symbols.
  */
 export const HELP_NOTES = {
+  panelSections: "Hidden or not, their settings are always applied.",
   addStartImage:
     "Works with PNG, JPEG, WebP, BMP and GIF (its first frame). TIFF, SVG and HEIC (iPhone photos) are not supported.",
   checkpoint:
