@@ -85,6 +85,7 @@ def library_list(request: Request, _body: Any) -> dict:
         rating=params.get("rating", "all") if params.get("rating") in library.RATINGS else "all",
         offset=_int(params.get("offset"), 0, 0, 10_000_000),
         limit=_int(params.get("limit"), 100, 1, 500),
+        favorites_only=params.get("favorites") == "1",
     )
 
 
@@ -113,6 +114,28 @@ def library_reveal(_request: Request, body: Any) -> dict:
     return {"ok": True}
 
 
+def library_favorite(_request: Request, body: Any) -> dict:
+    body = body or {}
+    image_id, favorite = body.get("id"), body.get("favorite")
+    if not isinstance(image_id, str) or not isinstance(favorite, bool):
+        raise HTTPException(status_code=400, detail="Send the image id and whether it is a favorite.")
+    try:
+        return {"favorite": library.set_favorite(image_id, favorite)}
+    except (FileNotFoundError, OSError) as error:
+        raise HTTPException(status_code=404, detail="That image isn't in Forge's output folders.") from error
+
+
+def library_save_upscaled(_request: Request, body: Any) -> dict:
+    body = body or {}
+    fields = [body.get(key) for key in ("image", "infotext", "note", "name")]
+    if not all(isinstance(value, str) for value in fields):
+        raise HTTPException(status_code=400, detail="Send the image, its settings, a note and its name.")
+    try:
+        return library.save_upscaled(*fields)
+    except (ValueError, OSError) as error:
+        raise HTTPException(status_code=500, detail=f"The upscaled image couldn't be saved: {error}") from error
+
+
 def library_delete(_request: Request, body: Any) -> dict:
     ids = (body or {}).get("ids")
     if not isinstance(ids, list) or not all(isinstance(i, str) for i in ids):
@@ -136,6 +159,8 @@ ROUTES: dict[tuple[str, str], Handler] = {
     ("GET", "library/thumb"): library_thumb,
     ("POST", "library/reveal"): library_reveal,
     ("POST", "library/delete"): library_delete,
+    ("POST", "library/favorite"): library_favorite,
+    ("POST", "library/save-upscaled"): library_save_upscaled,
 }
 
 

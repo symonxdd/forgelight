@@ -1,13 +1,19 @@
 """The image library: every image in Forge's output folders, newest first.
 
-Only reads the output folders; it never moves, changes or deletes an image.
-Each image's size and settings text are read once and kept in data/library.json,
-and small preview images are made on demand into data/thumbs/.
+Only reads the output folders; it never moves, changes or deletes an image
+(deleting moves it to the Recycle Bin, on the user's request). The one thing it
+adds there is an image the user upscaled with "Upscale only", saved as a new
+file in the extras folder, where Forge's own Extras tab saves. Each image's size
+and settings text are read once and kept in data/library.json, small preview
+images are made on demand into data/thumbs/, and starred images are listed in
+data/favorites.json.
 """
 
 from __future__ import annotations
 
+import base64
 import hashlib
+import io
 import os
 import re
 import threading
@@ -16,6 +22,7 @@ import uuid
 from pathlib import Path
 
 from PIL import Image
+from PIL.PngImagePlugin import PngInfo
 
 from . import store
 
@@ -25,6 +32,7 @@ SKIPPED_DIRS = {"thumbnails", ".thumbnails", "__pycache__"}
 THUMBS = store.DATA / "thumbs"
 THUMB_WIDTH = 400
 INDEX_FILE = "library.json"
+FAVORITES_FILE = "favorites.json"
 # Rescanning the folders is cheap, but not on every page of a scroll.
 SCAN_TTL = 2.0
 
@@ -209,17 +217,40 @@ def looks_nsfw(infotext: str) -> bool:
 RATINGS = ("all", "sfw", "nsfw")
 
 
-def listing(query: str, model: str, offset: int, limit: int, rating: str = "all") -> dict:
+def favorites() -> set[str]:
+    """Ids of the images starred in the Library."""
+    return set(store.read(FAVORITES_FILE, []))
+
+
+def set_favorite(image_id: str, favorite: bool) -> bool:
+    """Stars or unstars an image in the output folders. Written only when the user clicks."""
+    resolve(image_id)
+    with _lock:
+        ids = favorites()
+        if favorite:
+            ids.add(image_id)
+        else:
+            ids.discard(image_id)
+        store.write(FAVORITES_FILE, sorted(ids))
+    return favorite
+
+
+def listing(
+    query: str, model: str, offset: int, limit: int, rating: str = "all", favorites_only: bool = False
+) -> dict:
     images = scan()
+    starred = favorites()
     models: dict[str, int] = {}
     for image in images:
         if name := model_of(image["infotext"]):
             models[name] = models.get(name, 0) + 1
 
     words = query.lower().split()
-    if words or model or rating != "all":
+    if words or model or rating != "all" or favorites_only:
 
         def matches(image: dict) -> bool:
+            if favorites_only and image["id"] not in starred:
+                return False
             if model and model_of(image["infotext"]) != model:
                 return False
             if rating != "all" and looks_nsfw(image["infotext"]) != (rating == "nsfw"):
@@ -241,7 +272,11 @@ def listing(query: str, model: str, offset: int, limit: int, rating: str = "all"
         "days": days,
         "offset": offset,
         "items": [
-            {**{k: v for k, v in image.items() if k != "path"}, "nsfw": looks_nsfw(image["infotext"])}
+            {
+                **{k: v for k, v in image.items() if k != "path"},
+                "nsfw": looks_nsfw(image["infotext"]),
+                "favorite": image["id"] in starred,
+            }
             for image in page
         ],
         "models": [{"name": n, "count": c} for n, c in sorted(models.items(), key=lambda m: -m[1])],
@@ -328,12 +363,13 @@ MAX_DELETE = 2000
 def delete(image_ids: list[str]) -> dict:
     """Moves images to the Recycle Bin. Ids outside the output folders are skipped."""
     global _scan
-    paths = []
+    found: dict[str, Path] = {}
     for image_id in image_ids[:MAX_DELETE]:
         try:
-            paths.append(resolve(image_id))
+            found[image_id] = resolve(image_id)
         except FileNotFoundError:
             continue
+    paths = list(found.values())
     thumbs = [_thumb_path(path) for path in paths]
     if paths:
         try:
@@ -343,8 +379,59 @@ def delete(image_ids: list[str]) -> dict:
                 _scan = None
     for thumb in thumbs:
         thumb.unlink(missing_ok=True)
-    deleted = sum(1 for path in paths if not path.exists())
-    return {"deleted": deleted, "failed": len(image_ids) - deleted}
+    gone = {image_id for image_id, path in found.items() if not path.exists()}
+    # A deleted image's star goes with it.
+    with _lock:
+        starred = favorites()
+        if starred & gone:
+            store.write(FAVORITES_FILE, sorted(starred - gone))
+    return {"deleted": len(gone), "failed": len(image_ids) - len(gone)}
+
+
+# The largest upscaled image accepted, in decoded bytes.
+MAX_UPSCALED_BYTES = 256 * 1024 * 1024
+
+
+def _next_number(folder: Path) -> int:
+    """Forge numbers the files in a folder; a new file takes the next number."""
+    numbers = [int(m.group(1)) for p in folder.iterdir() if (m := re.match(r"(\d+)-", p.name))]
+    return max(numbers, default=-1) + 1
+
+
+def save_upscaled(image_b64: str, infotext: str, note: str, source_name: str) -> dict:
+    """Saves an image enlarged by "Upscale only" as a new file in the extras folder.
+
+    It keeps the original's settings text with a note of the upscale added, and never
+    replaces an existing file.
+    """
+    global _scan
+    data = base64.b64decode(image_b64.split(",", 1)[-1], validate=True)
+    if len(data) > MAX_UPSCALED_BYTES:
+        raise ValueError("The upscaled image is too large to save.")
+    with Image.open(io.BytesIO(data)) as image:
+        image.load()
+        name, root = next(((n, r) for n, r in roots().items() if n in ("extras", "outputs")), (None, None))
+        if root is None:
+            raise FileNotFoundError("Forge has no folder for upscaled images.")
+        folder = root / time.strftime("%Y-%m-%d")
+        folder.mkdir(parents=True, exist_ok=True)
+        stem = re.sub(r"[^\w.-]+", "_", Path(source_name).stem)[:80].strip("._") or "upscaled"
+        settings = f"{infotext}, {note}" if infotext.strip() else note
+        info = PngInfo()
+        info.add_text("parameters", settings)
+        number = _next_number(folder)
+        while True:
+            path = folder / f"{number:05}-{stem}.png"
+            try:
+                # "x" creates the file only if it doesn't exist yet: nothing is ever overwritten.
+                with open(path, "xb") as file:
+                    image.save(file, "PNG", pnginfo=info)
+                break
+            except FileExistsError:
+                number += 1
+    with _lock:
+        _scan = None
+    return {"id": f"{name}/{path.relative_to(root).as_posix()}", "infotext": settings}
 
 
 def reveal(image_id: str) -> None:
