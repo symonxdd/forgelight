@@ -53,12 +53,13 @@ function Dropdown({
   );
 }
 
-function Heading({ children, help }: { children: string; help?: string }) {
+/** Related settings on a card of their own, under a quiet title. */
+function Group({ title, children }: { title: string; children: ReactNode }) {
   return (
-    <h3 className="flex items-center gap-1.5 px-1 pt-1 text-[11px] font-medium tracking-wide text-faint uppercase">
-      {children}
-      {help && <InfoTip topic={children.toLowerCase()} text={help} side="left" />}
-    </h3>
+    <section aria-label={title} className="flex flex-col pt-3">
+      <h3 className="px-1 pb-1.5 text-[12.5px] font-medium text-muted">{title}</h3>
+      <div className="flex flex-col rounded-lg bg-raised/60 px-2 py-1">{children}</div>
+    </section>
   );
 }
 
@@ -79,7 +80,7 @@ function Row({
   return (
     <div className="flex min-h-9 items-center justify-between gap-3 px-1">
       <span className="flex items-center gap-1.5">
-        <span id={id} className="text-[13.5px] text-fg">
+        <span id={id} className="text-[13.5px] whitespace-nowrap text-fg">
           {label}
         </span>
         {help && <InfoTip topic={label} text={help} note={helpNote} side="left" />}
@@ -87,10 +88,6 @@ function Row({
       {children}
     </div>
   );
-}
-
-function Divider() {
-  return <div className="my-1 h-px bg-line" />;
 }
 
 function Appearance() {
@@ -102,8 +99,7 @@ function Appearance() {
   const fontOptions = FONTS.map(({ id, label }) => ({ value: id, label, style: { fontFamily: fontStack(id) } }));
 
   return (
-    <>
-      <Heading>Appearance</Heading>
+    <Group title="Appearance">
       <Row id="font-label" label="Font" help={HELP.font}>
         <Dropdown value={font} options={fontOptions} onChange={(v) => setFont(parseFont(v))} labelledBy="font-label" />
       </Row>
@@ -115,52 +111,36 @@ function Appearance() {
       <Row id="sections-label" label="Sections" help={HELP.panelSections} helpNote={HELP_NOTES.panelSections}>
         <SectionsPicker labelledBy="sections-label" />
       </Row>
-    </>
+    </Group>
   );
 }
 
-function Checkpoints() {
-  const enabled = useCheckpointMemory((s) => s.enabled);
-  const setEnabled = useCheckpointMemory((s) => s.setEnabled);
-  return (
-    <>
-      <Heading>Checkpoints</Heading>
-      <Row id="checkpoint-memory-label" label="Remember per checkpoint" help={HELP.checkpointMemory}>
-        <Toggle checked={enabled} onChange={setEnabled} labelledBy="checkpoint-memory-label" />
-      </Row>
-    </>
-  );
-}
-
-function LivePreview() {
+/** Settings about making images: checkpoint memory, live preview and where Civitai links open. */
+function Generating() {
+  const memoryEnabled = useCheckpointMemory((s) => s.enabled);
+  const setMemoryEnabled = useCheckpointMemory((s) => s.setEnabled);
   const options = useOptions();
   const setOptions = useSetOptions();
-  const current = currentLivePreview(options.data?.live_previews_enable, options.data?.show_progress_every_n_steps);
-  const choices = LIVE_PREVIEW_CHOICES.map(({ id, label }) => ({ value: id, label }));
+  const preview = currentLivePreview(options.data?.live_previews_enable, options.data?.show_progress_every_n_steps);
+  const previewChoices = LIVE_PREVIEW_CHOICES.map(({ id, label }) => ({ value: id, label }));
+  const site = usePreferences((s) => s.civitaiSite);
+  const setSite = usePreferences((s) => s.setCivitaiSite);
 
   return (
-    <>
-      <Heading>Live preview</Heading>
-      <Row id="preview-label" label="Updates" help={HELP.livePreview}>
+    <Group title="Generating">
+      <Row id="checkpoint-memory-label" label="Remember per checkpoint" help={HELP.checkpointMemory}>
+        <Toggle checked={memoryEnabled} onChange={setMemoryEnabled} labelledBy="checkpoint-memory-label" />
+      </Row>
+      <Row id="preview-label" label="Live preview" help={HELP.livePreview}>
         <Dropdown
-          value={current ?? ""}
-          options={choices}
+          value={preview ?? ""}
+          options={previewChoices}
           onChange={(v) => setOptions.mutate(livePreviewSettings(v as LivePreviewChoice))}
           labelledBy="preview-label"
           disabled={!options.data || setOptions.isPending}
         />
       </Row>
-    </>
-  );
-}
-
-function Civitai() {
-  const site = usePreferences((s) => s.civitaiSite);
-  const setSite = usePreferences((s) => s.setCivitaiSite);
-  return (
-    <>
-      <Heading>Civitai</Heading>
-      <Row id="civitai-site-label" label="Open links on" help={HELP.civitaiSite}>
+      <Row id="civitai-site-label" label="Civitai links" help={HELP.civitaiSite}>
         <Dropdown
           value={site}
           options={CIVITAI_SITES.map(({ id, label }) => ({ value: id, label }))}
@@ -168,7 +148,7 @@ function Civitai() {
           labelledBy="civitai-site-label"
         />
       </Row>
-    </>
+    </Group>
   );
 }
 
@@ -183,8 +163,7 @@ function Startup({ onStopForge }: { onStopForge: () => void }) {
   const forgeRunning = connection === "connected" || connection === "api-off";
 
   return (
-    <>
-      <Heading>Startup</Heading>
+    <Group title="Startup">
       <Row id="open-on-start-label" label="Open Forgelight on start" help={HELP.openOnStart}>
         <Toggle
           checked={state?.openOnStart ?? false}
@@ -199,7 +178,7 @@ function Startup({ onStopForge }: { onStopForge: () => void }) {
           onClick={() => createShortcut.mutate()}
           disabled={!state || createShortcut.isPending}
           aria-describedby="shortcut-label"
-          className="flex h-8 w-36 items-center justify-center gap-2 rounded-md border border-line text-[13px] text-fg hover:bg-raised disabled:opacity-50"
+          className="flex h-8 w-36 items-center justify-center gap-2 rounded-md border border-line bg-surface text-[13px] text-fg hover:border-line-strong disabled:opacity-50"
         >
           {createShortcut.isPending ? (
             <LoaderCircle className="size-3.5 animate-spin" aria-hidden />
@@ -217,14 +196,14 @@ function Startup({ onStopForge }: { onStopForge: () => void }) {
           onClick={onStopForge}
           disabled={!forgeRunning}
           aria-describedby="stop-forge-label"
-          className="flex h-8 w-36 items-center justify-center gap-2 rounded-md border border-line text-[13px] text-fg enabled:hover:border-bad enabled:hover:text-bad disabled:text-faint"
+          className="flex h-8 w-36 items-center justify-center gap-2 rounded-md border border-line bg-surface text-[13px] text-fg enabled:hover:border-bad enabled:hover:text-bad disabled:text-faint"
         >
           <Power className="size-3.5" aria-hidden />
           {forgeRunning ? "Stop" : "Not running"}
         </button>
       </Row>
-      {error && <p className="px-1 text-[12.5px] text-bad">{error.message}</p>}
-    </>
+      {error && <p className="px-1 pb-1 text-[12.5px] text-bad">{error.message}</p>}
+    </Group>
   );
 }
 
@@ -233,8 +212,7 @@ function Updates() {
   const setAuto = useSetAutoCheck();
   const state = updates.data;
   return (
-    <>
-      <Heading>Updates</Heading>
+    <Group title="Updates">
       {state?.kind === "developer" ? (
         <Row id="developer-copy-label" label="Developer copy" help={HELP.developerCopy} />
       ) : (
@@ -247,7 +225,7 @@ function Updates() {
           />
         </Row>
       )}
-    </>
+    </Group>
   );
 }
 
@@ -273,7 +251,7 @@ export function SettingsMenu() {
             sideOffset={8}
             collisionPadding={12}
             aria-label="Settings"
-            className="z-40 flex max-h-[var(--radix-popover-content-available-height)] w-80 flex-col overflow-y-auto rounded-lg border border-line bg-surface p-2 text-fg shadow-lg shadow-black/15"
+            className="z-40 flex max-h-[var(--radix-popover-content-available-height)] w-[21rem] flex-col overflow-y-auto rounded-lg border border-line bg-surface p-2 text-fg shadow-lg shadow-black/15"
           >
             <button
               type="button"
@@ -301,25 +279,16 @@ export function SettingsMenu() {
                 setUpdateOpen(true);
               }}
             />
-            <Divider />
             <Appearance />
-            <Divider />
-            <Checkpoints />
-            <Divider />
-            <LivePreview />
-            <Divider />
-            <Civitai />
-            <Divider />
+            <Generating />
             <Startup
               onStopForge={() => {
                 setOpen(false);
                 setStopOpen(true);
               }}
             />
-            <Divider />
             <Updates />
-            <Divider />
-            <div className="flex items-center px-1 py-1">
+            <div className="flex items-center px-1 pt-4 pb-1">
               <a
                 href="/"
                 target="_blank"
