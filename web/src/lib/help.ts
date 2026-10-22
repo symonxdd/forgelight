@@ -74,6 +74,8 @@ export const HELP = {
     "Which address Civitai links open on. Both show the same models and pages; civitai.red also shows mature preview images.",
   civitai:
     "Details looked up on Civitai once per model, using only the file name, file size and a short fingerprint of the file. Saved on this computer afterwards.",
+  recommended:
+    "Settings from the example images this checkpoint's creator shared on Civitai. Nothing changes until Apply is clicked.",
 } as const;
 
 /**
@@ -81,6 +83,8 @@ export const HELP = {
  * how to say it, spelled with everyday words rather than phonetic symbols.
  */
 export const HELP_NOTES = {
+  recommended:
+    "The most common sampler and size, with typical steps and CFG scale. Hires fix gets its values but stays off, so images are tried at the base size first.",
   panelSections: "Hidden or not, their settings are always applied.",
   addStartImage:
     "Works with PNG, JPEG, WebP, BMP and GIF (its first frame). TIFF, SVG and HEIC (iPhone photos) are not supported.",

@@ -3,6 +3,7 @@ import type { SectionId } from "../stores/settings";
 /** The Generate screen's sections that can be hidden, in screen order. The prompt always shows. */
 export const SECTIONS: readonly { id: SectionId; label: string }[] = [
   { id: "loras", label: "LoRAs" },
+  { id: "recommended", label: "Recommended" },
   { id: "size", label: "Size" },
   { id: "sampling", label: "Sampling" },
   { id: "hires", label: "Hires fix" },

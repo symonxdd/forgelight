@@ -1,4 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import type { CivitaiExample } from "../lib/recommended";
 import { ForgeError, forgePost } from "./client";
 
 export interface CivitaiInfo {
@@ -10,6 +11,14 @@ export interface CivitaiInfo {
   nsfw?: boolean;
   trainedWords?: string[];
   url?: string;
+  /** Settings of the creator's example images, for recommended settings. */
+  examples?: CivitaiExample[];
+  /** The model's description on Civitai, as plain text. */
+  notes?: string;
+  /** The description of this version, often a list of changes. */
+  versionNotes?: string;
+  /** Known from an earlier lookup and being fetched again to add the examples and notes. */
+  refreshing?: boolean;
 }
 
 export interface ModelEntry {
@@ -71,7 +80,9 @@ export function useModels(enabled = true) {
     staleTime: 60_000,
     refetchInterval: (query) => {
       const data = query.state.data;
-      const pending = data && [...data.checkpoints, ...data.loras].some((m) => m.civitai.status === "pending");
+      const pending =
+        data &&
+        [...data.checkpoints, ...data.loras].some((m) => m.civitai.status === "pending" || m.civitai.refreshing);
       return pending ? 3000 : false;
     },
   });

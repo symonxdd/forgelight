@@ -18,7 +18,7 @@ export const gettingModels: GuideChapter = {
         "civitai.com and civitai.red show the same models; civitai.red also shows mature preview images.",
       ],
       forgelight:
-        "Forgelight looks up each local model on Civitai once, for its name, family and trigger words, and links to its page.",
+        "Forgelight looks up each local model on Civitai once, for its name, family, trigger words and the settings of the creator's example images, and links to its page. The Recommended card beside the image turns those settings into one Apply button; a LoRA shows the strength its creator used.",
       related: ["recreating/generation-data", "getting-models/choosing"],
       keywords: ["civitai", "download", "community", "site"],
     },

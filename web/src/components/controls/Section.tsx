@@ -15,6 +15,8 @@ interface SectionProps {
   helpNote?: string;
   /** A control at the right end of the header, such as an on/off switch. */
   action?: ReactNode;
+  /** Drawn as a suggestion (dashed outline, page background) instead of a settings card. */
+  suggestion?: boolean;
   open: boolean;
   onOpenChange: (open: boolean) => void;
   children: ReactNode;
@@ -31,12 +33,17 @@ export function Section({
   help,
   helpNote,
   action,
+  suggestion = false,
   open,
   onOpenChange,
   children,
 }: SectionProps) {
   return (
-    <Collapsible.Root open={open} onOpenChange={onOpenChange} className="rounded-xl border border-line bg-surface">
+    <Collapsible.Root
+      open={open}
+      onOpenChange={onOpenChange}
+      className={`rounded-xl border ${suggestion ? "border-dashed border-line-strong" : "border-line bg-surface"}`}
+    >
       <div className="flex items-center gap-2 py-3 pr-2.5 pl-4">
         <Icon className="size-4 shrink-0 text-muted" aria-hidden />
         <h2 className="text-[13px] font-medium text-fg-strong">{title}</h2>

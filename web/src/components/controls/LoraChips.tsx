@@ -6,6 +6,7 @@ import { useCurrentCheckpoint } from "../../api/queries";
 import { HELP, HELP_NOTES } from "../../lib/help";
 import { ARCH_LABEL, addTriggerWord, compatibility, hasTriggerWord, type Arch, type LoraSlot } from "../../lib/loras";
 import { baseModelLabel, displayName } from "../../lib/modelNames";
+import { recommendedLoraWeight } from "../../lib/recommended";
 import { usePreferences } from "../../stores/preferences";
 import { useSettings } from "../../stores/settings";
 import { CivitaiLink } from "../CivitaiLink";
@@ -41,6 +42,30 @@ function Warning({ children }: { children: string }) {
     <p className="flex items-start gap-1.5 text-[12px] leading-snug text-bad">
       <TriangleAlert className="mt-px size-3.5 shrink-0" aria-hidden />
       {children}
+    </p>
+  );
+}
+
+/** The strength the creator's example images used, with a button to take it over. */
+function SuggestedStrength({ value, current, onUse }: { value: number; current: number; onUse: () => void }) {
+  if (value === current) {
+    return (
+      <p className="-mt-1.5 flex items-center gap-1.5 text-[12px] text-muted">
+        <Check className="size-3.5 shrink-0 text-accent" aria-hidden />
+        Same as in the creator's example images
+      </p>
+    );
+  }
+  return (
+    <p className="-mt-1.5 flex items-center gap-2 text-[12px] text-muted">
+      The creator's example images use {value}.
+      <button
+        type="button"
+        onClick={onUse}
+        className="h-6 rounded-md border border-line px-2 text-[12px] text-fg hover:border-line-strong hover:text-fg-strong"
+      >
+        Use {value}
+      </button>
     </p>
   );
 }
@@ -106,6 +131,7 @@ function LoraDetails({ slot, entry, checkpointArch, onChange, onRemove }: LoraPr
   const arch = entry?.arch;
   const fit = compatibility(arch, checkpointArch);
   const words = entry?.civitai.trainedWords?.filter((w) => w.trim()) ?? [];
+  const suggested = recommendedLoraWeight(entry?.civitai.examples ?? []);
 
   return (
     <div className="flex flex-col gap-3">
@@ -145,6 +171,9 @@ function LoraDetails({ slot, entry, checkpointArch, onChange, onRemove }: LoraPr
         step={0.05}
         onChange={onChange}
       />
+      {suggested !== undefined && (
+        <SuggestedStrength value={suggested} current={slot.weight} onUse={() => onChange(suggested)} />
+      )}
       {words.length > 0 && <TriggerWords words={words} />}
     </div>
   );

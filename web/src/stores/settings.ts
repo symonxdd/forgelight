@@ -3,10 +3,10 @@ import { createJSONStorage, persist } from "zustand/middleware";
 import { safeStorage } from "../lib/storage";
 import { DEFAULT_SETTINGS, type GenerationSettings } from "../lib/txt2img";
 
-export type SectionId = "loras" | "size" | "sampling" | "hires";
+export type SectionId = "loras" | "recommended" | "size" | "sampling" | "hires";
 
 /** The sections in the settings column beside the image; LoRAs live in the prompt card. */
-const PANEL_SECTIONS: SectionId[] = ["size", "sampling", "hires"];
+const PANEL_SECTIONS: SectionId[] = ["recommended", "size", "sampling", "hires"];
 
 interface SettingsState extends GenerationSettings {
   openSections: Record<SectionId, boolean>;
@@ -22,7 +22,7 @@ export const useSettings = create<SettingsState>()(
   persist(
     (set) => ({
       ...DEFAULT_SETTINGS,
-      openSections: { loras: true, size: true, sampling: true, hires: true },
+      openSections: { loras: true, recommended: true, size: true, sampling: true, hires: true },
       hiddenSections: [],
       update: (changes) => set(changes),
       setSectionOpen: (id, open) => set((s) => ({ openSections: { ...s.openSections, [id]: open } })),
