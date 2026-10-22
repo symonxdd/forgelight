@@ -33,24 +33,3 @@ export function ViewerStar({ item }: { item: LibraryItem }) {
     </IconButton>
   );
 }
-
-/** Shows only starred images. */
-export function FavoritesToggle({ on, onChange }: { on: boolean; onChange: (on: boolean) => void }) {
-  return (
-    <Hint label={on ? "Show all images" : "Show only favorites"}>
-      <button
-        type="button"
-        onClick={() => onChange(!on)}
-        aria-pressed={on}
-        className={`flex h-8 items-center gap-1.5 rounded-md border px-2.5 text-[13px] ${
-          on
-            ? "border-line-strong bg-raised text-fg-strong"
-            : "border-line text-muted hover:border-line-strong hover:text-fg-strong"
-        }`}
-      >
-        <Star className={`size-3.5 ${on ? "fill-current" : ""}`} aria-hidden />
-        Favorites
-      </button>
-    </Hint>
-  );
-}

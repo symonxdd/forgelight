@@ -1,35 +1,20 @@
 import { Check, ImageIcon, Layers, LoaderCircle, Lock, Search, Trash2, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useModels } from "../../api/forgelight";
 import { usePrivateStatus } from "../../api/private";
 import { useLibrary } from "../../api/library";
 import { fileName, groupBatches, groupByDay, singles, thumbUrl, type Batch } from "../../lib/library";
-import { displayName, tidyName } from "../../lib/modelNames";
 import { usePreferences } from "../../stores/preferences";
 import { Hint } from "../Hint";
-import { SelectMenu } from "../SelectMenu";
-import { ContentFilter } from "./ContentFilter";
+import { FiltersMenu } from "./FiltersMenu";
 import { DeleteDialog } from "./DeleteDialog";
 import { FloatingMessages } from "../controls/Messages";
-import { LockedLine, PrivateFilter } from "./PrivateFilter";
-import { FavoritesToggle, TileStar } from "./Favorites";
+import { ViewSwitch, type LibraryView } from "./ViewSwitch";
+import { TileStar } from "./Favorites";
 import { LibraryViewer } from "./LibraryViewer";
-
-const ALL = "__all";
-
-/** Readable names for the checkpoints named in images, using Civitai's name when known. */
-function useModelLabels(): (name: string) => string {
-  const models = useModels();
-  const byStem = useMemo(
-    () => new Map((models.data?.checkpoints ?? []).map((m) => [m.stem, displayName(m.stem, m.civitai).name])),
-    [models.data],
-  );
-  return useCallback((name: string) => byStem.get(name) ?? tidyName(name), [byStem]);
-}
 
 function SearchBox({ value, onChange }: { value: string; onChange: (value: string) => void }) {
   return (
-    <div className="relative w-72 max-w-full">
+    <div className="relative max-w-[26rem] min-w-48 flex-1">
       <Search
         className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-faint"
         aria-hidden
@@ -54,31 +39,6 @@ function SearchBox({ value, onChange }: { value: string; onChange: (value: strin
         </button>
       )}
     </div>
-  );
-}
-
-function ModelFilter({
-  value,
-  models,
-  onChange,
-}: {
-  value: string;
-  models: { name: string; count: number }[];
-  onChange: (value: string) => void;
-}) {
-  const label = useModelLabels();
-  const options = [
-    { value: ALL, label: "All checkpoints" },
-    ...models.map((m) => ({ value: m.name, label: label(m.name) })),
-  ];
-  return (
-    <SelectMenu
-      value={value || ALL}
-      options={options}
-      onChange={(v) => onChange(v === ALL ? "" : v)}
-      aria-label="Checkpoint"
-      className="h-8 max-w-64 min-w-40 rounded-md border border-line bg-surface px-2.5 text-[13px] text-fg-strong hover:border-line-strong"
-    />
   );
 }
 
@@ -224,8 +184,7 @@ export function Library() {
   const [input, setInput] = useState("");
   const [query, setQuery] = useState("");
   const [model, setModel] = useState("");
-  const [favoritesOnly, setFavoritesOnly] = useState(false);
-  const [privateOnly, setPrivateOnly] = useState(false);
+  const [view, setView] = useState<LibraryView>("all");
   const [openId, setOpenId] = useState<string | null>(null);
   const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
   const [anchor, setAnchor] = useState<string | null>(null);
@@ -242,12 +201,8 @@ export function Library() {
     setModel(value);
     setSelected(new Set());
   };
-  const changeFavoritesOnly = (value: boolean) => {
-    setFavoritesOnly(value);
-    setSelected(new Set());
-  };
-  const changePrivateOnly = (value: boolean) => {
-    setPrivateOnly(value);
+  const changeView = (value: LibraryView) => {
+    setView(value);
     setSelected(new Set());
   };
 
@@ -260,8 +215,9 @@ export function Library() {
   const rating = usePreferences((s) => s.libraryRating);
   const setRating = usePreferences((s) => s.setLibraryRating);
   const privateStatus = usePrivateStatus();
-  // Locking leaves nothing to show in the private view.
-  const showPrivateOnly = privateOnly && privateStatus.data?.unlocked !== false;
+  const favoritesOnly = view === "favorites";
+  // Locking leaves nothing to show in the private view, so it falls back to all images.
+  const showPrivateOnly = view === "private" && privateStatus.data?.unlocked === true;
   const library = useLibrary(query, model, rating, favoritesOnly, showPrivateOnly);
   const pages = useMemo(() => library.data?.pages ?? [], [library.data]);
   const items = useMemo(() => {
@@ -371,8 +327,7 @@ export function Library() {
             onClick={() => {
               changeInput("");
               changeModel("");
-              changeFavoritesOnly(false);
-              changePrivateOnly(false);
+              changeView("all");
               setRating("all");
             }}
             className="h-8 rounded-md border border-line px-3 text-[13px] text-fg hover:bg-raised"
@@ -428,34 +383,38 @@ export function Library() {
   return (
     <main aria-label="Library" className="relative flex min-h-0 flex-1 flex-col bg-canvas">
       <div className="border-b border-line px-4 py-3">
-        <div className="flex flex-wrap items-center justify-center gap-2">
+        {/* One centered band, so on a wide screen search and controls stay together. */}
+        <div className="mx-auto flex max-w-[70rem] flex-wrap items-center gap-2">
           <SearchBox value={input} onChange={changeInput} />
-          <ModelFilter value={model} models={models} onChange={changeModel} />
-          <ContentFilter />
-          <FavoritesToggle on={favoritesOnly} onChange={changeFavoritesOnly} />
-          <PrivateFilter on={showPrivateOnly} onChange={changePrivateOnly} />
-          <Hint label={stacks ? "Show every image on its own" : "Stack images made together"}>
-            <button
-              type="button"
-              onClick={() => setStacks(!stacks)}
-              aria-pressed={stacks}
-              className={`flex h-8 items-center gap-1.5 rounded-md border px-2.5 text-[13px] ${
-                stacks
-                  ? "border-line-strong bg-raised text-fg-strong"
-                  : "border-line text-muted hover:border-line-strong hover:text-fg-strong"
-              }`}
-            >
-              <Layers className="size-3.5" aria-hidden />
-              Stacks
-            </button>
-          </Hint>
-          {/* A fixed width, so a changing count ("13 images", "0 images") never shifts the centered bar. */}
-          <span className="ml-2 w-24 text-[12.5px] text-muted tabular-nums">
-            {library.isPending ? "" : total === 1 ? "1 image" : `${total.toLocaleString("en-US")} images`}
-          </span>
+          <div className="ml-auto flex flex-wrap items-center justify-end gap-2">
+            <ViewSwitch
+              view={showPrivateOnly ? "private" : view === "private" ? "all" : view}
+              hidden={latest?.lockedPrivate ?? 0}
+              onChange={changeView}
+            />
+            <FiltersMenu model={model} models={models} onModelChange={changeModel} />
+            <Hint label={stacks ? "Show every image on its own" : "Stack images made together"}>
+              <button
+                type="button"
+                onClick={() => setStacks(!stacks)}
+                aria-pressed={stacks}
+                aria-label="Stacks"
+                className={`grid size-8 place-items-center rounded-md border ${
+                  stacks
+                    ? "border-line-strong bg-raised text-fg-strong"
+                    : "border-line text-muted hover:border-line-strong hover:text-fg-strong"
+                }`}
+              >
+                <Layers className="size-3.5" aria-hidden />
+              </button>
+            </Hint>
+            {/* A fixed width, so a changing count ("13 images", "0 images") never shifts the controls. */}
+            <span className="w-20 text-right text-[12.5px] text-muted tabular-nums">
+              {library.isPending ? "" : total === 1 ? "1 image" : `${total.toLocaleString("en-US")} images`}
+            </span>
+          </div>
         </div>
       </div>
-      <LockedLine count={latest?.lockedPrivate ?? 0} />
       <div className="relative flex min-h-0 flex-1 flex-col">
         <div className={`min-h-0 flex-1 overflow-y-auto ${selectedCount > 0 ? "pb-20" : ""}`}>{body}</div>
         <FloatingMessages />
