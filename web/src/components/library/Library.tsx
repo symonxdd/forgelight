@@ -1,12 +1,13 @@
-import { Check, ImageIcon, Layers, LoaderCircle, Lock, Search, Trash2, X } from "lucide-react";
+import { Check, ImageIcon, Layers, LoaderCircle, Lock, LockOpen, Search, Trash2, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePrivateStatus } from "../../api/private";
-import { useLibrary } from "../../api/library";
+import { useLibrary, type PrivacyMove } from "../../api/library";
 import { fileName, groupBatches, groupByDay, singles, thumbUrl, type Batch } from "../../lib/library";
 import { usePreferences } from "../../stores/preferences";
 import { Hint } from "../Hint";
 import { FiltersMenu } from "./FiltersMenu";
 import { DeleteDialog } from "./DeleteDialog";
+import { PrivacyDialog } from "./PrivacyDialog";
 import { FloatingMessages } from "../controls/Messages";
 import { ViewSwitch, type LibraryView } from "./ViewSwitch";
 import { TileStar } from "./Favorites";
@@ -135,7 +136,25 @@ function Tile({ batch, selected, selecting, onOpen, onToggle }: TileProps) {
 }
 
 /** Floats at the bottom center while images are selected, close to wherever the pointer is. */
-function SelectionBar({ count, onClear, onDelete }: { count: number; onClear: () => void; onDelete: () => void }) {
+function SelectionBar({
+  count,
+  publicCount,
+  privateCount,
+  onClear,
+  onMove,
+  onDelete,
+}: {
+  count: number;
+  /** Selected images that can be made private; zero hides the button (also before setup). */
+  publicCount: number;
+  privateCount: number;
+  onClear: () => void;
+  onMove: (to: "private" | "public") => void;
+  onDelete: () => void;
+}) {
+  const mixed = publicCount > 0 && privateCount > 0;
+  const moveButton =
+    "flex h-8 items-center gap-1.5 rounded-md border border-line px-3 text-[13px] text-fg hover:border-line-strong hover:text-fg-strong";
   return (
     <div className="pointer-events-none absolute inset-x-0 bottom-5 z-10 flex justify-center px-4">
       <div
@@ -153,6 +172,18 @@ function SelectionBar({ count, onClear, onDelete }: { count: number; onClear: ()
         >
           Clear
         </button>
+        {publicCount > 0 && (
+          <button type="button" onClick={() => onMove("private")} className={moveButton}>
+            <Lock className="size-3.5" aria-hidden />
+            Make private{mixed ? ` (${publicCount})` : ""}
+          </button>
+        )}
+        {privateCount > 0 && (
+          <button type="button" onClick={() => onMove("public")} className={moveButton}>
+            <LockOpen className="size-3.5" aria-hidden />
+            Make public{mixed ? ` (${privateCount})` : ""}
+          </button>
+        )}
         <button
           type="button"
           onClick={onDelete}
@@ -189,6 +220,7 @@ export function Library() {
   const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
   const [anchor, setAnchor] = useState<string | null>(null);
   const [pendingDelete, setPendingDelete] = useState<{ ids: string[]; next: string | null } | null>(null);
+  const [pendingMove, setPendingMove] = useState<(PrivacyMove & { next: string | null }) | null>(null);
   // Deleted images leave the grid at once, before the Library has reloaded.
   const [removed, setRemoved] = useState<ReadonlySet<string>>(new Set());
 
@@ -298,12 +330,28 @@ export function Library() {
     const next = items[openIndex + 1] ?? items[openIndex - 1];
     setPendingDelete({ ids: [current.id], next: next?.id ?? null });
   };
-  const onDeleted = (ids: string[]) => {
+  /** Deleted or moved images leave the grid at once, and the image view goes on to the next one. */
+  const leave = (ids: string[], next: string | null) => {
     setRemoved((current) => new Set([...current, ...ids]));
     setSelected((current) => new Set([...current].filter((id) => !ids.includes(id))));
-    if (openId && ids.includes(openId)) setOpenId(pendingDelete?.next ?? null);
+    if (openId && ids.includes(openId)) setOpenId(next);
+  };
+  const onDeleted = (ids: string[]) => {
+    leave(ids, pendingDelete?.next ?? null);
     setPendingDelete(null);
   };
+  const moveOpen = () => {
+    const current = items[openIndex];
+    if (!current) return;
+    const next = items[openIndex + 1] ?? items[openIndex - 1];
+    setPendingMove({ ids: [current.id], to: current.private ? "public" : "private", next: next?.id ?? null });
+  };
+  const onMoved = (ids: string[]) => {
+    leave(ids, pendingMove?.next ?? null);
+    setPendingMove(null);
+  };
+  const selectedPrivate = [...selected].filter((id) => id.startsWith("private/"));
+  const selectedPublic = [...selected].filter((id) => !id.startsWith("private/"));
 
   const filtered = Boolean(query || model || rating !== "all" || favoritesOnly || showPrivateOnly);
   let body;
@@ -422,7 +470,10 @@ export function Library() {
       {selectedCount > 0 && openIndex === -1 && (
         <SelectionBar
           count={selectedCount}
+          publicCount={privateStatus.data?.setUp ? selectedPublic.length : 0}
+          privateCount={selectedPrivate.length}
           onClear={clearSelection}
+          onMove={(to) => setPendingMove({ ids: to === "private" ? selectedPublic : selectedPrivate, to, next: null })}
           onDelete={() => setPendingDelete({ ids: [...selected], next: null })}
         />
       )}
@@ -434,10 +485,12 @@ export function Library() {
           onClose={close}
           onNearEnd={loadMore}
           onDelete={deleteOpen}
+          onMove={privateStatus.data?.setUp ? moveOpen : undefined}
           batch={batchOf.get(items[openIndex]!.id)?.items ?? []}
         />
       )}
       <DeleteDialog ids={pendingDelete?.ids ?? null} onClose={() => setPendingDelete(null)} onDeleted={onDeleted} />
+      <PrivacyDialog move={pendingMove} onClose={() => setPendingMove(null)} onMoved={onMoved} />
     </main>
   );
 }

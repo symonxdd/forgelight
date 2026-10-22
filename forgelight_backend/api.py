@@ -238,7 +238,7 @@ def _private_file(image_id: str, make: Callable[[str], bytes], media_type: str) 
 def library_image(request: Request, _body: Any) -> Response:
     image_id = request.query_params.get("id", "")
     if private.vault_id(image_id) is not None:
-        return _private_file(image_id, private.image_bytes, "image/png")
+        return _private_file(image_id, private.image_bytes, private.image_mime(image_id))
     return _image_file(request, library.resolve)
 
 
@@ -277,6 +277,26 @@ def library_save_upscaled(_request: Request, body: Any) -> dict:
         return library.save_upscaled(*fields)
     except (ValueError, OSError) as error:
         raise HTTPException(status_code=500, detail=f"The upscaled image couldn't be saved: {error}") from error
+
+
+def _library_ids(body: Any) -> list[str]:
+    ids = (body or {}).get("ids")
+    if not isinstance(ids, list) or not all(isinstance(i, str) for i in ids):
+        raise HTTPException(status_code=400, detail="Send the image ids.")
+    return ids
+
+
+def library_make_private(_request: Request, body: Any) -> dict:
+    ids = _library_ids(body)
+    return _private_call(lambda: library.make_private(ids))
+
+
+def library_make_public(_request: Request, body: Any) -> dict:
+    ids = _library_ids(body)
+    try:
+        return _private_call(lambda: library.make_public(ids))
+    except FileNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
 
 
 def library_delete(_request: Request, body: Any) -> dict:
@@ -319,6 +339,8 @@ ROUTES: dict[tuple[str, str], Handler] = {
     ("GET", "library/thumb"): library_thumb,
     ("POST", "library/reveal"): library_reveal,
     ("POST", "library/delete"): library_delete,
+    ("POST", "library/make-private"): library_make_private,
+    ("POST", "library/make-public"): library_make_public,
     ("POST", "library/favorite"): library_favorite,
     ("POST", "library/save-upscaled"): library_save_upscaled,
 }

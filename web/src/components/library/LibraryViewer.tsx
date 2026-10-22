@@ -1,4 +1,4 @@
-import { ArrowLeft, ChevronLeft, ChevronRight, FolderOpen, Trash2 } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronRight, FolderOpen, Lock, LockOpen, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useRevealImage } from "../../api/library";
 import { useToggleFavorite } from "../../hooks/useToggleFavorite";
@@ -55,12 +55,23 @@ interface LibraryViewerProps {
   /** Called near the end of what's loaded, so stepping on never runs dry. */
   onNearEnd: () => void;
   onDelete: () => void;
+  /** Moves the image into the vault or out of it; missing until private mode is set up. */
+  onMove?: () => void;
   /** The images made together with this one, newest first; a strip shows them when there are several. */
   batch: LibraryItem[];
 }
 
 /** One Library image over the grid, with the same zoom, info and settings reuse as the Generate screen. */
-export function LibraryViewer({ items, index, onIndex, onClose, onNearEnd, onDelete, batch }: LibraryViewerProps) {
+export function LibraryViewer({
+  items,
+  index,
+  onIndex,
+  onClose,
+  onNearEnd,
+  onDelete,
+  onMove,
+  batch,
+}: LibraryViewerProps) {
   const ref = useRef<HTMLDivElement>(null);
   const item = items[index]!;
   const infoOpen = useViewer((s) => s.infoOpen);
@@ -192,6 +203,11 @@ export function LibraryViewer({ items, index, onIndex, onClose, onNearEnd, onDel
               {!item.private && (
                 <IconButton label="Show in folder" onClick={() => reveal.mutate(item.id)}>
                   <FolderOpen className="size-4" aria-hidden />
+                </IconButton>
+              )}
+              {onMove && (
+                <IconButton label={item.private ? "Make public" : "Make private"} onClick={onMove}>
+                  {item.private ? <LockOpen className="size-4" aria-hidden /> : <Lock className="size-4" aria-hidden />}
                 </IconButton>
               )}
               <IconButton label="Delete" onClick={onDelete}>

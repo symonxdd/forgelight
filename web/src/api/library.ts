@@ -74,6 +74,21 @@ export function useSetFavorite() {
   });
 }
 
+export interface PrivacyMove {
+  ids: string[];
+  /** "private" encrypts images into the vault; "public" saves them as normal files again. */
+  to: "private" | "public";
+}
+
+/** Moves images into the private vault or back out of it, then reloads the Library. */
+export function useMoveImages() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({ ids, to }: PrivacyMove) => request<{ moved: number; failed: number }>(`library/make-${to}`, { ids }),
+    onSettled: () => queryClient.invalidateQueries({ queryKey: ["library"] }),
+  });
+}
+
 /** Moves images to the Windows Recycle Bin, then reloads the Library. */
 export function useDeleteImages() {
   const queryClient = useQueryClient();

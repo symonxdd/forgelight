@@ -127,6 +127,16 @@ def image_bytes(image_id: str) -> bytes:
     return vault.image(vault_id(image_id) or "")
 
 
+def meta(image_id: str) -> dict:
+    return vault.meta(vault_id(image_id) or "")[0]
+
+
+def image_mime(image_id: str) -> str:
+    """The image's file type: generated images are PNGs, moved-in ones keep their own."""
+    known = _state["metas"].get(vault_id(image_id) or "")
+    return MIME.get(str((known or {}).get("format") or "PNG"), "image/png")
+
+
 def thumbnail_bytes(image_id: str) -> bytes:
     return vault.meta(vault_id(image_id) or "")[1]
 
@@ -152,17 +162,32 @@ def decode(image: str) -> bytes:
     return base64.b64decode(image.split(",", 1)[-1])
 
 
-def store(png: bytes, infotext: str, seed: int | None, kind: str = "txt2img") -> str:
-    """Encrypts one image into the vault with its settings and a small thumbnail."""
+MIME = {"PNG": "image/png", "JPEG": "image/jpeg", "WEBP": "image/webp"}
+
+
+def store(png: bytes, infotext: str, seed: int | None, kind: str = "txt2img", created: float | None = None) -> str:
+    """Encrypts one image into the vault with its settings and a small thumbnail.
+
+    `created` keeps an existing image's date, so it stays in its place in the Library.
+    """
     from PIL import Image
 
     with Image.open(io.BytesIO(png)) as image:
         width, height = image.size
+        image_format = image.format or "PNG"
         small = image.convert("RGB")
         small.thumbnail((THUMB_WIDTH, THUMB_WIDTH * 4), Image.Resampling.LANCZOS, reducing_gap=2.0)
     thumb = io.BytesIO()
     small.save(thumb, "WEBP", quality=82, method=4)
-    meta = {"infotext": infotext, "seed": seed, "width": width, "height": height, "created": time.time(), "kind": kind}
+    meta = {
+        "infotext": infotext,
+        "seed": seed,
+        "width": width,
+        "height": height,
+        "created": created if created is not None else time.time(),
+        "kind": kind,
+        "format": image_format,
+    }
     return vault.add(png, meta, thumb.getvalue())
 
 

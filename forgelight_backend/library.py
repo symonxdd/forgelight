@@ -407,6 +407,114 @@ def delete(image_ids: list[str]) -> dict:
     return {"deleted": len(gone), "failed": len(image_ids) - len(gone)}
 
 
+_SEED = re.compile(r"(?:^|,\s*)Seed: (-?\d+)")
+
+
+def _seed_of(infotext: str) -> int | None:
+    match = _SEED.search(infotext)
+    return int(match.group(1)) if match else None
+
+
+def _move_stars(renamed: dict[str, str]) -> None:
+    """A moved image keeps its star under its new id."""
+    if not renamed:
+        return
+    with _lock:
+        starred = favorites()
+        if starred & set(renamed):
+            moved = {new for old, new in renamed.items() if old in starred}
+            store.write(FAVORITES_FILE, sorted((starred - set(renamed)) | moved))
+
+
+def make_private(image_ids: list[str]) -> dict:
+    """Encrypts images into the vault, then deletes the originals for good.
+
+    Not to the Recycle Bin, which would keep readable copies. Each image keeps its date
+    and settings; its cached thumbnail goes with it. Works while the vault is locked.
+    """
+    global _scan
+    if not private.vault.exists():
+        raise private.VaultError("Set up private mode first.", 409)
+    entries = {image["id"]: image for image in scan()}
+    renamed: dict[str, str] = {}
+    for image_id in image_ids[:MAX_DELETE]:
+        if private.vault_id(image_id) is not None:
+            continue
+        try:
+            path = resolve(image_id)
+            thumb = _thumb_path(path)
+            infotext = str((entries.get(image_id) or {}).get("infotext") or "")
+            kind = image_id.partition("/")[0]
+            new_id = private.store(path.read_bytes(), infotext, _seed_of(infotext), kind, path.stat().st_mtime)
+            path.unlink()
+            thumb.unlink(missing_ok=True)
+        except (OSError, ValueError, private.VaultError):
+            continue
+        renamed[image_id] = private.PREFIX + new_id
+    with _lock:
+        _scan = None
+    _move_stars(renamed)
+    return {"moved": len(renamed), "failed": len(image_ids) - len(renamed)}
+
+
+def _with_settings(data: bytes, infotext: str) -> bytes:
+    """A PNG with its settings text written in, as Forge saves it, when it lacks one."""
+    with Image.open(io.BytesIO(data)) as image:
+        if image.format != "PNG" or image.info.get("parameters") or not infotext:
+            return data
+        info = PngInfo()
+        info.add_text("parameters", infotext)
+        out = io.BytesIO()
+        image.save(out, "PNG", pnginfo=info)
+        return out.getvalue()
+
+
+def make_public(image_ids: list[str]) -> dict:
+    """Saves private images as normal files in Forge's output folders again, then removes
+    them from the vault. They go back to their own kind's folder and date, numbered the
+    way Forge numbers files, and never replace an existing file. Needs the vault unlocked.
+    """
+    global _scan
+    places = roots()
+    if not places:
+        raise FileNotFoundError("Forge has no output folder.")
+    renamed: dict[str, str] = {}
+    for image_id in image_ids[:MAX_DELETE]:
+        if private.vault_id(image_id) is None:
+            continue
+        try:
+            meta = private.meta(image_id)
+            data = private.image_bytes(image_id)
+            kind = str(meta.get("kind") or "txt2img")
+            name = kind if kind in places else next(iter(places))
+            root = places[name]
+            created = float(meta["created"]) if meta.get("created") is not None else time.time()
+            folder = root / time.strftime("%Y-%m-%d", time.localtime(created))
+            folder.mkdir(parents=True, exist_ok=True)
+            suffix = {"JPEG": ".jpg", "WEBP": ".webp"}.get(str(meta.get("format") or "PNG"), ".png")
+            data = _with_settings(data, str(meta.get("infotext") or ""))
+            seed = meta.get("seed")
+            number = _next_number(folder)
+            while True:
+                path = folder / f"{number:05}-{seed if seed is not None else 'image'}{suffix}"
+                try:
+                    # "x" creates the file only if it doesn't exist yet: nothing is ever overwritten.
+                    with open(path, "xb") as file:
+                        file.write(data)
+                    break
+                except FileExistsError:
+                    number += 1
+            os.utime(path, (created, created))
+            private.delete([image_id])
+        except (OSError, ValueError, private.VaultError):
+            continue
+        renamed[image_id] = f"{name}/{path.relative_to(root).as_posix()}"
+    with _lock:
+        _scan = None
+    _move_stars(renamed)
+    return {"moved": len(renamed), "failed": len(image_ids) - len(renamed)}
+
+
 # The largest upscaled image accepted, in decoded bytes.
 MAX_UPSCALED_BYTES = 256 * 1024 * 1024
 
