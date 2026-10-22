@@ -10,6 +10,7 @@ import { useSession } from "../stores/session";
 import { Hint } from "./Hint";
 import { CivitaiLink } from "./CivitaiLink";
 import { InfoTip } from "./InfoTip";
+import { FoundModelsList } from "./newmodels/FoundModelsList";
 import { RefreshButton } from "./RefreshButton";
 
 interface Row {
@@ -102,6 +103,7 @@ export function CheckpointPicker({ enabled }: { enabled: boolean }) {
             collisionPadding={12}
             className="z-50 flex max-h-[min(30rem,var(--radix-popover-content-available-height))] w-[min(26rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-lg border border-line bg-surface text-fg shadow-lg shadow-black/15"
           >
+            <FoundModelsList kind="checkpoint" />
             <div className="flex items-center gap-1.5 px-3.5 pt-3 pb-1.5">
               <span className="text-xs font-medium tracking-wide text-muted uppercase">Checkpoints</span>
               <InfoTip topic="checkpoints" text={HELP.checkpoint} side="right" />

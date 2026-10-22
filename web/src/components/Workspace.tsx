@@ -10,6 +10,7 @@ import { PromptFields } from "./controls/PromptFields";
 import { ControlsPanel } from "./ControlsPanel";
 import { Tagline } from "./Tagline";
 import { HistoryRail } from "./HistoryRail";
+import { NewModelsStrip } from "./newmodels/NewModelsStrip";
 import { Viewer } from "./viewer/Viewer";
 
 // Panel sizes are remembered between visits; storage failures just mean defaults next time.
@@ -39,6 +40,7 @@ function ResizeHandle() {
 /**
  * The middle of the screen: the image, with the prompt card centered under it, or above
  * it when moved there. The card sits outside the viewer, so typing never triggers viewer keys.
+ * Newly found models show as a strip on the image side of the card.
  */
 function Stage({ connection }: { connection: ConnectionState }) {
   const above = usePreferences((s) => s.promptPosition) === "above";
@@ -46,8 +48,10 @@ function Stage({ connection }: { connection: ConnectionState }) {
   const composer = (
     <div className={`shrink-0 px-4 ${above ? "pt-4" : "pt-1"} pb-2.5`}>
       <div className="relative mx-auto flex w-full max-w-270 flex-col gap-2.5">
+        {!above && <NewModelsStrip />}
         <PromptFields connected={connection === "connected"} />
         <Tagline />
+        {above && <NewModelsStrip />}
         {/* Messages float on the image side of the card, clear of the viewer's zoom bar. */}
         <div
           className={`pointer-events-none absolute inset-x-0 z-20 flex justify-center ${
@@ -72,7 +76,7 @@ function Stage({ connection }: { connection: ConnectionState }) {
         </div>
       )}
       {above && composer}
-      <div className="min-h-0 flex-1">
+      <div className="relative min-h-0 flex-1">
         <Viewer connection={connection} />
       </div>
       {!above && composer}

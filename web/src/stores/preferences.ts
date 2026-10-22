@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import {
   CIVITAI_SITE_KEY,
+  FIND_NEW_MODELS_KEY,
   FONT_KEY,
   LIBRARY_BLUR_KEY,
   LIBRARY_RATING_KEY,
@@ -40,6 +41,8 @@ interface PreferencesState {
   /** Library shows each batch as one stacked tile. On until switched off. */
   libraryStacks: boolean;
   promptPosition: PromptPosition;
+  /** Looks for new checkpoints and LoRAs in Downloads and on the Desktop. On until switched off. */
+  findNewModels: boolean;
   setTheme: (theme: Theme) => void;
   setOled: (oled: boolean) => void;
   setFont: (font: FontId) => void;
@@ -48,6 +51,7 @@ interface PreferencesState {
   setLibraryRating: (rating: LibraryRating) => void;
   setLibraryStacks: (stacks: boolean) => void;
   setPromptPosition: (position: PromptPosition) => void;
+  setFindNewModels: (find: boolean) => void;
 }
 
 const systemDark = window.matchMedia("(prefers-color-scheme: dark)");
@@ -64,6 +68,7 @@ export const usePreferences = create<PreferencesState>((set) => ({
   libraryRating: parseLibraryRating(readStored(LIBRARY_RATING_KEY)),
   libraryStacks: readStored(LIBRARY_STACKS_KEY) !== "false",
   promptPosition: parsePromptPosition(readStored(PROMPT_POSITION_KEY)),
+  findNewModels: readStored(FIND_NEW_MODELS_KEY) !== "false",
   setTheme: (theme) => {
     writeStored(THEME_KEY, theme);
     set({ theme, themeChosen: true });
@@ -95,6 +100,10 @@ export const usePreferences = create<PreferencesState>((set) => ({
   setPromptPosition: (promptPosition) => {
     writeStored(PROMPT_POSITION_KEY, promptPosition);
     set({ promptPosition });
+  },
+  setFindNewModels: (findNewModels) => {
+    writeStored(FIND_NEW_MODELS_KEY, String(findNewModels));
+    set({ findNewModels });
   },
 }));
 

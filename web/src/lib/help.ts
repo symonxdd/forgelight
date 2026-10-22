@@ -74,6 +74,9 @@ export const HELP = {
     "Which address Civitai links open on. Both show the same models and pages; civitai.red also shows mature preview images.",
   civitai:
     "Details looked up on Civitai once per model, using only the file name, file size and a short fingerprint of the file. Saved on this computer afterwards.",
+  findNewModels:
+    "Looks in Downloads and on the Desktop for checkpoints and LoRAs that Forge doesn't have yet, and offers to move them in.",
+  foundModels: "Checkpoints and LoRAs in Downloads or on the Desktop that Forge doesn't have yet.",
   recommended:
     "Settings from the example images this checkpoint's creator shared on Civitai. Nothing changes until Apply is clicked.",
 } as const;
@@ -83,6 +86,8 @@ export const HELP = {
  * how to say it, spelled with everyday words rather than phonetic symbols.
  */
 export const HELP_NOTES = {
+  findNewModels: "Only those two places, not the folders inside them. Nothing moves until Move to Forge is clicked.",
+  foundModels: "Only those two places are checked, not the folders inside them. Switched off in settings.",
   recommended:
     "The most common sampler and size, with typical steps and CFG scale. Hires fix gets its values but stays off, so images are tried at the base size first.",
   panelSections: "Hidden or not, their settings are always applied.",

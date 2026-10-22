@@ -12,6 +12,7 @@ import { useSettings } from "../../stores/settings";
 import { CivitaiLink } from "../CivitaiLink";
 import { Hint } from "../Hint";
 import { InfoTip } from "../InfoTip";
+import { FoundModelsList } from "../newmodels/FoundModelsList";
 import { RefreshButton } from "../RefreshButton";
 import { NumberSlider } from "./NumberSlider";
 
@@ -279,6 +280,7 @@ function LoraPicker({
               className="size-7"
             />
           </div>
+          <FoundModelsList kind="lora" />
           <ul aria-label="LoRAs" className="flex flex-col overflow-y-auto p-1.5">
             {rows.length === 0 && (
               <li className="px-2.5 py-6 text-center text-[13px] text-faint">

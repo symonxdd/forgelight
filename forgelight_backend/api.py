@@ -11,7 +11,7 @@ from typing import Any, Callable
 from fastapi import HTTPException, Request
 from fastapi.responses import FileResponse
 
-from . import library, loading, models, startup, updates
+from . import library, loading, models, newmodels, startup, updates
 from .security import require_own_page, require_same_origin
 from .store import ROOT, version
 
@@ -42,6 +42,41 @@ def status(_request: Request, _body: Any) -> dict:
 
 def list_models(_request: Request, _body: Any) -> dict:
     return {"checkpoints": models.checkpoints(), "loras": models.loras()}
+
+
+def new_models(_request: Request, _body: Any) -> dict:
+    return {"models": newmodels.scan()}
+
+
+def _found_file(body: Any) -> tuple[str, int]:
+    body = body or {}
+    file, size = body.get("file"), body.get("size")
+    if not isinstance(file, str) or not isinstance(size, int):
+        raise HTTPException(status_code=400, detail="Send the file name and its size.")
+    return file, size
+
+
+def new_models_move(_request: Request, body: Any) -> dict:
+    file, size = _found_file(body)
+    try:
+        return newmodels.move(str((body or {}).get("place")), file, size)
+    except newmodels.MoveError as error:
+        raise HTTPException(status_code=error.status, detail=str(error)) from error
+
+
+def new_models_hide(_request: Request, body: Any) -> dict:
+    file, size = _found_file(body)
+    newmodels.set_hidden(file, size, bool((body or {}).get("hidden")))
+    return {"ok": True}
+
+
+def new_models_reveal(_request: Request, body: Any) -> dict:
+    body = body or {}
+    try:
+        newmodels.reveal(str(body.get("kind")), body.get("file"))
+    except newmodels.MoveError as error:
+        raise HTTPException(status_code=error.status, detail=str(error)) from error
+    return {"ok": True}
 
 
 def loading_state(_request: Request, _body: Any) -> dict:
@@ -187,6 +222,10 @@ def library_delete(_request: Request, body: Any) -> dict:
 ROUTES: dict[tuple[str, str], Handler] = {
     ("GET", "status"): status,
     ("GET", "models"): list_models,
+    ("GET", "new-models"): new_models,
+    ("POST", "new-models/move"): new_models_move,
+    ("POST", "new-models/hide"): new_models_hide,
+    ("POST", "new-models/reveal"): new_models_reveal,
     ("GET", "startup"): startup_state,
     ("POST", "startup/open-on-start"): open_on_start,
     ("POST", "startup/desktop-shortcut"): desktop_shortcut,

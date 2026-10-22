@@ -115,7 +115,7 @@ function Appearance() {
   );
 }
 
-/** Settings about making images: checkpoint memory, live preview and where Civitai links open. */
+/** Settings about making images: checkpoint memory, live preview, Civitai links and finding new models. */
 function Generating() {
   const memoryEnabled = useCheckpointMemory((s) => s.enabled);
   const setMemoryEnabled = useCheckpointMemory((s) => s.setEnabled);
@@ -125,6 +125,8 @@ function Generating() {
   const previewChoices = LIVE_PREVIEW_CHOICES.map(({ id, label }) => ({ value: id, label }));
   const site = usePreferences((s) => s.civitaiSite);
   const setSite = usePreferences((s) => s.setCivitaiSite);
+  const findNewModels = usePreferences((s) => s.findNewModels);
+  const setFindNewModels = usePreferences((s) => s.setFindNewModels);
 
   return (
     <Group title="Generating">
@@ -147,6 +149,14 @@ function Generating() {
           onChange={(v) => setSite(parseCivitaiSite(v))}
           labelledBy="civitai-site-label"
         />
+      </Row>
+      <Row
+        id="find-models-label"
+        label="Look for new models"
+        help={HELP.findNewModels}
+        helpNote={HELP_NOTES.findNewModels}
+      >
+        <Toggle checked={findNewModels} onChange={setFindNewModels} labelledBy="find-models-label" />
       </Row>
     </Group>
   );
