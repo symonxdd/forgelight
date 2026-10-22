@@ -47,6 +47,8 @@ export function useShortcuts() {
         const viewer = useViewer.getState();
         if (viewer.infoOpen) viewer.setInfoOpen(false);
         else if (isRunning()) void interrupt();
+        // On Generate, with nothing running, Escape clears the view; the image stays in the Session strip.
+        else if (useView.getState().view === "generate") useSession.getState().clearView();
         return;
       }
 

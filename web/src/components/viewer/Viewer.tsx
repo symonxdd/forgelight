@@ -19,8 +19,10 @@ const MESSAGES: Record<ConnectionState, { title: string; detail: string }> = {
   offline: { title: "Forge isn't running", detail: "Start Forge, and this page reconnects by itself." },
 };
 
-function EmptyState({ connection }: { connection: ConnectionState }) {
-  const { title, detail } = MESSAGES[connection];
+const CLEARED = { title: "Nothing shown", detail: "Pick an image in the Session strip to see it again." };
+
+function EmptyState({ connection, cleared }: { connection: ConnectionState; cleared: boolean }) {
+  const { title, detail } = cleared && connection === "connected" ? CLEARED : MESSAGES[connection];
   const Icon = connection === "connected" || connection === "connecting" ? ImageIcon : PlugZap;
   return (
     <div className="grid h-full place-items-center p-8">
@@ -39,6 +41,8 @@ export function Viewer({ connection }: { connection: ConnectionState }) {
   const image = useSession(selectedImage);
   const infoOpen = useViewer((s) => s.infoOpen);
   const handoff = useSession((s) => s.handoff);
+  const cleared = useSession((s) => s.cleared && s.images.length > 0);
+  const clearView = useSession((s) => s.clearView);
   const running = job.status === "running";
 
   let stage = null;
@@ -91,13 +95,13 @@ export function Viewer({ connection }: { connection: ConnectionState }) {
   return (
     <main data-viewer-root data-shortcuts="viewer" className="flex h-full overflow-hidden bg-viewer">
       <div className="relative min-w-0 flex-1">
-        {stage ?? <EmptyState connection={connection} />}
+        {stage ?? <EmptyState connection={connection} cleared={cleared} />}
         {running && (
           <div className="absolute inset-x-0 top-0 h-0.5" aria-hidden>
             <div className="h-full bg-accent" style={{ width: `${barFraction(job) * 100}%` }} />
           </div>
         )}
-        {(image || running) && <ViewerToolbar image={running ? undefined : image} />}
+        {(image || running) && <ViewerToolbar image={running ? undefined : image} onClear={clearView} />}
       </div>
       {infoOpen && image && !running && <InfoDrawer image={image} />}
     </main>

@@ -1,4 +1,4 @@
-import { Download, ImagePlus, ImageUpscale, Info, Maximize, Minimize } from "lucide-react";
+import { Download, ImagePlus, ImageUpscale, Info, Maximize, Minimize, X } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import type { SessionImage } from "../../stores/session";
 import { startFromImage } from "../../stores/startImage";
@@ -45,8 +45,16 @@ function TextButton({
   );
 }
 
-/** `extra` holds more buttons, placed before fullscreen. */
-export function ViewerToolbar({ image, extra }: { image: SessionImage | undefined; extra?: ReactNode }) {
+/** `extra` holds more buttons, placed before fullscreen; `onClear` adds a clear button at the end. */
+export function ViewerToolbar({
+  image,
+  extra,
+  onClear,
+}: {
+  image: SessionImage | undefined;
+  extra?: ReactNode;
+  onClear?: () => void;
+}) {
   const viewer = useViewer();
   const fullscreen = useIsFullscreen();
   const percent = Math.round(currentScale(viewer) * 100);
@@ -117,6 +125,14 @@ export function ViewerToolbar({ image, extra }: { image: SessionImage | undefine
       <IconButton label={fullscreen ? "Exit fullscreen (F)" : "Fullscreen (F)"} onClick={toggleFullscreen}>
         {fullscreen ? <Minimize className="size-4" aria-hidden /> : <Maximize className="size-4" aria-hidden />}
       </IconButton>
+      {onClear && image && (
+        <>
+          <div className="mx-1 h-5 w-px bg-line" />
+          <IconButton label="Clear the view (Esc)" onClick={onClear}>
+            <X className="size-4" aria-hidden />
+          </IconButton>
+        </>
+      )}
     </div>
   );
 }
