@@ -14,6 +14,8 @@ export interface LibraryItem {
   nsfw: boolean;
   /** Starred in the Library. */
   favorite: boolean;
+  /** In the private vault: listed only while unlocked, and deleted for good. */
+  private?: boolean;
 }
 
 export interface DayGroup<T> {

@@ -11,20 +11,23 @@ export interface LibraryPage {
   items: LibraryItem[];
   /** Every checkpoint named in the images' settings, most used first. */
   models: { name: string; count: number }[];
+  /** Private images left out because the vault is locked. */
+  lockedPrivate?: number;
 }
 
 const PAGE_SIZE = 120;
 
 /** All images in Forge's output folders, newest first, a page at a time. */
-export function useLibrary(query: string, model: string, rating: string, favoritesOnly = false) {
+export function useLibrary(query: string, model: string, rating: string, favoritesOnly = false, privateOnly = false) {
   return useInfiniteQuery({
-    queryKey: ["library", query, model, rating, favoritesOnly],
+    queryKey: ["library", query, model, rating, favoritesOnly, privateOnly],
     queryFn: ({ pageParam }) => {
       const params = new URLSearchParams({ offset: String(pageParam), limit: String(PAGE_SIZE) });
       if (query) params.set("q", query);
       if (model) params.set("model", model);
       if (rating !== "all") params.set("rating", rating);
       if (favoritesOnly) params.set("favorites", "1");
+      if (privateOnly) params.set("private", "1");
       return request<LibraryPage>(`library?${params}`);
     },
     initialPageParam: 0,

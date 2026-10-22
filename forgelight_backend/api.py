@@ -9,7 +9,7 @@ from __future__ import annotations
 from typing import Any, Callable
 
 from fastapi import HTTPException, Request
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 
 from . import library, loading, models, newmodels, private, startup, updates
 from .vault import VaultError, vault
@@ -102,6 +102,20 @@ def private_mode(_request: Request, body: Any) -> dict:
     return _private_call(lambda: private.set_on(bool((body or {}).get("on"))))
 
 
+def private_unlock(_request: Request, body: Any) -> dict:
+    body = body or {}
+    password, recovery = body.get("password"), body.get("recovery")
+    if not isinstance(password, str) and not isinstance(recovery, str):
+        raise HTTPException(status_code=400, detail="Send the password or the recovery key.")
+    return _private_call(lambda: private.unlock(
+        password if isinstance(password, str) else None, recovery if isinstance(recovery, str) else None
+    ))
+
+
+def private_lock(_request: Request, _body: Any) -> dict:
+    return private.lock()
+
+
 def private_generate(_request: Request, body: Any) -> dict:
     body = body or {}
     return _private_call(lambda: private.generate(str(body.get("kind")), body.get("request")))
@@ -116,7 +130,7 @@ def private_add(_request: Request, body: Any) -> dict:
     image, infotext = body.get("image"), body.get("infotext")
     if not isinstance(image, str) or not isinstance(infotext, str):
         raise HTTPException(status_code=400, detail="Send the image and its settings.")
-    return _private_call(lambda: {"id": private.store(private.decode(image), infotext, None)})
+    return _private_call(lambda: {"id": private.store(private.decode(image), infotext, None, "extras")})
 
 
 def loading_state(_request: Request, _body: Any) -> dict:
@@ -199,6 +213,7 @@ def library_list(request: Request, _body: Any) -> dict:
         offset=_int(params.get("offset"), 0, 0, 10_000_000),
         limit=_int(params.get("limit"), 100, 1, 500),
         favorites_only=params.get("favorites") == "1",
+        private_only=params.get("private") == "1",
     )
 
 
@@ -211,11 +226,26 @@ def _image_file(request: Request, make) -> FileResponse:
     return FileResponse(path, headers={"Cache-Control": "private, max-age=31536000, immutable"})
 
 
-def library_image(request: Request, _body: Any) -> FileResponse:
+def _private_file(image_id: str, make: Callable[[str], bytes], media_type: str) -> Response:
+    """A private image, decrypted in memory. The browser is told never to keep a copy."""
+    try:
+        data = make(image_id)
+    except VaultError as error:
+        raise HTTPException(status_code=error.status, detail=str(error)) from error
+    return Response(data, media_type=media_type, headers={"Cache-Control": "no-store"})
+
+
+def library_image(request: Request, _body: Any) -> Response:
+    image_id = request.query_params.get("id", "")
+    if private.vault_id(image_id) is not None:
+        return _private_file(image_id, private.image_bytes, "image/png")
     return _image_file(request, library.resolve)
 
 
-def library_thumb(request: Request, _body: Any) -> FileResponse:
+def library_thumb(request: Request, _body: Any) -> Response:
+    image_id = request.query_params.get("id", "")
+    if private.vault_id(image_id) is not None:
+        return _private_file(image_id, private.thumbnail_bytes, "image/webp")
     return _image_file(request, library.thumbnail)
 
 
@@ -274,6 +304,8 @@ ROUTES: dict[tuple[str, str], Handler] = {
     ("GET", "private"): private_status,
     ("POST", "private/setup"): private_setup,
     ("POST", "private/mode"): private_mode,
+    ("POST", "private/unlock"): private_unlock,
+    ("POST", "private/lock"): private_lock,
     ("POST", "private/generate"): private_generate,
     ("GET", "private/result"): private_result,
     ("POST", "private/add"): private_add,

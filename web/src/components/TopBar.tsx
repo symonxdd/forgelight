@@ -4,6 +4,7 @@ import { useState } from "react";
 import { FlameCard } from "./about/FlameCard";
 import { LogoMark } from "./Logo";
 import { ConnectionStatus } from "./ConnectionStatus";
+import { LockButton } from "./private/LockButton";
 import { SettingsMenu } from "./SettingsMenu";
 import { ThemeSwitch } from "./ThemeSwitch";
 
@@ -65,6 +66,7 @@ export function TopBar({ connection }: { connection: ConnectionState }) {
       </div>
       <ViewSwitch />
       <div className="flex items-center justify-end gap-2">
+        <LockButton />
         <ConnectionStatus state={connection} />
         <ThemeSwitch />
         <SettingsMenu />

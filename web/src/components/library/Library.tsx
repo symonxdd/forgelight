@@ -1,6 +1,7 @@
-import { Check, ImageIcon, Layers, LoaderCircle, Search, Trash2, X } from "lucide-react";
+import { Check, ImageIcon, Layers, LoaderCircle, Lock, Search, Trash2, X } from "lucide-react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useModels } from "../../api/forgelight";
+import { usePrivateStatus } from "../../api/private";
 import { useLibrary } from "../../api/library";
 import { fileName, groupBatches, groupByDay, singles, thumbUrl, type Batch } from "../../lib/library";
 import { displayName, tidyName } from "../../lib/modelNames";
@@ -9,6 +10,7 @@ import { Hint } from "../Hint";
 import { SelectMenu } from "../SelectMenu";
 import { ContentFilter } from "./ContentFilter";
 import { DeleteDialog } from "./DeleteDialog";
+import { LockedLine, PrivateFilter } from "./PrivateFilter";
 import { FavoritesToggle, TileStar } from "./Favorites";
 import { LibraryViewer } from "./LibraryViewer";
 
@@ -138,6 +140,11 @@ function Tile({ batch, selected, selecting, onOpen, onToggle }: TileProps) {
                 : "group-hover:brightness-110"
           }`}
         />
+        {item.private && (
+          <span className="absolute bottom-2 left-2 grid size-6 place-items-center rounded-md bg-black/60 text-white backdrop-blur-sm">
+            <Lock className="size-3.5" aria-label="Private" />
+          </span>
+        )}
         {count > 1 && (
           <span className="absolute right-2 bottom-2 flex items-center gap-1 rounded-md bg-black/60 px-1.5 py-0.5 text-[11.5px] font-medium text-white tabular-nums backdrop-blur-sm">
             <Layers className="size-3" aria-hidden />
@@ -217,6 +224,7 @@ export function Library() {
   const [query, setQuery] = useState("");
   const [model, setModel] = useState("");
   const [favoritesOnly, setFavoritesOnly] = useState(false);
+  const [privateOnly, setPrivateOnly] = useState(false);
   const [openId, setOpenId] = useState<string | null>(null);
   const [selected, setSelected] = useState<ReadonlySet<string>>(new Set());
   const [anchor, setAnchor] = useState<string | null>(null);
@@ -237,6 +245,10 @@ export function Library() {
     setFavoritesOnly(value);
     setSelected(new Set());
   };
+  const changePrivateOnly = (value: boolean) => {
+    setPrivateOnly(value);
+    setSelected(new Set());
+  };
 
   // Search once typing pauses, not on every key.
   useEffect(() => {
@@ -246,7 +258,10 @@ export function Library() {
 
   const rating = usePreferences((s) => s.libraryRating);
   const setRating = usePreferences((s) => s.setLibraryRating);
-  const library = useLibrary(query, model, rating, favoritesOnly);
+  const privateStatus = usePrivateStatus();
+  // Locking leaves nothing to show in the private view.
+  const showPrivateOnly = privateOnly && privateStatus.data?.unlocked !== false;
+  const library = useLibrary(query, model, rating, favoritesOnly, showPrivateOnly);
   const pages = useMemo(() => library.data?.pages ?? [], [library.data]);
   const items = useMemo(() => {
     // New images shift later pages by a few places; drop the repeats that causes.
@@ -333,7 +348,7 @@ export function Library() {
     setPendingDelete(null);
   };
 
-  const filtered = Boolean(query || model || rating !== "all" || favoritesOnly);
+  const filtered = Boolean(query || model || rating !== "all" || favoritesOnly || showPrivateOnly);
   let body;
   if (library.isPending) {
     body = (
@@ -356,6 +371,7 @@ export function Library() {
               changeInput("");
               changeModel("");
               changeFavoritesOnly(false);
+              changePrivateOnly(false);
               setRating("all");
             }}
             className="h-8 rounded-md border border-line px-3 text-[13px] text-fg hover:bg-raised"
@@ -416,6 +432,7 @@ export function Library() {
           <ModelFilter value={model} models={models} onChange={changeModel} />
           <ContentFilter />
           <FavoritesToggle on={favoritesOnly} onChange={changeFavoritesOnly} />
+          <PrivateFilter on={showPrivateOnly} onChange={changePrivateOnly} />
           <Hint label={stacks ? "Show every image on its own" : "Stack images made together"}>
             <button
               type="button"
@@ -437,6 +454,7 @@ export function Library() {
           </span>
         </div>
       </div>
+      <LockedLine count={latest?.lockedPrivate ?? 0} />
       <div className={`min-h-0 flex-1 overflow-y-auto ${selectedCount > 0 ? "pb-20" : ""}`}>{body}</div>
       {selectedCount > 0 && openIndex === -1 && (
         <SelectionBar

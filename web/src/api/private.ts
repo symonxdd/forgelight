@@ -1,6 +1,8 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, type InfiniteData } from "@tanstack/react-query";
+import { useSession } from "../stores/session";
 import { ForgeError } from "./client";
 import { request } from "./forgelight";
+import type { LibraryPage } from "./library";
 import { queryClient } from "./queryClient";
 
 /** Private mode as the extension holds it, so every tab and every reload agree. */
@@ -30,8 +32,42 @@ export async function privateModeOn(): Promise<boolean> {
   }
 }
 
+/** Switching to public also locks the vault, so private images leave the screen too. */
 export async function setPrivateOn(on: boolean): Promise<void> {
   queryClient.setQueryData(PRIVATE_KEY, await request<PrivateStatus>("private/mode", { on }));
+  if (!on) await forgetPrivateImages();
+}
+
+/** Shows private images: with the password, or the recovery key instead. */
+export async function unlockPrivate(secret: { password: string } | { recovery: string }): Promise<void> {
+  queryClient.setQueryData(PRIVATE_KEY, await request<PrivateStatus>("private/unlock", secret));
+  await queryClient.invalidateQueries({ queryKey: ["library"] });
+}
+
+/** Hides private images again, until the password is entered. */
+export async function lockPrivate(): Promise<void> {
+  queryClient.setQueryData(PRIVATE_KEY, await request<PrivateStatus>("private/lock", {}));
+  await forgetPrivateImages();
+  useSession.getState().setNotice({ tone: "info", text: "Private images are locked." });
+}
+
+/**
+ * After locking: private images leave the Library and the Session strip at once, before
+ * the Library has reloaded, and their pictures in memory are let go.
+ */
+async function forgetPrivateImages(): Promise<void> {
+  queryClient.setQueriesData<InfiniteData<LibraryPage>>({ queryKey: ["library"] }, (data) =>
+    data
+      ? { ...data, pages: data.pages.map((page) => ({ ...page, items: page.items.filter((i) => !i.private) })) }
+      : data,
+  );
+  useSession.setState((state) => {
+    const kept = state.images.filter((image) => !image.private);
+    for (const image of state.images) if (image.private) URL.revokeObjectURL(image.url);
+    const selectedId = kept.some((image) => image.id === state.selectedId) ? state.selectedId : (kept[0]?.id ?? null);
+    return { images: kept, selectedId };
+  });
+  await queryClient.invalidateQueries({ queryKey: ["library"] });
 }
 
 /** Creates the vault; the recovery code comes back once and is never stored. */

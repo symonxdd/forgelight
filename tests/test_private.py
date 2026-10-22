@@ -46,7 +46,7 @@ class PrivateTest(unittest.TestCase):
         patches = [
             mock.patch.object(private, "vault", self.vault),
             mock.patch.object(private, "_forge_url", lambda path: f"http://forge{path}"),
-            mock.patch.dict(private._state, {"on": True, "jobs": {}}),
+            mock.patch.dict(private._state, {"on": True, "jobs": {}, "metas": {}}),
         ]
         for patch in patches:
             patch.start()
@@ -108,6 +108,41 @@ class PrivateTest(unittest.TestCase):
         kind, body, task = thread.call_args.kwargs["args"]
         self.assertEqual((kind, task, body["save_images"]), ("img2img", "task(3)", False))
         self.assertEqual(private.result("task(3)"), {"status": "running"})
+
+    def test_library_sees_private_images_only_while_unlocked(self) -> None:
+        reply = {"images": [png(64, 96, (9, 9, 9))], "info": json.dumps({"infotexts": ["cat"]})}
+        self.run_job(FakeResponse(200, reply))
+        self.assertEqual(private.library_items(), [])
+        self.assertEqual(private.hidden_count(), 1)
+
+        private.unlock("correct horse", None)
+        [item] = private.library_items()
+        self.assertTrue(item["id"].startswith("private/"))
+        self.assertEqual((item["infotext"], item["width"], item["height"], item["private"]), ("cat", 64, 96, True))
+        self.assertEqual(private.hidden_count(), 0)
+        self.assertTrue(private.image_bytes(item["id"]).startswith(b"\x89PNG"))
+        self.assertTrue(private.thumbnail_bytes(item["id"]).startswith(b"RIFF"))
+
+        private.lock()
+        self.assertEqual(private._state["metas"], {})
+        self.assertEqual(private.library_items(), [])
+        with self.assertRaises(VaultError):
+            private.image_bytes(item["id"])
+
+    def test_delete_removes_for_good(self) -> None:
+        self.run_job(FakeResponse(200, {"images": [png(8, 8, (1, 2, 3))], "info": "{}"}))
+        [vault_item] = self.vault.ids()
+        gone = private.delete([f"private/{vault_item}", "txt2img-images/x.png", "private/unknown"])
+        self.assertEqual(gone, {f"private/{vault_item}"})
+        self.assertEqual(self.vault.ids(), [])
+
+    def test_reload_fills_in_state_from_an_older_version(self) -> None:
+        import importlib
+
+        del private._state["metas"]
+        importlib.reload(private)
+        self.assertEqual(private._state["metas"], {})
+        self.assertIn("jobs", private._state)
 
     def test_switching_to_public_locks(self) -> None:
         self.vault.unlock(password="correct horse")

@@ -188,9 +188,12 @@ export function LibraryViewer({ items, index, onIndex, onClose, onNearEnd, onDel
           extra={
             <>
               <ViewerStar item={item} />
-              <IconButton label="Show in folder" onClick={() => reveal.mutate(item.id)}>
-                <FolderOpen className="size-4" aria-hidden />
-              </IconButton>
+              {/* A private image has no file to show: it exists only encrypted. */}
+              {!item.private && (
+                <IconButton label="Show in folder" onClick={() => reveal.mutate(item.id)}>
+                  <FolderOpen className="size-4" aria-hidden />
+                </IconButton>
+              )}
               <IconButton label="Delete" onClick={onDelete}>
                 <Trash2 className="size-4" aria-hidden />
               </IconButton>

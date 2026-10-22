@@ -24,7 +24,7 @@ from pathlib import Path
 from PIL import Image
 from PIL.PngImagePlugin import PngInfo
 
-from . import store
+from . import private, store
 
 IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".webp"}
 # Folders other programs keep next to the images, holding copies or previews.
@@ -223,8 +223,11 @@ def favorites() -> set[str]:
 
 
 def set_favorite(image_id: str, favorite: bool) -> bool:
-    """Stars or unstars an image in the output folders. Written only when the user clicks."""
-    resolve(image_id)
+    """Stars or unstars an image. Written only when the user clicks."""
+    if private.vault_id(image_id) is None:
+        resolve(image_id)
+    elif not private.exists(image_id):
+        raise FileNotFoundError(image_id)
     with _lock:
         ids = favorites()
         if favorite:
@@ -236,9 +239,18 @@ def set_favorite(image_id: str, favorite: bool) -> bool:
 
 
 def listing(
-    query: str, model: str, offset: int, limit: int, rating: str = "all", favorites_only: bool = False
+    query: str,
+    model: str,
+    offset: int,
+    limit: int,
+    rating: str = "all",
+    favorites_only: bool = False,
+    private_only: bool = False,
 ) -> dict:
+    """One page of the Library. Private images join in only while the vault is unlocked."""
     images = scan()
+    if extra := private.library_items():
+        images = sorted(images + extra, key=lambda image: image["mtime"], reverse=True)
     starred = favorites()
     models: dict[str, int] = {}
     for image in images:
@@ -246,10 +258,12 @@ def listing(
             models[name] = models.get(name, 0) + 1
 
     words = query.lower().split()
-    if words or model or rating != "all" or favorites_only:
+    if words or model or rating != "all" or favorites_only or private_only:
 
         def matches(image: dict) -> bool:
             if favorites_only and image["id"] not in starred:
+                return False
+            if private_only and not image.get("private"):
                 return False
             if model and model_of(image["infotext"]) != model:
                 return False
@@ -276,10 +290,12 @@ def listing(
                 **{k: v for k, v in image.items() if k != "path"},
                 "nsfw": looks_nsfw(image["infotext"]),
                 "favorite": image["id"] in starred,
+                "private": bool(image.get("private")),
             }
             for image in page
         ],
         "models": [{"name": n, "count": c} for n, c in sorted(models.items(), key=lambda m: -m[1])],
+        "lockedPrivate": private.hidden_count(),
     }
 
 
@@ -361,10 +377,13 @@ MAX_DELETE = 2000
 
 
 def delete(image_ids: list[str]) -> dict:
-    """Moves images to the Recycle Bin. Ids outside the output folders are skipped."""
+    """Moves images to the Recycle Bin; private images are deleted for good. Unknown ids are skipped."""
     global _scan
     found: dict[str, Path] = {}
+    gone_private = private.delete([i for i in image_ids[:MAX_DELETE] if private.vault_id(i) is not None])
     for image_id in image_ids[:MAX_DELETE]:
+        if private.vault_id(image_id) is not None:
+            continue
         try:
             found[image_id] = resolve(image_id)
         except FileNotFoundError:
@@ -379,7 +398,7 @@ def delete(image_ids: list[str]) -> dict:
                 _scan = None
     for thumb in thumbs:
         thumb.unlink(missing_ok=True)
-    gone = {image_id for image_id, path in found.items() if not path.exists()}
+    gone = {image_id for image_id, path in found.items() if not path.exists()} | gone_private
     # A deleted image's star goes with it.
     with _lock:
         starred = favorites()

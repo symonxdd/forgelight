@@ -25,9 +25,15 @@ KINDS = ("txt2img", "img2img")
 RESULT_TTL = 15 * 60
 THUMB_WIDTH = 400
 
-# Kept across live reloads (reloading reuses this module's globals): the mode and the
-# replies of running and recent private generations.
-_state: dict = globals().get("_state") or {"on": None, "jobs": {}, "lock": threading.Lock()}
+PREFIX = "private/"
+
+# Kept across live reloads (reloading reuses this module's globals): the mode, the replies
+# of running and recent private generations, and the settings of private images while
+# unlocked (forgotten on Lock).
+# Entries added in later versions are filled in, so a live reload never meets an older state.
+_state: dict = globals().get("_state") or {}
+for _key, _default in (("on", None), ("jobs", {}), ("metas", {}), ("lock", threading.Lock())):
+    _state.setdefault(_key, _default)
 
 
 def is_on() -> bool:
@@ -47,8 +53,93 @@ def set_on(on: bool) -> dict:
         raise VaultError("Set up private mode first.", 409)
     _state["on"] = on
     if not on:
-        vault.lock()
+        lock()
     return status()
+
+
+def unlock(password: str | None, recovery: str | None) -> dict:
+    vault.unlock(password=password, recovery=recovery)
+    return status()
+
+
+def lock() -> dict:
+    """Forgets the private key and every private image's settings held in memory."""
+    vault.lock()
+    with _state["lock"]:
+        _state["metas"] = {}
+    return status()
+
+
+# ---- private images in the Library -------------------------------------------------------
+
+
+def vault_id(image_id: str) -> str | None:
+    """The vault's own id for a Library id like "private/3fa9…", or None for other images."""
+    return image_id[len(PREFIX) :] if image_id.startswith(PREFIX) else None
+
+
+def _metas() -> dict[str, dict]:
+    """The settings of every private image, decrypted once per unlock and kept in memory."""
+    ids = vault.ids()
+    with _state["lock"]:
+        cache = {item: meta for item, meta in _state["metas"].items() if item in ids}
+    for item in ids:
+        if item not in cache:
+            try:
+                cache[item] = vault.meta(item)[0]
+            except VaultError:
+                continue  # A damaged file stays out of the Library rather than breaking it.
+    with _state["lock"]:
+        _state["metas"] = cache
+    return cache
+
+
+def library_items() -> list[dict]:
+    """Private images shaped like the Library's own entries. None while locked."""
+    if not vault.exists() or not vault.is_unlocked():
+        return []
+    return [
+        {
+            "id": PREFIX + item,
+            "path": "",
+            "mtime": float(meta.get("created") or 0),
+            "bytes": 0,
+            "width": int(meta.get("width") or 0),
+            "height": int(meta.get("height") or 0),
+            "infotext": str(meta.get("infotext") or ""),
+            "private": True,
+        }
+        for item, meta in _metas().items()
+    ]
+
+
+def hidden_count() -> int:
+    """How many private images the Library leaves out because the vault is locked."""
+    return len(vault.ids()) if vault.exists() and not vault.is_unlocked() else 0
+
+
+def exists(image_id: str) -> bool:
+    item = vault_id(image_id)
+    return item is not None and item in vault.ids()
+
+
+def image_bytes(image_id: str) -> bytes:
+    return vault.image(vault_id(image_id) or "")
+
+
+def thumbnail_bytes(image_id: str) -> bytes:
+    return vault.meta(vault_id(image_id) or "")[1]
+
+
+def delete(image_ids: list[str]) -> set[str]:
+    """Deletes private images for good: there is no Recycle Bin for encrypted files."""
+    gone = set()
+    for image_id in image_ids:
+        item = vault_id(image_id)
+        if item is not None and item in vault.ids():
+            vault.remove(item)
+            gone.add(image_id)
+    return gone
 
 
 def _forge_url(path: str) -> str:
@@ -61,7 +152,7 @@ def decode(image: str) -> bytes:
     return base64.b64decode(image.split(",", 1)[-1])
 
 
-def store(png: bytes, infotext: str, seed: int | None) -> str:
+def store(png: bytes, infotext: str, seed: int | None, kind: str = "txt2img") -> str:
     """Encrypts one image into the vault with its settings and a small thumbnail."""
     from PIL import Image
 
@@ -71,7 +162,7 @@ def store(png: bytes, infotext: str, seed: int | None) -> str:
         small.thumbnail((THUMB_WIDTH, THUMB_WIDTH * 4), Image.Resampling.LANCZOS, reducing_gap=2.0)
     thumb = io.BytesIO()
     small.save(thumb, "WEBP", quality=82, method=4)
-    meta = {"infotext": infotext, "seed": seed, "width": width, "height": height, "created": time.time()}
+    meta = {"infotext": infotext, "seed": seed, "width": width, "height": height, "created": time.time(), "kind": kind}
     return vault.add(png, meta, thumb.getvalue())
 
 
@@ -96,7 +187,7 @@ def _run(kind: str, body: dict, task: str) -> None:
         # A batch's overview grid comes first and is not kept, as on the public side.
         for index, image in enumerate((reply.get("images") or [])[first:]):
             infotext = infotexts[index + first] if index + first < len(infotexts) else ""
-            store(decode(image), infotext, seeds[index] if index < len(seeds) else None)
+            store(decode(image), infotext, seeds[index] if index < len(seeds) else None, kind)
         job = {"status": "done", "images": reply.get("images") or [], "info": reply.get("info") or ""}
     except (requests.RequestException, VaultError, OSError, ValueError) as error:
         job = {"status": "error", "message": str(error) or "The private generation failed."}

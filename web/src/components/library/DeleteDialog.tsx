@@ -14,6 +14,7 @@ export function DeleteDialog({ ids, onClose, onDeleted }: DeleteDialogProps) {
   const remove = useDeleteImages();
   const count = ids?.length ?? 0;
   const what = count === 1 ? "this image" : `these ${count.toLocaleString("en-US")} images`;
+  const privateCount = ids?.filter((id) => id.startsWith("private/")).length ?? 0;
 
   return (
     <AlertDialog.Root
@@ -32,10 +33,24 @@ export function DeleteDialog({ ids, onClose, onDeleted }: DeleteDialogProps) {
             Delete {count === 1 ? "1 image" : `${count.toLocaleString("en-US")} images`}?
           </AlertDialog.Title>
           <AlertDialog.Description className="text-[13.5px] leading-relaxed text-muted">
-            This removes {what} from Forge's output folder.{" "}
-            {count === 1
-              ? "It goes to the Windows Recycle Bin, so you can still restore it from there."
-              : "They go to the Windows Recycle Bin, so you can still restore them from there."}
+            {privateCount === count ? (
+              <>
+                This deletes {what} for good. Private images are encrypted, so there is no Recycle Bin to restore them
+                from.
+              </>
+            ) : privateCount > 0 ? (
+              <>
+                Images from Forge's output folder go to the Windows Recycle Bin and can be restored from there.{" "}
+                {privateCount === 1 ? "The private one is" : `The ${privateCount} private ones are`} deleted for good.
+              </>
+            ) : (
+              <>
+                This removes {what} from Forge's output folder.{" "}
+                {count === 1
+                  ? "It goes to the Windows Recycle Bin, so you can still restore it from there."
+                  : "They go to the Windows Recycle Bin, so you can still restore them from there."}
+              </>
+            )}
           </AlertDialog.Description>
           {remove.error && <p className="text-[13px] text-bad">{remove.error.message}</p>}
           <div className="flex justify-end gap-2">
