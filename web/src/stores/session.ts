@@ -43,6 +43,8 @@ export type Job =
 
 export interface Notice {
   tone: "info" | "warning";
+  /** A short heading; by default "Done" or "Heads up", after the tone. */
+  title?: string;
   text: string;
   /** One optional button, such as "Undo". */
   action?: { label: string; run: () => void };

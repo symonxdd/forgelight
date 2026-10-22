@@ -10,6 +10,7 @@ import { Hint } from "../Hint";
 import { SelectMenu } from "../SelectMenu";
 import { ContentFilter } from "./ContentFilter";
 import { DeleteDialog } from "./DeleteDialog";
+import { FloatingMessages } from "../controls/Messages";
 import { LockedLine, PrivateFilter } from "./PrivateFilter";
 import { FavoritesToggle, TileStar } from "./Favorites";
 import { LibraryViewer } from "./LibraryViewer";
@@ -455,7 +456,10 @@ export function Library() {
         </div>
       </div>
       <LockedLine count={latest?.lockedPrivate ?? 0} />
-      <div className={`min-h-0 flex-1 overflow-y-auto ${selectedCount > 0 ? "pb-20" : ""}`}>{body}</div>
+      <div className="relative flex min-h-0 flex-1 flex-col">
+        <div className={`min-h-0 flex-1 overflow-y-auto ${selectedCount > 0 ? "pb-20" : ""}`}>{body}</div>
+        <FloatingMessages />
+      </div>
       {selectedCount > 0 && openIndex === -1 && (
         <SelectionBar
           count={selectedCount}

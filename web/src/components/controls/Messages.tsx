@@ -15,11 +15,13 @@ const TITLES: Record<Tone, string> = { info: "Done", warning: "Heads up", error:
 function Message({
   tone,
   text,
+  title,
   action,
   onDismiss,
   fading = false,
 }: {
   tone: Tone;
+  title?: string;
   text: string;
   action?: { label: string; run: () => void };
   onDismiss: () => void;
@@ -31,13 +33,13 @@ function Message({
       role={tone === "error" ? "alert" : "status"}
       // Floats in the image's top right corner, clear of the prompt and the zoom bar. It eases
       // in, and fades out when it leaves by itself.
-      className={`flex items-start gap-2.5 rounded-xl border border-line bg-surface p-3 motion-safe:animate-[toast-in_180ms_ease-out] motion-safe:transition-opacity motion-safe:duration-200 ${
+      className={`flex items-center gap-2.5 rounded-xl border border-line bg-surface p-3 motion-safe:animate-[toast-in_180ms_ease-out] motion-safe:transition-opacity motion-safe:duration-200 ${
         fading ? "opacity-0" : ""
       }`}
     >
-      <Icon className={`mt-px size-4 shrink-0 ${ICON_COLOR[tone]}`} aria-hidden />
+      <Icon className={`size-4 shrink-0 ${ICON_COLOR[tone]}`} aria-hidden />
       <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <p className="text-[13px] font-medium text-fg-strong">{TITLES[tone]}</p>
+        <p className="text-[13px] font-medium text-fg-strong">{title ?? TITLES[tone]}</p>
         <p className={`text-[12.5px] leading-snug ${tone === "error" ? "text-bad" : "text-muted"}`}>{text}</p>
         {action && (
           <button
@@ -93,6 +95,7 @@ export function Messages() {
       <div onPointerEnter={() => setHovered(notice)} onPointerLeave={() => setHovered(null)}>
         <Message
           tone={notice.tone}
+          title={notice.title}
           text={notice.text}
           action={notice.action}
           onDismiss={() => setNotice(null)}
@@ -102,4 +105,18 @@ export function Messages() {
     );
   }
   return null;
+}
+
+/**
+ * Messages in the top right corner of the area below the top bar, on every screen. The
+ * parent needs `relative`; clicks pass through everywhere except the message itself.
+ */
+export function FloatingMessages() {
+  return (
+    <div className="pointer-events-none absolute top-3 right-3 z-30 w-[min(20rem,calc(100%-1.5rem))]">
+      <div className="pointer-events-auto">
+        <Messages />
+      </div>
+    </div>
+  );
 }

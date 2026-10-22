@@ -48,7 +48,7 @@ export async function unlockPrivate(secret: { password: string } | { recovery: s
 export async function lockPrivate(): Promise<void> {
   queryClient.setQueryData(PRIVATE_KEY, await request<PrivateStatus>("private/lock", {}));
   await forgetPrivateImages();
-  useSession.getState().setNotice({ tone: "info", text: "Private images are locked." });
+  useSession.getState().setNotice({ tone: "info", title: "Locked", text: "Private images are locked." });
 }
 
 /**

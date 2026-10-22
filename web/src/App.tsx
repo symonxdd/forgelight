@@ -1,6 +1,7 @@
 import { Tooltip } from "radix-ui";
 import { useEffect } from "react";
 import { useConnection } from "./api/queries";
+import { FloatingMessages } from "./components/controls/Messages";
 import { Guide } from "./components/guide/Guide";
 import { GuidePeek } from "./components/guide/GuidePeek";
 import { Library } from "./components/library/Library";
@@ -25,7 +26,16 @@ export function App() {
     <Tooltip.Provider delayDuration={0} skipDelayDuration={0} disableHoverableContent>
       <div className="flex h-full flex-col">
         <TopBar connection={connection} />
-        {view === "library" ? <Library /> : view === "guide" ? <Guide /> : <Workspace connection={connection} />}
+        {view === "library" ? (
+          <Library />
+        ) : view === "guide" ? (
+          <div className="relative flex min-h-0 flex-1 flex-col">
+            <Guide />
+            <FloatingMessages />
+          </div>
+        ) : (
+          <Workspace connection={connection} />
+        )}
         <GuidePeek />
       </div>
     </Tooltip.Provider>

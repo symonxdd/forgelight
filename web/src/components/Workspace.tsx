@@ -5,7 +5,7 @@ import { useOverlayOpen } from "../hooks/useOverlayOpen";
 import { useStartImageInput } from "../hooks/useStartImageInput";
 import { usePreferences } from "../stores/preferences";
 import { useHasPanelSections } from "../stores/settings";
-import { Messages } from "./controls/Messages";
+import { FloatingMessages } from "./controls/Messages";
 import { PromptFields } from "./controls/PromptFields";
 import { ControlsPanel } from "./ControlsPanel";
 import { Tagline } from "./Tagline";
@@ -69,9 +69,7 @@ function Stage({ connection }: { connection: ConnectionState }) {
       <div className="relative min-h-0 flex-1">
         <Viewer connection={connection} />
         {/* Messages sit in the image's top right corner, away from the prompt and the zoom bar. */}
-        <div className="absolute top-3 right-3 z-30 w-[min(20rem,calc(100%-1.5rem))]">
-          <Messages />
-        </div>
+        <FloatingMessages />
       </div>
       {!above && composer}
     </div>
