@@ -18,6 +18,8 @@ PACKAGE = Path(__file__).resolve().parent
 # Dependencies first, so each reloaded module picks up the fresh versions of what it imports.
 ORDER = [
     "store",
+    "cng",
+    "vault",
     "security",
     "architecture",
     "civitai",
