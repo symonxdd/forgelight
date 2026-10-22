@@ -47,21 +47,11 @@ function Stage({ connection }: { connection: ConnectionState }) {
   const { dragging, dropTarget } = useStartImageInput();
   const composer = (
     <div className={`shrink-0 px-4 ${above ? "pt-4" : "pt-1"} pb-2.5`}>
-      <div className="relative mx-auto flex w-full max-w-270 flex-col gap-2.5">
+      <div className="mx-auto flex w-full max-w-270 flex-col gap-2.5">
         {!above && <NewModelsStrip />}
         <PromptFields connected={connection === "connected"} />
         <Tagline />
         {above && <NewModelsStrip />}
-        {/* Messages float on the image side of the card, clear of the viewer's zoom bar. */}
-        <div
-          className={`pointer-events-none absolute inset-x-0 z-20 flex justify-center ${
-            above ? "top-full mt-3" : "bottom-full mb-[4.5rem]"
-          }`}
-        >
-          <div className="pointer-events-auto w-full max-w-lg">
-            <Messages />
-          </div>
-        </div>
       </div>
     </div>
   );
@@ -78,6 +68,10 @@ function Stage({ connection }: { connection: ConnectionState }) {
       {above && composer}
       <div className="relative min-h-0 flex-1">
         <Viewer connection={connection} />
+        {/* Messages sit in the image's top right corner, away from the prompt and the zoom bar. */}
+        <div className="absolute top-3 right-3 z-30 w-[min(20rem,calc(100%-1.5rem))]">
+          <Messages />
+        </div>
       </div>
       {!above && composer}
     </div>

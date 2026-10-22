@@ -1,10 +1,16 @@
-import { X } from "lucide-react";
+import { CircleAlert, CircleCheck, TriangleAlert, X, type LucideIcon } from "lucide-react";
 import { useEffect, useState } from "react";
 import { dismissError } from "../../stores/generation";
 import { useSession, type Notice } from "../../stores/session";
 
 const NOTICE_MS = 6000;
 const FADE_MS = 200;
+
+type Tone = "error" | "warning" | "info";
+
+const ICONS: Record<Tone, LucideIcon> = { info: CircleCheck, warning: TriangleAlert, error: CircleAlert };
+const ICON_COLOR: Record<Tone, string> = { info: "text-accent", warning: "text-fg-strong", error: "text-bad" };
+const TITLES: Record<Tone, string> = { info: "Done", warning: "Heads up", error: "Didn't work" };
 
 function Message({
   tone,
@@ -13,39 +19,44 @@ function Message({
   onDismiss,
   fading = false,
 }: {
-  tone: "error" | "warning" | "info";
+  tone: Tone;
   text: string;
   action?: { label: string; run: () => void };
   onDismiss: () => void;
   fading?: boolean;
 }) {
+  const Icon = ICONS[tone];
   return (
     <div
       role={tone === "error" ? "alert" : "status"}
-      // Floats over the image, so it never pushes the prompt card around. It eases in, and
-      // fades out when it leaves by itself.
-      className={`flex items-center gap-2 rounded-lg border bg-surface py-2.5 pr-2.5 pl-3.5 shadow-lg shadow-black/25 motion-safe:animate-[toast-in_180ms_ease-out] motion-safe:transition-opacity motion-safe:duration-200 ${
-        tone === "error" ? "border-bad/45" : "border-line-strong"
-      } ${fading ? "opacity-0" : ""}`}
+      // Floats in the image's top right corner, clear of the prompt and the zoom bar. It eases
+      // in, and fades out when it leaves by itself.
+      className={`flex items-start gap-2.5 rounded-xl border border-line bg-surface p-3 motion-safe:animate-[toast-in_180ms_ease-out] motion-safe:transition-opacity motion-safe:duration-200 ${
+        fading ? "opacity-0" : ""
+      }`}
     >
-      <p className={`flex-1 text-[13px] leading-relaxed ${tone === "error" ? "text-bad" : "text-fg"}`}>{text}</p>
-      {action && (
-        <button
-          type="button"
-          onClick={() => {
-            action.run();
-            onDismiss();
-          }}
-          className="h-6 shrink-0 rounded-md px-2 text-[12.5px] font-medium text-fg-strong hover:bg-surface"
-        >
-          {action.label}
-        </button>
-      )}
+      <Icon className={`mt-px size-4 shrink-0 ${ICON_COLOR[tone]}`} aria-hidden />
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
+        <p className="text-[13px] font-medium text-fg-strong">{TITLES[tone]}</p>
+        <p className={`text-[12.5px] leading-snug ${tone === "error" ? "text-bad" : "text-muted"}`}>{text}</p>
+        {action && (
+          <button
+            type="button"
+            onClick={() => {
+              action.run();
+              onDismiss();
+            }}
+            className="mt-1 h-7 self-start rounded-md border border-line px-2.5 text-[12px] text-fg-strong hover:border-line-strong"
+          >
+            {action.label}
+          </button>
+        )}
+      </div>
       <button
         type="button"
         onClick={onDismiss}
         aria-label="Dismiss"
-        className="grid size-6 shrink-0 place-items-center rounded text-muted hover:text-fg-strong"
+        className="grid size-6 shrink-0 place-items-center rounded text-faint hover:text-fg-strong"
       >
         <X className="size-3.5" aria-hidden />
       </button>
