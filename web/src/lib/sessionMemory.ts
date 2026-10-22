@@ -11,6 +11,8 @@ export interface PendingJob {
   hires: { width: number; height: number } | null;
   /** The prompt as sent, LoRA tags included, to recognize the job's images among the saved ones. */
   prompt: string;
+  /** Private mode: the images go into the vault and are picked up from the extension. No prompt is kept. */
+  private?: boolean;
 }
 
 /** A session image without its picture, which is found again in Forge's outputs folder. */

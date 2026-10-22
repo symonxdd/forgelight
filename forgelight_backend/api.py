@@ -11,7 +11,8 @@ from typing import Any, Callable
 from fastapi import HTTPException, Request
 from fastapi.responses import FileResponse
 
-from . import library, loading, models, newmodels, startup, updates
+from . import library, loading, models, newmodels, private, startup, updates
+from .vault import VaultError, vault
 from .security import require_own_page, require_same_origin
 from .store import ROOT, version
 
@@ -77,6 +78,45 @@ def new_models_reveal(_request: Request, body: Any) -> dict:
     except newmodels.MoveError as error:
         raise HTTPException(status_code=error.status, detail=str(error)) from error
     return {"ok": True}
+
+
+def _private_call(action: Callable[[], Any]) -> Any:
+    try:
+        return action()
+    except VaultError as error:
+        raise HTTPException(status_code=error.status, detail=str(error)) from error
+
+
+def private_status(_request: Request, _body: Any) -> dict:
+    return private.status()
+
+
+def private_setup(_request: Request, body: Any) -> dict:
+    password = (body or {}).get("password")
+    if not isinstance(password, str):
+        raise HTTPException(status_code=400, detail="Send the password.")
+    return _private_call(lambda: {"recoveryCode": vault.create(password), **private.status()})
+
+
+def private_mode(_request: Request, body: Any) -> dict:
+    return _private_call(lambda: private.set_on(bool((body or {}).get("on"))))
+
+
+def private_generate(_request: Request, body: Any) -> dict:
+    body = body or {}
+    return _private_call(lambda: private.generate(str(body.get("kind")), body.get("request")))
+
+
+def private_result(request: Request, _body: Any) -> dict:
+    return private.result(request.query_params.get("task", ""))
+
+
+def private_add(_request: Request, body: Any) -> dict:
+    body = body or {}
+    image, infotext = body.get("image"), body.get("infotext")
+    if not isinstance(image, str) or not isinstance(infotext, str):
+        raise HTTPException(status_code=400, detail="Send the image and its settings.")
+    return _private_call(lambda: {"id": private.store(private.decode(image), infotext, None)})
 
 
 def loading_state(_request: Request, _body: Any) -> dict:
@@ -231,6 +271,12 @@ ROUTES: dict[tuple[str, str], Handler] = {
     ("POST", "startup/desktop-shortcut"): desktop_shortcut,
     ("POST", "forge/stop"): stop_forge,
     ("GET", "loading"): loading_state,
+    ("GET", "private"): private_status,
+    ("POST", "private/setup"): private_setup,
+    ("POST", "private/mode"): private_mode,
+    ("POST", "private/generate"): private_generate,
+    ("GET", "private/result"): private_result,
+    ("POST", "private/add"): private_add,
     ("GET", "updates"): updates_state,
     ("POST", "updates/check"): updates_check,
     ("POST", "updates/auto"): updates_auto,

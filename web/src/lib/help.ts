@@ -77,6 +77,8 @@ export const HELP = {
   findNewModels:
     "Looks in Downloads and on the Desktop for checkpoints and LoRAs that Forge doesn't have yet, and offers to move them in.",
   foundModels: "Checkpoints and LoRAs in Downloads or on the Desktop that Forge doesn't have yet.",
+  privateMode:
+    "New images are saved encrypted in Forgelight's vault instead of as normal files in Forge's outputs folder.",
   recommended:
     "Settings from the example images this checkpoint's creator shared on Civitai. Nothing changes until Apply is clicked.",
 } as const;

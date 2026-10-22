@@ -25,6 +25,7 @@ ORDER = [
     "civitai",
     "models",
     "newmodels",
+    "private",
     "startup",
     "library",
     "loading",

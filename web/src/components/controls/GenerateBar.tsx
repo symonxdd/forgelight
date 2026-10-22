@@ -1,4 +1,4 @@
-import { Minus, Plus, SkipForward, Square } from "lucide-react";
+import { Lock, Minus, Plus, SkipForward, Square } from "lucide-react";
 import { Tooltip } from "radix-ui";
 import { HELP } from "../../lib/help";
 import { barFraction, barPulses, progressLabel } from "../../lib/progress";
@@ -7,6 +7,8 @@ import { useSession } from "../../stores/session";
 import { useSettings } from "../../stores/settings";
 import { useUpscale } from "../../stores/upscale";
 import { CheckpointPicker } from "../CheckpointPicker";
+import { usePrivateStatus } from "../../api/private";
+import { PrivateChip } from "../private/PrivateChip";
 import { ProgressText } from "../ProgressText";
 import { AddImageButton } from "./StartImage";
 import { Hint } from "../Hint";
@@ -74,6 +76,7 @@ export function GenerateBar({ connected }: { connected: boolean }) {
   const job = useSession((s) => s.job);
   // With an image attached for upscaling, the button says what it will do.
   const action = useUpscale((s) => (!s.source ? "Generate" : s.method === "enhance" ? "Enhance" : "Upscale"));
+  const privateStatus = usePrivateStatus();
 
   if (job.status === "running") {
     return (
@@ -122,11 +125,13 @@ export function GenerateBar({ connected }: { connected: boolean }) {
     );
   }
 
+  const privateOn = privateStatus.data?.on ?? false;
   return (
     <div className="flex items-center gap-2">
       <AddImageButton />
       <CheckpointPicker enabled={connected} />
       <div className="ml-auto flex shrink-0 items-center gap-2">
+        <PrivateChip />
         {/* Upscaling always makes one image. */}
         {action === "Generate" && <BatchStepper />}
         <button
@@ -135,6 +140,7 @@ export function GenerateBar({ connected }: { connected: boolean }) {
           disabled={!connected}
           className="flex h-9 items-center gap-2 rounded-lg bg-primary px-4 text-[14px] font-medium text-on-primary hover:bg-primary-hover disabled:opacity-40"
         >
+          {privateOn && <Lock className="size-3.5" aria-label="Private" />}
           {action}
           <kbd className="font-sans text-[11px] font-normal opacity-60">Ctrl ↵</kbd>
         </button>

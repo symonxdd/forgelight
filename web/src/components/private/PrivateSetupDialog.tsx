@@ -1,0 +1,179 @@
+import { Check, Copy, LoaderCircle, Lock } from "lucide-react";
+import { Dialog } from "radix-ui";
+import { useState, type FormEvent } from "react";
+import { setPrivateOn, setUpPrivate } from "../../api/private";
+import { useSession } from "../../stores/session";
+import { PasswordInput } from "./PasswordInput";
+
+const MIN_PASSWORD = 8;
+
+const primary =
+  "flex h-9 items-center gap-2 rounded-lg bg-primary px-4 text-[13px] font-medium text-on-primary hover:bg-primary-hover disabled:opacity-40";
+
+/** Step one: the password, typed twice. The vault is created when it is accepted. */
+function PasswordStep({ onCreated, onCancel }: { onCreated: (code: string) => void; onCancel: () => void }) {
+  const [password, setPassword] = useState("");
+  const [repeat, setRepeat] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const tooShort = password.length > 0 && password.length < MIN_PASSWORD;
+  const mismatch = repeat.length > 0 && repeat !== password;
+  const ready = password.length >= MIN_PASSWORD && repeat === password;
+
+  const submit = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!ready || busy) return;
+    setBusy(true);
+    setError(null);
+    try {
+      onCreated(await setUpPrivate(password));
+    } catch (failure) {
+      setError(failure instanceof Error ? failure.message : "Private mode could not be set up.");
+      setBusy(false);
+    }
+  };
+
+  return (
+    <form onSubmit={(event) => void submit(event)} className="flex flex-col gap-4">
+      <Dialog.Description asChild>
+        <div className="flex flex-col gap-1.5 text-[13px] leading-relaxed text-muted">
+          <p>When private mode is on, new images will be encrypted before they are saved.</p>
+          <p>To set up private mode, choose a password.</p>
+        </div>
+      </Dialog.Description>
+      <label className="flex flex-col gap-1.5 text-[12.5px] text-fg">
+        Password
+        <PasswordInput
+          id="private-password"
+          autoComplete="new-password"
+          autoFocus
+          value={password}
+          onChange={setPassword}
+        />
+        <span className={`text-[12px] ${tooShort ? "text-bad" : "text-faint"}`}>
+          At least {MIN_PASSWORD} characters
+        </span>
+      </label>
+      <label className="flex flex-col gap-1.5 text-[12.5px] text-fg">
+        Repeat password
+        <PasswordInput id="private-password-repeat" autoComplete="new-password" value={repeat} onChange={setRepeat} />
+        {mismatch && <span className="text-[12px] text-bad">The passwords don't match yet</span>}
+      </label>
+      {error && <p className="text-[12.5px] text-bad">{error}</p>}
+      <div className="flex justify-end gap-2">
+        <button
+          type="button"
+          onClick={onCancel}
+          className="h-9 rounded-lg px-3 text-[13px] text-muted hover:bg-raised hover:text-fg-strong"
+        >
+          Cancel
+        </button>
+        <button type="submit" disabled={!ready || busy} className={primary}>
+          {busy && <LoaderCircle className="size-3.5 animate-spin" aria-hidden />}
+          Next
+        </button>
+      </div>
+    </form>
+  );
+}
+
+/** Step two: the recovery code, shown this once, then private mode goes on. */
+function RecoveryStep({ code, onDone }: { code: string; onDone: () => void }) {
+  const [saved, setSaved] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [busy, setBusy] = useState(false);
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(code);
+      setCopied(true);
+    } catch {
+      // The code stays on screen to write down.
+    }
+  };
+
+  const turnOn = async () => {
+    setBusy(true);
+    try {
+      await setPrivateOn(true);
+    } catch (failure) {
+      useSession.getState().setNotice({
+        tone: "warning",
+        text: failure instanceof Error ? failure.message : "Private mode could not be turned on.",
+      });
+    }
+    onDone();
+  };
+
+  return (
+    <div className="flex flex-col gap-4">
+      <Dialog.Description className="text-[13px] leading-relaxed text-muted">
+        If the password is ever forgotten, this recovery key is the only other way in. It is shown only now.
+      </Dialog.Description>
+      <div className="flex items-center gap-2 rounded-lg border border-line bg-canvas py-2 pr-2 pl-3">
+        <code className="min-w-0 flex-1 font-mono text-[13px] tracking-wide break-all text-fg-strong select-all">
+          {code}
+        </code>
+        <button
+          type="button"
+          onClick={() => void copy()}
+          className="flex h-8 shrink-0 items-center gap-1.5 rounded-md border border-line px-2.5 text-[12px] text-fg hover:border-line-strong hover:text-fg-strong"
+        >
+          {copied ? <Check className="size-3.5 text-accent" aria-hidden /> : <Copy className="size-3.5" aria-hidden />}
+          {copied ? "Copied" : "Copy"}
+        </button>
+      </div>
+      <label className="flex items-center gap-2 text-[13px] text-fg">
+        <input
+          id="private-recovery-saved"
+          type="checkbox"
+          checked={saved}
+          onChange={(e) => setSaved(e.target.checked)}
+          className="size-4 accent-[var(--accent)]"
+        />
+        I've saved it somewhere safe
+      </label>
+      <div className="flex justify-end">
+        <button type="button" disabled={!saved || busy} onClick={() => void turnOn()} className={primary}>
+          <Lock className="size-3.5" aria-hidden />
+          Turn on private mode
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * The first time Private is switched on: a password, then the recovery key. While the key
+ * is on screen the dialog can only be left with the button, so it isn't lost by a stray click.
+ */
+export function PrivateSetupDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
+  const [code, setCode] = useState<string | null>(null);
+  const close = () => {
+    setCode(null);
+    onOpenChange(false);
+  };
+
+  return (
+    <Dialog.Root open={open} onOpenChange={(next) => (next ? onOpenChange(true) : code === null && close())}>
+      <Dialog.Portal>
+        <Dialog.Overlay className="fixed inset-0 z-50 bg-black/50 motion-safe:animate-[fade-in_120ms_ease-out]" />
+        <Dialog.Content
+          onEscapeKeyDown={(event) => code !== null && event.preventDefault()}
+          onPointerDownOutside={(event) => code !== null && event.preventDefault()}
+          className="fixed top-1/2 left-1/2 z-50 flex w-[min(28rem,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 flex-col gap-4 rounded-xl border border-line bg-surface p-5 text-fg shadow-xl shadow-black/30 motion-safe:animate-[fade-in_120ms_ease-out]"
+        >
+          <Dialog.Title className="flex items-center gap-2 text-[15px] font-semibold text-fg-strong">
+            <Lock className="size-4 text-accent" aria-hidden />
+            {code === null ? "Set up private mode" : "Save the recovery key"}
+          </Dialog.Title>
+          {code === null ? (
+            <PasswordStep onCreated={setCode} onCancel={close} />
+          ) : (
+            <RecoveryStep code={code} onDone={close} />
+          )}
+        </Dialog.Content>
+      </Dialog.Portal>
+    </Dialog.Root>
+  );
+}

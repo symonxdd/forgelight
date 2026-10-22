@@ -35,7 +35,9 @@ const before = read<StoredSession>(SESSION_KEY);
 
 useSession.subscribe((state, previous) => {
   if (state.images === previous.images && state.selectedId === previous.selectedId) return;
-  const images: StoredImage[] = state.images.map(({ id, width, height, seed, infotext, createdAt }) => ({
+  // Private images stay out: this storage can end up on disk unencrypted.
+  const shared = state.images.filter((image) => !image.private);
+  const images: StoredImage[] = shared.map(({ id, width, height, seed, infotext, createdAt }) => ({
     id,
     width,
     height,

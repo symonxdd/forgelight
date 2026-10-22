@@ -10,6 +10,8 @@ export interface SessionImage {
   seed: number;
   infotext: string;
   createdAt: number;
+  /** Made in private mode: saved only in the vault, and never remembered by the browser. */
+  private?: boolean;
 }
 
 export type JobPhase = "waiting" | "preparing" | "sampling";

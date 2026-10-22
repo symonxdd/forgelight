@@ -1,6 +1,7 @@
 import { ForgeError, forgePost, type PostResponse } from "../api/client";
 import { request, type LoadingState, type ModelEntry } from "../api/forgelight";
 import type { LibraryPage } from "../api/library";
+import { addPrivateImage, privateGenerate, privateModeOn, waitForPrivateResult } from "../api/private";
 import { queryClient } from "../api/queryClient";
 import { randomTaskId } from "../lib/format";
 import { buildImg2imgRequest } from "../lib/img2img";
@@ -147,14 +148,40 @@ export async function generate(): Promise<void> {
     prompt: promptWithLoras(settings.prompt, settings.loras),
   };
   useSession.getState().setJob(runningJob(pending));
-  await runGeneration(pending, () =>
-    startImage
-      ? forgePost("/sdapi/v1/img2img", buildImg2imgRequest(settings, startImage.dataUrl, taskId))
-      : forgePost("/sdapi/v1/txt2img", buildTxt2imgRequest(settings, taskId)),
-  );
+  await markPrivate(pending);
+  await runGeneration(pending, () => {
+    if (startImage) {
+      const body = buildImg2imgRequest(settings, startImage.dataUrl, taskId);
+      return pending.private ? privateGenerate("img2img", body) : forgePost("/sdapi/v1/img2img", body);
+    }
+    const body = buildTxt2imgRequest(settings, taskId);
+    return pending.private ? privateGenerate("txt2img", body) : forgePost("/sdapi/v1/txt2img", body);
+  });
 }
 
-type GenerationResult = PostResponse<"/sdapi/v1/txt2img"> | PostResponse<"/sdapi/v1/img2img">;
+/** Private mode is asked right before sending; a private job keeps no prompt in the tab's memory. */
+async function markPrivate(pending: PendingJob): Promise<void> {
+  if (!(await privateModeOn())) return;
+  pending.private = true;
+  pending.prompt = "";
+}
+
+type GenerationResult =
+  PostResponse<"/sdapi/v1/txt2img"> | PostResponse<"/sdapi/v1/img2img"> | { images: string[]; info: string };
+
+/** The images of a finished generation, as Session strip entries, in generation order. */
+function sessionImages(result: GenerationResult | undefined, pending: PendingJob): SessionImage[] {
+  return parseTxt2imgResult(result?.images ?? [], result?.info ?? "").map((img) => ({
+    id: crypto.randomUUID(),
+    url: base64ToObjectUrl(img.base64),
+    width: pending.width,
+    height: pending.height,
+    seed: img.seed,
+    infotext: img.infotext,
+    createdAt: Date.now(),
+    private: pending.private,
+  }));
+}
 
 /**
  * Sends a generation to Forge, shows its progress, then its images. The job is remembered
@@ -180,19 +207,10 @@ async function runGeneration(pending: PendingJob, send: () => Promise<Generation
   }
 
   try {
-    const images: SessionImage[] = parseTxt2imgResult(result?.images ?? [], result?.info ?? "").map((img) => ({
-      id: crypto.randomUUID(),
-      url: base64ToObjectUrl(img.base64),
-      width: pending.width,
-      height: pending.height,
-      seed: img.seed,
-      infotext: img.infotext,
-      createdAt: Date.now(),
-    }));
     // Results arrive in generation order; the session lists newest first.
-    addImages(images.reverse());
-    // Forge saved them to its outputs folder too, so the Library has news.
-    void queryClient.invalidateQueries({ queryKey: ["library"] });
+    addImages(sessionImages(result, pending).reverse());
+    // Forge saved public ones to its outputs folder too, so the Library has news.
+    if (!pending.private) void queryClient.invalidateQueries({ queryKey: ["library"] });
     setJob({ status: "idle" });
   } catch (error) {
     setJob({ status: "error", message: errorMessage(error) });
@@ -224,6 +242,7 @@ async function upscale(): Promise<void> {
     prompt: promptWithLoras(settings.prompt, settings.loras),
   };
   setJob({ ...runningJob(pending), enlarging: true });
+  await markPrivate(pending);
 
   let enlarged: string;
   try {
@@ -240,19 +259,22 @@ async function upscale(): Promise<void> {
 
   if (enhance) {
     updateRunning({ enlarging: false });
+    const body = buildEnhanceRequest(settings, enlarged, target, card.strength, pending.taskId);
     return runGeneration(pending, () =>
-      forgePost("/sdapi/v1/img2img", buildEnhanceRequest(settings, enlarged, target, card.strength, pending.taskId)),
+      pending.private ? privateGenerate("img2img", body) : forgePost("/sdapi/v1/img2img", body),
     );
   }
 
   try {
     const note = `Postprocess upscale to: ${target.width}x${target.height}, Postprocess upscaler: ${card.upscaler}`;
-    const saved = await request<{ id: string; infotext: string }>("library/save-upscaled", {
-      image: enlarged,
-      infotext: source.infotext,
-      note,
-      name: source.name,
-    });
+    const saved = pending.private
+      ? await savePrivateUpscale(enlarged, source.infotext, note)
+      : await request<{ id: string; infotext: string }>("library/save-upscaled", {
+          image: enlarged,
+          infotext: source.infotext,
+          note,
+          name: source.name,
+        });
     addImages([
       {
         id: crypto.randomUUID(),
@@ -261,13 +283,21 @@ async function upscale(): Promise<void> {
         seed: seedFromInfotext(saved.infotext),
         infotext: saved.infotext,
         createdAt: Date.now(),
+        private: pending.private,
       },
     ]);
-    void queryClient.invalidateQueries({ queryKey: ["library"] });
+    if (!pending.private) void queryClient.invalidateQueries({ queryKey: ["library"] });
     setJob({ status: "idle" });
   } catch (error) {
     setJob({ status: "error", message: errorMessage(error) });
   }
+}
+
+/** Upscale only, in private mode: the enlarged image goes into the vault with the note added. */
+async function savePrivateUpscale(image: string, infotext: string, note: string): Promise<{ infotext: string }> {
+  const withNote = infotext ? `${infotext}, ${note}` : note;
+  await addPrivateImage(image, withNote);
+  return { infotext: withNote };
 }
 
 const RESULT_TRIES = 6;
@@ -301,6 +331,7 @@ async function savedResults(job: PendingJob): Promise<SessionImage[]> {
  */
 function followJob(pending: PendingJob): void {
   const { setJob, addImages, setNotice } = useSession.getState();
+  if (pending.private) return followPrivateJob(pending);
   pollProgress(pending.taskId, (completed) => {
     clearPendingJob();
     void (async () => {
@@ -323,6 +354,23 @@ function followJob(pending: PendingJob): void {
       setJob({ status: "idle" });
     })();
   });
+}
+
+/** The same for a private generation: the extension holds its reply until the page asks. */
+function followPrivateJob(pending: PendingJob): void {
+  const { setJob, addImages, setNotice } = useSession.getState();
+  const stopPolling = pollProgress(pending.taskId);
+  void (async () => {
+    try {
+      addImages(sessionImages(await waitForPrivateResult(pending.taskId), pending).reverse());
+    } catch (error) {
+      setNotice({ tone: "warning", text: errorMessage(error) });
+    } finally {
+      stopPolling();
+      clearPendingJob();
+      setJob({ status: "idle" });
+    }
+  })();
 }
 
 /** Picks up a generation that was running when the page reloaded: Forge kept going. */
