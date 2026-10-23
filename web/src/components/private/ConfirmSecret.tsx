@@ -3,20 +3,27 @@ import { pinDigits } from "../../lib/pin";
 import { PasswordInput } from "./PasswordInput";
 import type { ConfirmState, SecretMode } from "./useConfirmSecret";
 
-const LABELS: Record<SecretMode, string> = { pin: "PIN", password: "Current password", recovery: "Recovery key" };
+const LABELS: Record<SecretMode, string> = {
+  pin: "Current PIN",
+  password: "Current password",
+  recovery: "Recovery key",
+};
 const SWITCH: Record<SecretMode, string> = {
   pin: "Use the PIN",
   password: "Use the password",
   recovery: "Use the recovery key",
 };
 
-/** The field for useConfirmSecret, with links to the other ways in. Renders nothing while unlocked. */
+/**
+ * The field for useConfirmSecret, with links to the other ways in, on a tinted panel of its
+ * own so it never blends in with fields for something new. Renders nothing while unlocked.
+ */
 export function ConfirmSecret({ state, autoFocus = false }: { state: ConfirmState; autoFocus?: boolean }) {
   const hasPin = usePrivateStatus().data?.pin ?? false;
   if (!state.needed) return null;
   const { mode } = state;
   return (
-    <div className="flex flex-col gap-1.5 text-[12.5px] text-fg">
+    <div className="flex flex-col gap-1.5 rounded-lg bg-raised/60 p-3 text-[12.5px] text-fg">
       <label htmlFor={`confirm-${mode}`}>{LABELS[mode]}</label>
       {mode === "recovery" ? (
         <input

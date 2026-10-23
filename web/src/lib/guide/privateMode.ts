@@ -76,6 +76,7 @@ export const privateMode: GuideChapter = {
         "Changing the password, the PIN or the recovery key replaces only its own copy. It is instant, and the images stay as they are.",
         "While private images are locked, these changes are confirmed with the password, the PIN or the recovery key, and private images stay locked afterwards.",
         "A forgotten password is replaced with Change under Password, using the recovery key or the PIN instead of the current password.",
+        "A forgotten PIN is no problem: the password or the recovery key still opens the vault, and Change under PIN sets a new PIN with the password.",
         "A new recovery key makes the old one stop working.",
       ],
       forgelight: "In Settings under Privacy: Add PIN, Change for the password, and New key for the recovery key.",

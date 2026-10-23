@@ -62,7 +62,14 @@ export function PinDialog({
               A quicker way to unlock private images on this computer. The password can still be used instead.
             </Dialog.Description>
             <ConfirmSecret state={confirm} autoFocus />
-            <PinFields pin={pin} repeat={repeat} onPin={setPinValue} onRepeat={setRepeat} autoFocus={!confirm.needed} />
+            <PinFields
+              pin={pin}
+              repeat={repeat}
+              onPin={setPinValue}
+              onRepeat={setRepeat}
+              autoFocus={!confirm.needed}
+              replacing={replacing}
+            />
             {error && <p className="text-[12.5px] text-bad">{error}</p>}
             <div className="flex justify-end gap-2">
               <button
