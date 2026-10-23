@@ -6,12 +6,17 @@ export interface GuideTable {
   rows: string[][];
 }
 
+/** The drawn diagrams a topic can show, from components/guide/GuideDiagram.tsx. */
+export type GuideDiagramId = "private-saving" | "private-unlocking" | "private-viewing";
+
 /** One card in a chapter: a short summary first, details only where they help. */
 export interface GuideTopic {
   id: string;
   title: string;
   /** One or two sentences that answer "what is this?" on their own. */
   summary: string;
+  /** A diagram shown under the summary. */
+  diagram?: GuideDiagramId;
   /** Short facts, one line each where possible. */
   points?: string[];
   /** Numbered steps, for things that happen in order. */

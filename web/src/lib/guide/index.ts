@@ -3,6 +3,7 @@ import { gettingModels } from "./gettingModels";
 import { GLOSSARY } from "./glossary";
 import { hardware } from "./hardware";
 import { models } from "./models";
+import { privateMode } from "./privateMode";
 import { prompting } from "./prompting";
 import { recreating } from "./recreating";
 import { settings } from "./settings";
@@ -10,7 +11,7 @@ import { troubleshooting } from "./troubleshooting";
 import type { GuideChapter, GuideTopic } from "./types";
 
 export { GLOSSARY };
-export type { GlossaryTerm, GuideChapter, GuideTable, GuideTopic } from "./types";
+export type { GlossaryTerm, GuideChapter, GuideDiagramId, GuideTable, GuideTopic } from "./types";
 
 /** In reading order: the basics first, reference material last. */
 export const CHAPTERS: GuideChapter[] = [
@@ -20,6 +21,7 @@ export const CHAPTERS: GuideChapter[] = [
   prompting,
   settings,
   recreating,
+  privateMode,
   troubleshooting,
   hardware,
 ];

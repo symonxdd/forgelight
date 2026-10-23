@@ -2,6 +2,7 @@ import { FolderOpen } from "lucide-react";
 import { findTopic, type GuideTable, type GuideTopic } from "../../lib/guide";
 import { useGuide } from "../../stores/guide";
 import { LogoMark } from "../Logo";
+import { GuideDiagram } from "./GuideDiagram";
 
 function Steps({ steps }: { steps: string[] }) {
   return (
@@ -114,6 +115,7 @@ export function TopicCard({ topic, highlighted = false, onOpenTopic, anchor = tr
         </h2>
         <p className="text-[14px] text-fg-strong/90">{topic.summary}</p>
       </div>
+      {topic.diagram && <GuideDiagram id={topic.diagram} />}
       {topic.steps && <Steps steps={topic.steps} />}
       {topic.table && <Table table={topic.table} />}
       {topic.points && <Points points={topic.points} />}

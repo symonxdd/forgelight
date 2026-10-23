@@ -16,6 +16,7 @@ Forgelight runs inside Forge as an extension and is reachable at `http://127.0.0
 - A friendlier face for the [Forge](https://github.com/lllyasviel/stable-diffusion-webui-forge) engine
 - A Library of all generated images, whether made in Forgelight or in Forge's classic page
 - Settings remembered for each checkpoint
+- [Private mode](docs/private-mode.md): new images saved encrypted, seen again only with a password, PIN or recovery key
 - Light, dark and pure black themes
 - No telemetry, no tracking
 
