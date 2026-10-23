@@ -17,6 +17,15 @@ export interface PrivateStatus {
   pin: boolean;
   /** This computer's security chip can hold a PIN. */
   pinAvailable: boolean;
+  /** Forge starts with private mode on. */
+  startPrivate: boolean;
+}
+
+export interface DriveEncryption {
+  drive: string;
+  /** Windows' own label, such as "On" or "Waiting for activation". */
+  state: string;
+  protected: boolean;
 }
 
 export const PRIVATE_KEY = ["private"];
@@ -83,6 +92,39 @@ export async function setPin(pin: string): Promise<void> {
 
 export async function removePin(): Promise<void> {
   queryClient.setQueryData(PRIVATE_KEY, await request<PrivateStatus>("private/pin", { pin: null }));
+}
+
+export async function setStartPrivate(on: boolean): Promise<void> {
+  queryClient.setQueryData(PRIVATE_KEY, await request<PrivateStatus>("private/start", { on }));
+}
+
+/** Checks the current password and sets the new one. Images are not encrypted again. */
+export async function changePassword(current: string, next: string): Promise<void> {
+  queryClient.setQueryData(PRIVATE_KEY, await request<PrivateStatus>("private/password", { current, new: next }));
+}
+
+/** A fresh recovery key, shown once; the old one stops working. Needs private images unlocked. */
+export async function newRecoveryKey(): Promise<string> {
+  return (await request<{ recoveryCode: string }>("private/recovery", {})).recoveryCode;
+}
+
+/** Deletes Windows' thumbnail cache; files File Explorer is using right then are skipped. */
+export function clearThumbnails(): Promise<{ cleared: number; skipped: number; bytes: number }> {
+  return request("private/thumbnails", {});
+}
+
+/** BitLocker's state for the system drive, checked at most once a minute. */
+export function useDriveEncryption(enabled: boolean) {
+  return useQuery({
+    queryKey: ["private", "drive"],
+    queryFn: () => request<DriveEncryption>("private/drive"),
+    enabled,
+    staleTime: 60_000,
+  });
+}
+
+export function openDriveSettings(): Promise<unknown> {
+  return request("private/drive/open", {});
 }
 
 /** Creates the vault; the recovery code comes back once and is never stored. */

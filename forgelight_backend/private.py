@@ -12,13 +12,17 @@ from __future__ import annotations
 import base64
 import io
 import json
+import os
+import subprocess
 import threading
 import time
+from pathlib import Path
 from typing import Any
 
 import requests
 
 from . import cng, startup
+from . import store as data_files
 from .vault import VaultError, vault
 
 KINDS = ("txt2img", "img2img")
@@ -57,7 +61,99 @@ def status() -> dict:
         "unlocked": vault.is_unlocked(),
         "pin": vault.has_pin(),
         "pinAvailable": pin_available(),
+        "startPrivate": bool(startup.preferences().get("start_private")),
     }
+
+
+# ---- privacy settings --------------------------------------------------------------------
+
+
+def set_start_private(on: bool) -> dict:
+    """Whether Forge starts with private mode on. Saved only when the switch is clicked."""
+    prefs = startup.preferences()
+    prefs["start_private"] = on
+    data_files.write(startup.PREFS_FILE, prefs)
+    return status()
+
+
+def change_password(current: str, new: str) -> dict:
+    """Checks the current password, then replaces the password slot. Images are not touched."""
+    vault.unlock(password=current)
+    vault.change_password(new)
+    return status()
+
+
+def new_recovery_key() -> str:
+    """A fresh recovery key, shown once; the old one stops working. Needs the vault unlocked."""
+    return vault.new_recovery_code()
+
+
+THUMBNAIL_CACHE = Path(os.environ.get("LOCALAPPDATA", "")) / "Microsoft" / "Windows" / "Explorer"
+
+
+def clear_thumbnails() -> dict:
+    """Deletes Windows' thumbnail cache for this user, which keeps small previews of images
+    once opened in File Explorer. Files Explorer is using at that moment are skipped.
+    Windows makes new previews as folders are opened again."""
+    cleared, skipped, size = 0, 0, 0
+    for path in THUMBNAIL_CACHE.glob("thumbcache_*.db"):
+        try:
+            length = path.stat().st_size
+            path.unlink()
+        except OSError:
+            skipped += 1
+            continue
+        cleared += 1
+        size += length
+    return {"cleared": cleared, "skipped": skipped, "bytes": size}
+
+
+# Windows' own labels for System.Volume.BitLockerProtection, read from Windows itself
+# (PSFormatForDisplay) on 2026-10-22.
+DRIVE_STATES = {
+    1: "On",
+    2: "Off",
+    3: "Encrypting",
+    4: "Decrypting",
+    5: "Suspended",
+    6: "Locked",
+    7: "Not encryptable",
+    8: "Waiting for activation",
+}
+DRIVE_CHECK_TTL = 60
+
+
+def drive_encryption() -> dict:
+    """BitLocker's state for the system drive, as File Explorer knows it. No admin needed."""
+    cached = _state.get("drive")
+    if cached and time.time() - cached["at"] < DRIVE_CHECK_TTL:
+        return cached["value"]
+    drive = os.environ.get("SystemDrive", "C:")
+    script = (
+        f"(New-Object -ComObject Shell.Application).NameSpace('{drive}\\').Self"
+        ".ExtendedProperty('System.Volume.BitLockerProtection')"
+    )
+    try:
+        out = subprocess.run(
+            ["powershell", "-NoProfile", "-NonInteractive", "-Command", script],
+            capture_output=True, text=True, timeout=10, creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0),
+        ).stdout.strip()
+        code = int(out) if out.isdigit() else None
+    except (OSError, subprocess.SubprocessError):
+        code = None
+    value = {
+        "drive": drive,
+        "code": code,
+        "state": DRIVE_STATES.get(code, "Unknown") if code is not None else "Unknown",
+        "protected": code in (1, 3),
+    }
+    _state["drive"] = {"at": time.time(), "value": value}
+    return value
+
+
+def open_drive_settings() -> None:
+    """Opens Windows' BitLocker settings, where drive encryption is turned on."""
+    subprocess.Popen(["control.exe", "/name", "Microsoft.BitLockerDriveEncryption"])
 
 
 def set_on(on: bool) -> dict:

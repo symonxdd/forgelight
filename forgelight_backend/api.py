@@ -123,6 +123,35 @@ def private_lock(_request: Request, _body: Any) -> dict:
     return private.lock()
 
 
+def private_start(_request: Request, body: Any) -> dict:
+    return private.set_start_private(bool((body or {}).get("on")))
+
+
+def private_password(_request: Request, body: Any) -> dict:
+    body = body or {}
+    current, new = body.get("current"), body.get("new")
+    if not isinstance(current, str) or not isinstance(new, str):
+        raise HTTPException(status_code=400, detail="Send the current and the new password.")
+    return _private_call(lambda: private.change_password(current, new))
+
+
+def private_recovery(_request: Request, _body: Any) -> dict:
+    return _private_call(lambda: {"recoveryCode": private.new_recovery_key()})
+
+
+def private_thumbnails(_request: Request, _body: Any) -> dict:
+    return private.clear_thumbnails()
+
+
+def private_drive(_request: Request, _body: Any) -> dict:
+    return private.drive_encryption()
+
+
+def private_drive_open(_request: Request, _body: Any) -> dict:
+    private.open_drive_settings()
+    return {"ok": True}
+
+
 def private_generate(_request: Request, body: Any) -> dict:
     body = body or {}
     return _private_call(lambda: private.generate(str(body.get("kind")), body.get("request")))
@@ -334,6 +363,12 @@ ROUTES: dict[tuple[str, str], Handler] = {
     ("POST", "private/unlock"): private_unlock,
     ("POST", "private/lock"): private_lock,
     ("POST", "private/pin"): private_pin,
+    ("POST", "private/start"): private_start,
+    ("POST", "private/password"): private_password,
+    ("POST", "private/recovery"): private_recovery,
+    ("POST", "private/thumbnails"): private_thumbnails,
+    ("GET", "private/drive"): private_drive,
+    ("POST", "private/drive/open"): private_drive_open,
     ("POST", "private/generate"): private_generate,
     ("GET", "private/result"): private_result,
     ("POST", "private/add"): private_add,

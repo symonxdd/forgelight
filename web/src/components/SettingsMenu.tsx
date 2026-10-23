@@ -2,7 +2,7 @@ import { Check, ChevronRight, ExternalLink, LoaderCircle, Monitor, Power, Settin
 import { Popover } from "radix-ui";
 import { useRef, useState, type ReactNode } from "react";
 import { useCreateDesktopShortcut, useSetOpenOnStart, useStartup } from "../api/forgelight";
-import { removePin, usePrivateStatus } from "../api/private";
+import { openDriveSettings, removePin, setStartPrivate, useDriveEncryption, usePrivateStatus } from "../api/private";
 import { useConnection, useOptions, useSetOptions } from "../api/queries";
 import { useSetAutoCheck, useUpdates } from "../api/updates";
 import { HELP, HELP_NOTES } from "../lib/help";
@@ -17,10 +17,14 @@ import { useCheckpointMemory } from "../stores/checkpointMemory";
 import { usePreferences } from "../stores/preferences";
 import { AboutDialog } from "./about/AboutDialog";
 import { Signature } from "./about/Signature";
+import { Hint } from "./Hint";
 import { IconButton } from "./IconButton";
 import { InfoTip } from "./InfoTip";
 import { SectionsPicker } from "./SectionsPicker";
 import { SelectMenu, type MenuOption } from "./SelectMenu";
+import { ChangePasswordDialog } from "./private/ChangePasswordDialog";
+import { ClearThumbnailsDialog } from "./private/ClearThumbnailsDialog";
+import { NewRecoveryKeyDialog } from "./private/NewRecoveryKeyDialog";
 import { PinDialog } from "./private/PinDialog";
 import { UnlockDialog } from "./private/UnlockDialog";
 import { StopForgeDialog } from "./StopForgeDialog";
@@ -170,24 +174,92 @@ const smallButton =
   "h-8 shrink-0 rounded-md border border-line px-2.5 text-[13px] text-fg hover:border-line-strong hover:text-fg-strong";
 
 /** Private mode's settings; shown once it is set up. */
-function Privacy({ onPin, onRemovePin }: { onPin: () => void; onRemovePin: () => void }) {
-  const status = usePrivateStatus();
-  if (!status.data?.setUp || !status.data.pinAvailable) return null;
-  const hasPin = status.data.pin;
+interface PrivacyActions {
+  onPin: () => void;
+  onRemovePin: () => void;
+  onPassword: () => void;
+  onRecoveryKey: () => void;
+  onThumbnails: () => void;
+}
+
+/** Shows whether BitLocker protects the system drive, with a way to its Windows settings. */
+function DriveEncryptionRow() {
+  const drive = useDriveEncryption(true);
+  const state = drive.data;
+  return (
+    <Row id="drive-label" label="Drive encryption" help={HELP.driveEncryption} helpNote={HELP_NOTES.driveEncryption}>
+      <div className="flex items-center gap-2">
+        <Hint label={state ? `Windows reports: ${state.state}` : null}>
+          <span
+            tabIndex={state ? 0 : -1}
+            className={`text-[12.5px] whitespace-nowrap ${state?.protected ? "text-good" : "text-muted"}`}
+          >
+            {state ? (state.protected ? state.state : state.state === "Off" ? "Off" : "Not active") : "…"}
+          </span>
+        </Hint>
+        <button type="button" onClick={() => void openDriveSettings()} className={smallButton}>
+          Open
+        </button>
+      </div>
+    </Row>
+  );
+}
+
+/**
+ * Private mode's settings, plus two that help keep images private on this computer either
+ * way: clearing Windows' thumbnails, and the state of drive encryption.
+ */
+function Privacy({ onPin, onRemovePin, onPassword, onRecoveryKey, onThumbnails }: PrivacyActions) {
+  const status = usePrivateStatus().data;
+  const setUp = status?.setUp ?? false;
   return (
     <Group title="Privacy">
-      <Row id="pin-label" label="PIN" help={HELP.pin} helpNote={HELP_NOTES.pin}>
-        <div className="flex items-center gap-1.5">
-          {hasPin && (
-            <button type="button" onClick={onRemovePin} className={smallButton}>
-              Remove
-            </button>
+      {setUp && (
+        <>
+          <Row id="start-private-label" label="Start in private mode" help={HELP.startPrivate}>
+            <Toggle
+              checked={status?.startPrivate ?? false}
+              onChange={(on) => void setStartPrivate(on)}
+              labelledBy="start-private-label"
+            />
+          </Row>
+          {status?.pinAvailable && (
+            <Row id="pin-label" label="PIN" help={HELP.pin} helpNote={HELP_NOTES.pin}>
+              <div className="flex items-center gap-1.5">
+                {status.pin && (
+                  <button type="button" onClick={onRemovePin} className={smallButton}>
+                    Remove
+                  </button>
+                )}
+                <button type="button" onClick={onPin} className={smallButton}>
+                  {status.pin ? "Change" : "Add PIN"}
+                </button>
+              </div>
+            </Row>
           )}
-          <button type="button" onClick={onPin} className={smallButton}>
-            {hasPin ? "Change" : "Add PIN"}
-          </button>
-        </div>
+          <Row id="password-label" label="Password" help={HELP.privatePassword}>
+            <button type="button" onClick={onPassword} className={smallButton}>
+              Change
+            </button>
+          </Row>
+          <Row id="recovery-label" label="Recovery key" help={HELP.recoveryKey}>
+            <button type="button" onClick={onRecoveryKey} className={smallButton}>
+              New key
+            </button>
+          </Row>
+        </>
+      )}
+      <Row
+        id="thumbnails-label"
+        label="Windows thumbnails"
+        help={HELP.windowsThumbnails}
+        helpNote={HELP_NOTES.windowsThumbnails}
+      >
+        <button type="button" onClick={onThumbnails} className={smallButton}>
+          Clear
+        </button>
       </Row>
+      <DriveEncryptionRow />
     </Group>
   );
 }
@@ -274,6 +346,9 @@ export function SettingsMenu() {
   const [aboutOpen, setAboutOpen] = useState(false);
   const [stopOpen, setStopOpen] = useState(false);
   const [pinOpen, setPinOpen] = useState(false);
+  const [passwordOpen, setPasswordOpen] = useState(false);
+  const [recoveryOpen, setRecoveryOpen] = useState(false);
+  const [thumbnailsOpen, setThumbnailsOpen] = useState(false);
   const [unlocking, setUnlocking] = useState(false);
   const privateStatus = usePrivateStatus();
   // What to do once the unlock dialog succeeds: PIN changes need private images unlocked.
@@ -351,6 +426,18 @@ export function SettingsMenu() {
                 setOpen(false);
                 needsUnlock(() => void forgetPin());
               }}
+              onPassword={() => {
+                setOpen(false);
+                setPasswordOpen(true);
+              }}
+              onRecoveryKey={() => {
+                setOpen(false);
+                needsUnlock(() => setRecoveryOpen(true));
+              }}
+              onThumbnails={() => {
+                setOpen(false);
+                setThumbnailsOpen(true);
+              }}
             />
             <Startup
               onStopForge={() => {
@@ -387,6 +474,9 @@ export function SettingsMenu() {
       <UpdateDialog open={updateOpen} onOpenChange={setUpdateOpen} />
       <StopForgeDialog open={stopOpen} onOpenChange={setStopOpen} />
       <PinDialog open={pinOpen} replacing={privateStatus.data?.pin ?? false} onOpenChange={setPinOpen} />
+      <ChangePasswordDialog open={passwordOpen} onOpenChange={setPasswordOpen} />
+      <NewRecoveryKeyDialog open={recoveryOpen} onOpenChange={setRecoveryOpen} />
+      <ClearThumbnailsDialog open={thumbnailsOpen} onOpenChange={setThumbnailsOpen} />
       <UnlockDialog
         open={unlocking}
         onOpenChange={setUnlocking}

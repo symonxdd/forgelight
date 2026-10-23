@@ -1,9 +1,10 @@
-import { Check, Copy, LoaderCircle, Lock } from "lucide-react";
+import { LoaderCircle, Lock } from "lucide-react";
 import { Dialog } from "radix-ui";
 import { useState, type FormEvent } from "react";
 import { setPin, setPrivateOn, setUpPrivate, usePrivateStatus } from "../../api/private";
 import { useSession } from "../../stores/session";
 import { PasswordInput } from "./PasswordInput";
+import { RecoveryKeyBox } from "./RecoveryKeyBox";
 import { pinReady } from "../../lib/pin";
 import { PinFields } from "./PinFields";
 
@@ -149,17 +150,7 @@ function PinStep({ onDone }: { onDone: () => void }) {
 
 function RecoveryStep({ code, pinNext, onNext }: { code: string; pinNext: boolean; onNext: () => void }) {
   const [saved, setSaved] = useState(false);
-  const [copied, setCopied] = useState(false);
   const [busy, setBusy] = useState(false);
-
-  const copy = async () => {
-    try {
-      await navigator.clipboard.writeText(code);
-      setCopied(true);
-    } catch {
-      // The code stays on screen to write down.
-    }
-  };
 
   const next = async () => {
     if (pinNext) return onNext();
@@ -173,29 +164,7 @@ function RecoveryStep({ code, pinNext, onNext }: { code: string; pinNext: boolea
       <Dialog.Description className="text-[13px] leading-relaxed text-muted">
         If the password is ever forgotten, this recovery key is the only other way in. It is shown only now.
       </Dialog.Description>
-      <div className="flex items-center gap-2 rounded-lg border border-line bg-canvas py-2 pr-2 pl-3">
-        <code className="min-w-0 flex-1 font-mono text-[13px] tracking-wide break-all text-fg-strong select-all">
-          {code}
-        </code>
-        <button
-          type="button"
-          onClick={() => void copy()}
-          className="flex h-8 shrink-0 items-center gap-1.5 rounded-md border border-line px-2.5 text-[12px] text-fg hover:border-line-strong hover:text-fg-strong"
-        >
-          {copied ? <Check className="size-3.5 text-accent" aria-hidden /> : <Copy className="size-3.5" aria-hidden />}
-          {copied ? "Copied" : "Copy"}
-        </button>
-      </div>
-      <label className="flex items-center gap-2 text-[13px] text-fg">
-        <input
-          id="private-recovery-saved"
-          type="checkbox"
-          checked={saved}
-          onChange={(e) => setSaved(e.target.checked)}
-          className="size-4 accent-[var(--accent)]"
-        />
-        I've saved it somewhere safe
-      </label>
+      <RecoveryKeyBox code={code} saved={saved} onSavedChange={setSaved} />
       <div className="flex justify-end">
         <button type="button" disabled={!saved || busy} onClick={() => void next()} className={primary}>
           {!pinNext && <Lock className="size-3.5" aria-hidden />}

@@ -144,12 +144,50 @@ class PrivateTest(unittest.TestCase):
         self.assertEqual(private._state["metas"], {})
         self.assertIn("jobs", private._state)
 
+    def test_start_private_is_saved_in_preferences(self) -> None:
+        saved = {}
+        with mock.patch.object(private.startup, "preferences", lambda: dict(saved)), mock.patch.object(
+            private.data_files, "write", lambda name, value: saved.update(value)
+        ):
+            self.assertTrue(private.set_start_private(True)["startPrivate"])
+        self.assertTrue(saved["start_private"])
+
+    def test_change_password_checks_the_current_one(self) -> None:
+        with self.assertRaises(VaultError):
+            private.change_password("wrong horse", "new password")
+        private.change_password("correct horse", "new password")
+        self.vault.lock()
+        self.vault.unlock(password="new password")
+
+    def test_new_recovery_key_needs_unlocked(self) -> None:
+        with self.assertRaises(VaultError):
+            private.new_recovery_key()
+        self.vault.unlock(password="correct horse")
+        self.assertRegex(private.new_recovery_key(), r"^([A-Z2-7]{4}-){7}[A-Z2-7]{4}$")
+
+    def test_clear_thumbnails_deletes_only_the_cache(self) -> None:
+        folder = Path(tempfile.mkdtemp())
+        (folder / "thumbcache_256.db").write_bytes(b"x" * 10)
+        (folder / "thumbcache_idx.db").write_bytes(b"x" * 5)
+        (folder / "iconcache_32.db").write_bytes(b"keep")
+        with mock.patch.object(private, "THUMBNAIL_CACHE", folder):
+            self.assertEqual(private.clear_thumbnails(), {"cleared": 2, "skipped": 0, "bytes": 15})
+        self.assertEqual([p.name for p in folder.iterdir()], ["iconcache_32.db"])
+
+    def test_drive_encryption_reads_windows_label(self) -> None:
+        done = mock.Mock(stdout="8  ")
+        with mock.patch.dict(private._state, {"drive": None}), mock.patch.object(
+            private.subprocess, "run", return_value=done
+        ):
+            state = private.drive_encryption()
+        self.assertEqual((state["code"], state["state"], state["protected"]), (8, "Waiting for activation", False))
+
     def test_switching_to_public_locks(self) -> None:
         self.vault.unlock(password="correct horse")
         private.set_on(False)
         self.assertFalse(self.vault.is_unlocked())
-        expected = {"setUp": True, "on": False, "unlocked": False, "pin": False, "pinAvailable": True}
-        self.assertEqual(private.status(), expected)
+        status = private.status()
+        self.assertEqual((status["on"], status["unlocked"]), (False, False))
 
 
 if __name__ == "__main__":

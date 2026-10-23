@@ -79,6 +79,13 @@ export const HELP = {
   foundModels: "Checkpoints and LoRAs in Downloads or on the Desktop that Forge doesn't have yet.",
   privateMode:
     "New images are saved encrypted in Forgelight's vault instead of as normal files in Forge's outputs folder.",
+  startPrivate: "Forge starts with private mode already on, so no image is saved as a normal file by accident.",
+  privatePassword: "Changes the private mode password. Images don't need to be encrypted again, so it's instant.",
+  recoveryKey: "Makes a new recovery key and shows it once. The old one stops working.",
+  windowsThumbnails:
+    "Windows keeps small previews of images opened in File Explorer. Clearing them removes previews of images that are private now.",
+  driveEncryption:
+    "BitLocker encrypts the whole system drive, including memory Windows writes to disk. Private mode works without it.",
   pin: "A short code that unlocks private images on this computer, instead of the password.",
   recommended:
     "Settings from the example images this checkpoint's creator shared on Civitai. Nothing changes until Apply is clicked.",
@@ -89,6 +96,8 @@ export const HELP = {
  * how to say it, spelled with everyday words rather than phonetic symbols.
  */
 export const HELP_NOTES = {
+  windowsThumbnails: "Windows makes new previews as folders are opened again. Private images never get one.",
+  driveEncryption: "Turned on in Windows' BitLocker settings. Keep the recovery key it shows somewhere safe.",
   pin: "Kept by the computer's security chip (TPM), which pauses tries after too many wrong PINs. The password can still be used instead.",
   findNewModels: "Only those two places, not the folders inside them. Nothing moves until Move to Forge is clicked.",
   foundModels: "Only those two places are checked, not the folders inside them. Switched off in settings.",
