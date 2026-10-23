@@ -94,6 +94,7 @@ export const privateMode: GuideChapter = {
         "The browser is told not to keep a copy in its cache.",
         "Images stay unlocked until Lock in the top bar, switching private mode off, or Forge stopping. Reloading the page keeps them unlocked.",
         "While locked, the Library shows how many private images are hidden.",
+        "The top bar always shows Locked or Unlocked, and while unlocked the browser tab says so too, with a dot on its icon.",
       ],
       forgelight: "In the Library, the All, Favorites and Private switch can show private images only.",
       related: ["private-mode/moving"],
