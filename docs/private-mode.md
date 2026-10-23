@@ -24,7 +24,7 @@ Private mode uses **hybrid encryption**, the scheme behind OpenPGP and age. Each
 3. Save the recovery key. It is shown only this once.
 4. Optionally add a PIN of 4 to 12 digits (on computers with a TPM security chip).
 
-While private mode is on, a lock shows on the Generate button and new images go straight into the vault. **Start in private mode**, under Privacy in the settings menu, turns it on at every start.
+While private mode is on, a lock shows on the Generate button and new images go straight into the vault. **Start in private mode**, in Settings under Privacy, turns it on at every start.
 
 Unlocked private images show in the Library among the others, marked with a lock; the All, Favorites and Private switch can show them alone. **Lock** in the top bar locks them again. **Make private** and **Make public**, in the Library's selection bar and image view, move existing images in and out of the vault.
 
@@ -46,7 +46,7 @@ Each slot holds the same private key, encrypted under a different secret, the wa
 
 - **Password:** required, set up first. scrypt makes checking it slow and memory-hungry on purpose, so guessing it on graphics cards stays expensive.
 - **PIN:** optional, and works on this computer only. The key that opens its slot lives inside the TPM chip and only opens with the PIN. The chip counts wrong PINs and enforces growing pauses in hardware, so a short PIN is safe.
-- **Recovery key:** a long random code shown once at setup, for when the password is forgotten. **Change** under Password accepts the recovery key or the PIN instead of the current password, so a forgotten password can be replaced. A new recovery key, from the settings menu, makes the old one stop working.
+- **Recovery key:** a long random code shown once at setup, for when the password is forgotten. **Change** under Password accepts the recovery key or the PIN instead of the current password, so a forgotten password can be replaced. A new recovery key, made in Settings under Privacy, makes the old one stop working.
 
 The private key stays in memory only, until **Lock**, switching private mode off, or Forge stopping. Reloading the page keeps it unlocked.
 
@@ -84,8 +84,8 @@ The vault lives in `data/vault/` inside the extension folder: `vault.json` (the 
 - Someone at the computer while private images are unlocked
 - Spyware already running on the computer
 - Images made in the classic Forge page, until they are made private in the Library
-- Old Windows thumbnails of images that were once normal files, until cleared with **Clear** under Windows thumbnails in the settings menu
-- Memory Windows wrote to its page file on disk, such as an image on screen. That file is not encrypted unless drive encryption (BitLocker) is on. Private mode works without it; the settings menu shows its state under **Drive encryption**.
+- Old Windows thumbnails of images that were once normal files, until cleared with **Clear** under Windows thumbnails in Settings
+- Memory Windows wrote to its page file on disk, such as an image on screen. That file is not encrypted unless drive encryption (BitLocker) is on. Private mode works without it; Settings shows its state under **Drive encryption**.
 
 ## Moving images in and out
 

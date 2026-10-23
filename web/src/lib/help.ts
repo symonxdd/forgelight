@@ -68,8 +68,6 @@ export const HELP = {
     "Shuts Forge down, the same as pressing Ctrl+C in its window. When the desktop shortcut started Forge, its window closes too. Starting again works with the desktop shortcut.",
   updateCheck:
     "Once a day, asks GitHub whether a newer version of Forgelight exists, and shows a dot on the settings icon when one does. Only version numbers and release notes are read. Nothing is downloaded or installed until Update is clicked.",
-  developerCopy:
-    "This Forgelight runs from the folder where it is being developed, so it never checks for updates or updates itself.",
   civitaiSite:
     "Which address Civitai links open on. Both show the same models and pages; civitai.red also shows mature preview images.",
   civitai:

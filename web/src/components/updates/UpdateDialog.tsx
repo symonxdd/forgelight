@@ -86,7 +86,7 @@ export function UpdateDialog({ open, onOpenChange }: UpdateDialogProps) {
               </Dialog.Title>
               <p className="text-[13.5px] leading-relaxed text-muted">
                 {done.restartNeeded
-                  ? "This update also changed the part Forge loads when it starts. To finish, stop Forge in the settings menu and start it again with the desktop shortcut."
+                  ? "This update also changed the part Forge loads when it starts. To finish, stop Forge in the gear menu and start it again with the desktop shortcut."
                   : "Reload the page to start using it. Forge keeps running; nothing else needs restarting."}
               </p>
               <div className="flex justify-end gap-2">

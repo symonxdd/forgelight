@@ -12,7 +12,7 @@ import { useSession } from "./session";
 import { useSettings } from "./settings";
 
 interface MemoryState {
-  /** On until switched off in the settings menu. */
+  /** On until switched off in Settings. */
   enabled: boolean;
   /** The checkpoint whose settings are on screen, by model name. */
   lastCheckpoint: string | null;

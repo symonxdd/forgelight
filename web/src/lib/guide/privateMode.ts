@@ -19,7 +19,7 @@ export const privateMode: GuideChapter = {
         "Images made in the classic Forge page are normal files. The Library can make them private.",
       ],
       forgelight:
-        "The Private switch beside the image count turns it on, and a lock appears on the Generate button. Start in private mode, under Privacy in the settings menu, turns it on at every start.",
+        "The Private switch beside the image count turns it on, and a lock appears on the Generate button. Start in private mode, in Settings under Privacy, turns it on at every start.",
       related: ["private-mode/setting-up", "private-mode/protected"],
       keywords: ["private", "privacy", "hide", "hidden", "secret", "encrypted", "encryption", "vault", "nsfw"],
     },
@@ -78,8 +78,7 @@ export const privateMode: GuideChapter = {
         "A forgotten password is replaced with Change under Password, using the recovery key or the PIN instead of the current password.",
         "A new recovery key makes the old one stop working.",
       ],
-      forgelight:
-        "Under Privacy in the settings menu: Add PIN, Change for the password, and New key for the recovery key.",
+      forgelight: "In Settings under Privacy: Add PIN, Change for the password, and New key for the recovery key.",
       related: ["private-mode/lost-keys", "private-mode/viewing"],
       keywords: ["unlock", "password", "pin", "recovery key", "tpm", "slot", "forgot", "change"],
     },
@@ -144,7 +143,7 @@ export const privateMode: GuideChapter = {
       id: "traces",
       title: "Traces Windows may keep",
       summary:
-        "Windows itself can hold on to pieces of images that were once normal files or shown on screen. Two rows under Privacy in the settings menu help with that.",
+        "Windows itself can hold on to pieces of images that were once normal files or shown on screen. Two rows in Settings under Privacy help with that.",
       points: [
         "Windows thumbnails: File Explorer keeps small previews of images it has shown. Clear removes them, including those of images that are private now. Private images never get one.",
         "Windows can copy memory, such as an image on screen, into its page file on the system drive. That file is not encrypted.",

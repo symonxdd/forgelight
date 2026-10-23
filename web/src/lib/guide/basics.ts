@@ -44,8 +44,7 @@ export const basics: GuideChapter = {
         "Runs a small web server on this computer, at 127.0.0.1:7860, an address only this computer can open. Its classic page opens there.",
         "The command window (Command Prompt, a black text window) that appears on start is Forge running. Closing it stops Forge.",
       ],
-      forgelight:
-        "Settings menu > Open classic Forge opens Forge's own page, for everything Forgelight does not cover.",
+      forgelight: "Classic Forge, in the gear menu, opens Forge's own page, for everything Forgelight does not cover.",
       related: ["basics/forgelight", "troubleshooting/not-connected"],
       keywords: ["webui", "a1111", "automatic1111", "gradio", "classic"],
     },

@@ -9,7 +9,7 @@ export function UpdateDot() {
   return <span className="absolute top-1 right-1 size-2 rounded-full bg-accent ring-2 ring-canvas" aria-hidden />;
 }
 
-/** The settings menu's line about a new version. Opens the update dialog. */
+/** The gear menu's line about a new version. Opens the update dialog. */
 export function UpdateNotice({ onOpen }: { onOpen: () => void }) {
   const updates = useUpdates();
   const latest = updates.data?.releases[0];

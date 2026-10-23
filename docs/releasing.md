@@ -40,7 +40,7 @@ Pushing the tag starts [.github/workflows/release.yml](../.github/workflows/rele
 3. Commits the ready-to-run copy to the `release` branch: `scripts/`, `forgelight_backend/`, `page/`, `assets/`, the README, CHANGELOG and license. No interface source code or docs.
 4. Creates the GitHub release "Forgelight 1.2.0" with the version's CHANGELOG section and the same copy as `forgelight-1.2.0.zip`.
 
-Installed copies see the new release at their next daily check, or right away with **Check now** in About, and update from the update dialog (see [architecture.md](architecture.md#updates)).
+Installed copies see the new release at their next daily check, or right away with **Check now** in Settings, and update from the update dialog (see [architecture.md](architecture.md#updates)).
 
 Progress shows under the repository's **Actions** tab, the result on the **Releases** page. Pushes to `main` without a tag only run the checks ([checks.yml](../.github/workflows/checks.yml)).
 

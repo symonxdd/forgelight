@@ -14,7 +14,7 @@ const MESSAGES: Record<ConnectionState, { title: string; detail: string }> = {
   "api-off": {
     title: "Forge's API is switched off",
     detail:
-      "Start Forge with the Forgelight desktop shortcut (created in the settings menu), or add --api to COMMANDLINE_ARGS in webui-user.bat and restart Forge.",
+      "Start Forge with the Forgelight desktop shortcut (created in Settings, under Forge), or add --api to COMMANDLINE_ARGS in webui-user.bat and restart Forge.",
   },
   offline: { title: "Forge isn't running", detail: "Start Forge, and this page reconnects by itself." },
 };
