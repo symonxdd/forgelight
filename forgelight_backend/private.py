@@ -166,12 +166,10 @@ def open_drive_settings() -> None:
 
 
 def set_on(on: bool) -> dict:
-    """Switching to public also locks the vault."""
+    """Where new images go. Locking is separate: switching to public leaves the vault as it is."""
     if on and not vault.exists():
         raise VaultError("Set up private mode first.", 409)
     _state["on"] = on
-    if not on:
-        lock()
     return status()
 
 

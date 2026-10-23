@@ -152,6 +152,12 @@ class PrivateTest(unittest.TestCase):
             self.assertTrue(private.set_start_private(True)["startPrivate"])
         self.assertTrue(saved["start_private"])
 
+    def test_switching_to_public_leaves_the_vault_unlocked(self) -> None:
+        self.vault.unlock(password="correct horse")
+        private.set_on(True)
+        self.assertFalse(private.set_on(False)["on"])
+        self.assertTrue(self.vault.is_unlocked())
+
     def test_change_password_while_locked_checks_and_stays_locked(self) -> None:
         with self.assertRaises(VaultError):
             private.change_password("new password")
@@ -198,13 +204,6 @@ class PrivateTest(unittest.TestCase):
         ):
             state = private.drive_encryption()
         self.assertEqual((state["code"], state["state"], state["protected"]), (8, "Waiting for activation", False))
-
-    def test_switching_to_public_locks(self) -> None:
-        self.vault.unlock(password="correct horse")
-        private.set_on(False)
-        self.assertFalse(self.vault.is_unlocked())
-        status = private.status()
-        self.assertEqual((status["on"], status["unlocked"]), (False, False))
 
 
 if __name__ == "__main__":

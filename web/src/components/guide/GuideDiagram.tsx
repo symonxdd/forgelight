@@ -163,7 +163,7 @@ function Unlocking({ markers }: { markers: string }) {
         w={134}
         h={102}
         title="Private key"
-        lines={["until Lock, private", "mode off, or Forge", "stops"]}
+        lines={["until Lock, or", "until Forge stops"]}
         kind="key"
       />
       <Edge d="M556 77 H580 V136 H600" markers={markers} keyPath />

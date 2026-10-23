@@ -45,10 +45,9 @@ export async function privateModeOn(): Promise<boolean> {
   }
 }
 
-/** Switching to public also locks the vault, so private images leave the screen too. */
+/** Where new images go. It leaves the vault locked or unlocked as it is; only Lock locks. */
 export async function setPrivateOn(on: boolean): Promise<void> {
   queryClient.setQueryData(PRIVATE_KEY, await request<PrivateStatus>("private/mode", { on }));
-  if (!on) await forgetPrivateImages();
 }
 
 /** One way in: the password, the PIN or the recovery key. */

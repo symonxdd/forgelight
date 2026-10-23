@@ -48,7 +48,7 @@ Each slot holds the same private key, encrypted under a different secret, the wa
 - **PIN:** optional, and works on this computer only. The key that opens its slot lives inside the TPM chip and only opens with the PIN. The chip counts wrong PINs and enforces growing pauses in hardware, so a short PIN is safe.
 - **Recovery key:** a long random code shown once at setup, for when the password is forgotten. **Change** under Password accepts the recovery key or the PIN instead of the current password, so a forgotten password can be replaced. A new recovery key, made in Settings under Privacy, makes the old one stop working.
 
-The private key stays in memory only, until **Lock**, switching private mode off, or Forge stopping. Reloading the page keeps it unlocked.
+The private key stays in memory only, until **Lock** or Forge stopping. Switching private mode off only decides where new images go and leaves the vault as it is. Reloading the page keeps it unlocked.
 
 ## 3. Viewing a private image
 

@@ -92,7 +92,7 @@ export const privateMode: GuideChapter = {
       points: [
         "A changed or damaged file fails a check and is refused instead of shown.",
         "The browser is told not to keep a copy in its cache.",
-        "Images stay unlocked until Lock in the top bar, switching private mode off, or Forge stopping. Reloading the page keeps them unlocked.",
+        "Images stay unlocked until Lock in the top bar or Forge stopping. Switching private mode off doesn't lock: it only decides where new images go. Reloading the page keeps them unlocked.",
         "While locked, the Library shows how many private images are hidden.",
         "The top bar always shows Locked or Unlocked, and while unlocked the browser tab says so too, with a dot on its icon.",
       ],

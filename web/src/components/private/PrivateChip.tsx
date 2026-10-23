@@ -8,8 +8,8 @@ import { PrivateSetupDialog } from "./PrivateSetupDialog";
 
 /**
  * The Private switch beside the image count, explained in its tooltip. The first click sets
- * private mode up; after that it switches between private and public. Switching to public
- * also locks the vault.
+ * private mode up; after that it switches between private and public, for new images only:
+ * the vault stays locked or unlocked as it is.
  */
 export function PrivateChip() {
   const status = usePrivateStatus();
