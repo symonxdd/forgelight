@@ -9,9 +9,10 @@ from __future__ import annotations
 from typing import Any, Callable
 
 from fastapi import HTTPException, Request
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 
-from . import library, loading, models, startup, updates
+from . import library, loading, models, newmodels, private, startup, updates
+from .vault import VaultError, vault
 from .security import require_own_page, require_same_origin
 from .store import ROOT, version
 
@@ -42,6 +43,142 @@ def status(_request: Request, _body: Any) -> dict:
 
 def list_models(_request: Request, _body: Any) -> dict:
     return {"checkpoints": models.checkpoints(), "loras": models.loras()}
+
+
+def new_models(_request: Request, _body: Any) -> dict:
+    return {"models": newmodels.scan()}
+
+
+def _found_file(body: Any) -> tuple[str, int]:
+    body = body or {}
+    file, size = body.get("file"), body.get("size")
+    if not isinstance(file, str) or not isinstance(size, int):
+        raise HTTPException(status_code=400, detail="Send the file name and its size.")
+    return file, size
+
+
+def new_models_move(_request: Request, body: Any) -> dict:
+    file, size = _found_file(body)
+    try:
+        return newmodels.move(str((body or {}).get("place")), file, size)
+    except newmodels.MoveError as error:
+        raise HTTPException(status_code=error.status, detail=str(error)) from error
+
+
+def new_models_hide(_request: Request, body: Any) -> dict:
+    file, size = _found_file(body)
+    newmodels.set_hidden(file, size, bool((body or {}).get("hidden")))
+    return {"ok": True}
+
+
+def new_models_reveal(_request: Request, body: Any) -> dict:
+    body = body or {}
+    try:
+        newmodels.reveal(str(body.get("kind")), body.get("file"))
+    except newmodels.MoveError as error:
+        raise HTTPException(status_code=error.status, detail=str(error)) from error
+    return {"ok": True}
+
+
+def _private_call(action: Callable[[], Any]) -> Any:
+    try:
+        return action()
+    except VaultError as error:
+        raise HTTPException(status_code=error.status, detail=str(error)) from error
+
+
+def private_status(_request: Request, _body: Any) -> dict:
+    return private.status()
+
+
+def private_setup(_request: Request, body: Any) -> dict:
+    password = (body or {}).get("password")
+    if not isinstance(password, str):
+        raise HTTPException(status_code=400, detail="Send the password.")
+    return _private_call(lambda: {"recoveryCode": vault.create(password), **private.status()})
+
+
+def private_mode(_request: Request, body: Any) -> dict:
+    return _private_call(lambda: private.set_on(bool((body or {}).get("on"))))
+
+
+def _secret(body: Any) -> dict[str, str]:
+    """Exactly one of the password, the PIN or the recovery key, as {kind: value}."""
+    body = body if isinstance(body, dict) else {}
+    secrets = {key: value for key in ("password", "recovery", "pin") if isinstance(value := body.get(key), str)}
+    if len(secrets) != 1:
+        raise HTTPException(status_code=400, detail="Send the password, the PIN or the recovery key.")
+    return secrets
+
+
+def _confirm(body: Any) -> dict[str, str] | None:
+    """The optional `confirm` secret that lets a change through while private images are locked."""
+    confirm = (body or {}).get("confirm")
+    return None if confirm is None else _secret(confirm)
+
+
+def private_unlock(_request: Request, body: Any) -> dict:
+    secrets = _secret(body)
+    return _private_call(lambda: private.unlock(secrets.get("password"), secrets.get("recovery"), secrets.get("pin")))
+
+
+def private_pin(_request: Request, body: Any) -> dict:
+    pin, confirm = (body or {}).get("pin"), _confirm(body)
+    if pin is None:
+        return _private_call(lambda: private.remove_pin(confirm))
+    if not isinstance(pin, str):
+        raise HTTPException(status_code=400, detail="Send the PIN.")
+    return _private_call(lambda: private.set_pin(pin, confirm))
+
+
+def private_lock(_request: Request, _body: Any) -> dict:
+    return private.lock()
+
+
+def private_start(_request: Request, body: Any) -> dict:
+    return private.set_start_private(bool((body or {}).get("on")))
+
+
+def private_password(_request: Request, body: Any) -> dict:
+    new, confirm = (body or {}).get("new"), _confirm(body)
+    if not isinstance(new, str):
+        raise HTTPException(status_code=400, detail="Send the new password.")
+    return _private_call(lambda: private.change_password(new, confirm))
+
+
+def private_recovery(_request: Request, body: Any) -> dict:
+    confirm = _confirm(body)
+    return _private_call(lambda: {"recoveryCode": private.new_recovery_key(confirm)})
+
+
+def private_thumbnails(_request: Request, _body: Any) -> dict:
+    return private.clear_thumbnails()
+
+
+def private_drive(_request: Request, _body: Any) -> dict:
+    return private.drive_encryption()
+
+
+def private_drive_open(_request: Request, _body: Any) -> dict:
+    private.open_drive_settings()
+    return {"ok": True}
+
+
+def private_generate(_request: Request, body: Any) -> dict:
+    body = body or {}
+    return _private_call(lambda: private.generate(str(body.get("kind")), body.get("request")))
+
+
+def private_result(request: Request, _body: Any) -> dict:
+    return private.result(request.query_params.get("task", ""))
+
+
+def private_add(_request: Request, body: Any) -> dict:
+    body = body or {}
+    image, infotext = body.get("image"), body.get("infotext")
+    if not isinstance(image, str) or not isinstance(infotext, str):
+        raise HTTPException(status_code=400, detail="Send the image and its settings.")
+    return _private_call(lambda: {"id": private.store(private.decode(image), infotext, None, "extras")})
 
 
 def loading_state(_request: Request, _body: Any) -> dict:
@@ -124,6 +261,7 @@ def library_list(request: Request, _body: Any) -> dict:
         offset=_int(params.get("offset"), 0, 0, 10_000_000),
         limit=_int(params.get("limit"), 100, 1, 500),
         favorites_only=params.get("favorites") == "1",
+        private_only=params.get("private") == "1",
     )
 
 
@@ -136,12 +274,39 @@ def _image_file(request: Request, make) -> FileResponse:
     return FileResponse(path, headers={"Cache-Control": "private, max-age=31536000, immutable"})
 
 
-def library_image(request: Request, _body: Any) -> FileResponse:
+def _private_file(image_id: str, make: Callable[[str], bytes], media_type: str) -> Response:
+    """A private image, decrypted in memory. The browser is told never to keep a copy."""
+    try:
+        data = make(image_id)
+    except VaultError as error:
+        raise HTTPException(status_code=error.status, detail=str(error)) from error
+    return Response(data, media_type=media_type, headers={"Cache-Control": "no-store"})
+
+
+def library_image(request: Request, _body: Any) -> Response:
+    image_id = request.query_params.get("id", "")
+    if private.vault_id(image_id) is not None:
+        return _private_file(image_id, private.image_bytes, private.image_mime(image_id))
     return _image_file(request, library.resolve)
 
 
-def library_thumb(request: Request, _body: Any) -> FileResponse:
+def library_thumb(request: Request, _body: Any) -> Response:
+    image_id = request.query_params.get("id", "")
+    if private.vault_id(image_id) is not None:
+        return _private_file(image_id, private.thumbnail_bytes, "image/webp")
     return _image_file(request, library.thumbnail)
+
+
+def folders_list(_request: Request, _body: Any) -> list[dict]:
+    return [{"key": key, "path": str(path), "exists": path.is_dir()} for key, path in library.folders().items()]
+
+
+def folders_open(_request: Request, body: Any) -> dict:
+    try:
+        library.open_folder(str((body or {}).get("key", "")))
+    except FileNotFoundError as error:
+        raise HTTPException(status_code=404, detail="That folder doesn't exist yet.") from error
+    return {"ok": True}
 
 
 def library_reveal(_request: Request, body: Any) -> dict:
@@ -174,6 +339,26 @@ def library_save_upscaled(_request: Request, body: Any) -> dict:
         raise HTTPException(status_code=500, detail=f"The upscaled image couldn't be saved: {error}") from error
 
 
+def _library_ids(body: Any) -> list[str]:
+    ids = (body or {}).get("ids")
+    if not isinstance(ids, list) or not all(isinstance(i, str) for i in ids):
+        raise HTTPException(status_code=400, detail="Send the image ids.")
+    return ids
+
+
+def library_make_private(_request: Request, body: Any) -> dict:
+    ids = _library_ids(body)
+    return _private_call(lambda: library.make_private(ids))
+
+
+def library_make_public(_request: Request, body: Any) -> dict:
+    ids = _library_ids(body)
+    try:
+        return _private_call(lambda: library.make_public(ids))
+    except FileNotFoundError as error:
+        raise HTTPException(status_code=404, detail=str(error)) from error
+
+
 def library_delete(_request: Request, body: Any) -> dict:
     ids = (body or {}).get("ids")
     if not isinstance(ids, list) or not all(isinstance(i, str) for i in ids):
@@ -187,11 +372,30 @@ def library_delete(_request: Request, body: Any) -> dict:
 ROUTES: dict[tuple[str, str], Handler] = {
     ("GET", "status"): status,
     ("GET", "models"): list_models,
+    ("GET", "new-models"): new_models,
+    ("POST", "new-models/move"): new_models_move,
+    ("POST", "new-models/hide"): new_models_hide,
+    ("POST", "new-models/reveal"): new_models_reveal,
     ("GET", "startup"): startup_state,
     ("POST", "startup/open-on-start"): open_on_start,
     ("POST", "startup/desktop-shortcut"): desktop_shortcut,
     ("POST", "forge/stop"): stop_forge,
     ("GET", "loading"): loading_state,
+    ("GET", "private"): private_status,
+    ("POST", "private/setup"): private_setup,
+    ("POST", "private/mode"): private_mode,
+    ("POST", "private/unlock"): private_unlock,
+    ("POST", "private/lock"): private_lock,
+    ("POST", "private/pin"): private_pin,
+    ("POST", "private/start"): private_start,
+    ("POST", "private/password"): private_password,
+    ("POST", "private/recovery"): private_recovery,
+    ("POST", "private/thumbnails"): private_thumbnails,
+    ("GET", "private/drive"): private_drive,
+    ("POST", "private/drive/open"): private_drive_open,
+    ("POST", "private/generate"): private_generate,
+    ("GET", "private/result"): private_result,
+    ("POST", "private/add"): private_add,
     ("GET", "updates"): updates_state,
     ("POST", "updates/check"): updates_check,
     ("POST", "updates/auto"): updates_auto,
@@ -201,7 +405,11 @@ ROUTES: dict[tuple[str, str], Handler] = {
     ("GET", "library/image"): library_image,
     ("GET", "library/thumb"): library_thumb,
     ("POST", "library/reveal"): library_reveal,
+    ("GET", "folders"): folders_list,
+    ("POST", "folders/open"): folders_open,
     ("POST", "library/delete"): library_delete,
+    ("POST", "library/make-private"): library_make_private,
+    ("POST", "library/make-public"): library_make_public,
     ("POST", "library/favorite"): library_favorite,
     ("POST", "library/save-upscaled"): library_save_upscaled,
 }

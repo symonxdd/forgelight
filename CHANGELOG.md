@@ -2,6 +2,27 @@
 
 ## Unreleased
 
+## 1.4.0 (2026-10-24)
+
+### 🌱 New
+
+- **Added private mode, a locked vault for images.** While the Private button beside Generate is on, new images are encrypted the moment Forge returns them and never land on the disk as normal pictures. Saving needs no password; showing them again needs the password, an optional PIN kept by the computer's security chip, or the recovery key shown once at setup. While unlocked, private images appear in the Library with a lock, and existing images can be made private, or public again, from there. The top bar always shows whether the vault is locked, and the browser tab reads "Forgelight · Unlocked" while it is open. Settings, under Privacy, holds the PIN, password and recovery key, Start in private mode, a way to clear Windows' thumbnails and the drive encryption state. A Guide chapter explains how it all works.
+- Added a Recommended card above Size with the settings the checkpoint's creator used for the example images on Civitai, applied with one click and undone from the notice. Creator's notes opens the creator's full description, with the lines about settings highlighted. LoRAs show the strength their creator used.
+- Checkpoints and LoRAs in Downloads or on the Desktop now show up as new models, with Move to Forge to move them into the right folder.
+- Added a Folders page that lists where checkpoints, LoRAs, outputs, upscaled images and Forgelight's data are kept, each opening in File Explorer, plus folder buttons in the checkpoint and LoRA lists.
+- The image view on the Generate screen can be cleared, with a button or Escape.
+
+### 🩹 Fixed
+
+- The screen tabs and the Upscale method switch no longer nudge their neighbors when a choice is selected.
+
+### 🌿 Improved
+
+- Moved the settings into a Settings window with one page per topic. The gear menu keeps the everyday items: About, OLED black, Classic Forge and Stop Forge.
+- Notices now appear as small cards in the top right corner on every screen, titled Done, Heads up or Didn't work.
+- Reorganized the Library toolbar: one All, Favorites and Private switch, the checkpoint, content and blur choices in a Filters menu, and a search box that grows with its text.
+- Small dialogs sit slightly higher on the screen.
+
 ## 1.3.1 (2026-10-20)
 
 ### 🌿 Improved

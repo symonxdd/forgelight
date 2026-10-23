@@ -16,6 +16,7 @@ Forgelight runs inside Forge as an extension and is reachable at `http://127.0.0
 - A friendlier face for the [Forge](https://github.com/lllyasviel/stable-diffusion-webui-forge) engine
 - A Library of all generated images, whether made in Forgelight or in Forge's classic page
 - Settings remembered for each checkpoint
+- [Private mode](docs/private-mode.md): new images saved encrypted, seen again only with a password, PIN or recovery key
 - Light, dark and pure black themes
 - No telemetry, no tracking
 
@@ -59,9 +60,9 @@ Each of the three ways below installs the latest released version, ready to run.
 
 Then restart Forge: close the terminal window where Forge is running, and start Forge again the usual way. Forgelight is now at `http://127.0.0.1:7860/forgelight`.
 
-**Updating:** Forgelight checks GitHub once a day for a new version and shows a dot on the gear icon when there is one (switch off under **Updates** in the settings menu; **Check now** in About checks at any time). Nothing is downloaded until **Update** is clicked in the update dialog, which works for all three ways of installing. Favorites and preferences stay. Forge's Extensions tab can update git installs too.
+**Updating:** Forgelight checks GitHub once a day for a new version and shows a dot on the gear icon when there is one (switch off in **Settings**, under **Updates**, where **Check now** checks at any time). Nothing is downloaded until **Update** is clicked in the update dialog, which works for all three ways of installing. Favorites and preferences stay. Forge's Extensions tab can update git installs too.
 
-In Forgelight's settings menu (the gear icon), the **Desktop shortcut** button puts a Forgelight shortcut on the desktop. Starting Forge with that shortcut switches the API on and opens Forgelight. The **Guide** screen explains models, settings and prompting.
+In Forgelight's **Settings** (the gear icon, then **All settings**), the **Desktop shortcut** button under **Forge** puts a Forgelight shortcut on the desktop. Starting Forge with that shortcut switches the API on and opens Forgelight. The **Guide** screen explains models, settings and prompting.
 
 ## Nice to know
 

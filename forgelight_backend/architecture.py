@@ -1,4 +1,4 @@
-"""Tells SD 1.x, SDXL and other model families apart from a safetensors file's header.
+"""Tells model families, and checkpoints from LoRAs, apart from a safetensors file's header.
 
 Only the header is read: an 8-byte length, then a JSON index of the tensors and
 optional training metadata. That takes milliseconds even for a 7 GB checkpoint.
@@ -57,6 +57,34 @@ def _detect(path: str, size: int, mtime: float) -> str:
     except (OSError, ValueError, struct.error):
         return "unknown"
     return _from_metadata(header.get("__metadata__") or {}) or _from_keys(list(header))
+
+
+LORA_PREFIXES = ("lora_unet_", "lora_te", "lora_transformer_")
+LORA_MARKERS = (".lora_down.", ".lora_up.", ".lora_A.", ".lora_B.", ".hada_w1", ".lokr_w1", ".dora_scale")
+CHECKPOINT_PREFIXES = ("model.diffusion_model.", "double_blocks.")
+
+
+def _is_lora_tensor(name: str) -> bool:
+    return name.startswith(LORA_PREFIXES) or any(marker in name for marker in LORA_MARKERS)
+
+
+@lru_cache(maxsize=256)
+def _kind(path: str, size: int, mtime: float) -> str | None:
+    try:
+        names = [name for name in _header(Path(path)) if name != "__metadata__"]
+    except (OSError, ValueError, struct.error):
+        return None
+    if any(_is_lora_tensor(name) for name in names):
+        return "lora"
+    if any(name.startswith(CHECKPOINT_PREFIXES) for name in names):
+        return "checkpoint"
+    return None
+
+
+def kind(path: Path) -> str | None:
+    """"checkpoint" or "lora" from the tensor names, or None for anything else (VAE, upscaler, ...)."""
+    stat = path.stat()
+    return _kind(str(path), stat.st_size, stat.st_mtime)
 
 
 def detect(path: Path) -> str:

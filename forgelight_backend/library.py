@@ -24,7 +24,7 @@ from pathlib import Path
 from PIL import Image
 from PIL.PngImagePlugin import PngInfo
 
-from . import store
+from . import private, store
 
 IMAGE_EXTENSIONS = {".png", ".jpg", ".jpeg", ".webp"}
 # Folders other programs keep next to the images, holding copies or previews.
@@ -223,8 +223,11 @@ def favorites() -> set[str]:
 
 
 def set_favorite(image_id: str, favorite: bool) -> bool:
-    """Stars or unstars an image in the output folders. Written only when the user clicks."""
-    resolve(image_id)
+    """Stars or unstars an image. Written only when the user clicks."""
+    if private.vault_id(image_id) is None:
+        resolve(image_id)
+    elif not private.exists(image_id):
+        raise FileNotFoundError(image_id)
     with _lock:
         ids = favorites()
         if favorite:
@@ -236,9 +239,18 @@ def set_favorite(image_id: str, favorite: bool) -> bool:
 
 
 def listing(
-    query: str, model: str, offset: int, limit: int, rating: str = "all", favorites_only: bool = False
+    query: str,
+    model: str,
+    offset: int,
+    limit: int,
+    rating: str = "all",
+    favorites_only: bool = False,
+    private_only: bool = False,
 ) -> dict:
+    """One page of the Library. Private images join in only while the vault is unlocked."""
     images = scan()
+    if extra := private.library_items():
+        images = sorted(images + extra, key=lambda image: image["mtime"], reverse=True)
     starred = favorites()
     models: dict[str, int] = {}
     for image in images:
@@ -246,10 +258,12 @@ def listing(
             models[name] = models.get(name, 0) + 1
 
     words = query.lower().split()
-    if words or model or rating != "all" or favorites_only:
+    if words or model or rating != "all" or favorites_only or private_only:
 
         def matches(image: dict) -> bool:
             if favorites_only and image["id"] not in starred:
+                return False
+            if private_only and not image.get("private"):
                 return False
             if model and model_of(image["infotext"]) != model:
                 return False
@@ -276,10 +290,12 @@ def listing(
                 **{k: v for k, v in image.items() if k != "path"},
                 "nsfw": looks_nsfw(image["infotext"]),
                 "favorite": image["id"] in starred,
+                "private": bool(image.get("private")),
             }
             for image in page
         ],
         "models": [{"name": n, "count": c} for n, c in sorted(models.items(), key=lambda m: -m[1])],
+        "lockedPrivate": private.hidden_count(),
     }
 
 
@@ -361,10 +377,13 @@ MAX_DELETE = 2000
 
 
 def delete(image_ids: list[str]) -> dict:
-    """Moves images to the Recycle Bin. Ids outside the output folders are skipped."""
+    """Moves images to the Recycle Bin; private images are deleted for good. Unknown ids are skipped."""
     global _scan
     found: dict[str, Path] = {}
+    gone_private = private.delete([i for i in image_ids[:MAX_DELETE] if private.vault_id(i) is not None])
     for image_id in image_ids[:MAX_DELETE]:
+        if private.vault_id(image_id) is not None:
+            continue
         try:
             found[image_id] = resolve(image_id)
         except FileNotFoundError:
@@ -379,13 +398,121 @@ def delete(image_ids: list[str]) -> dict:
                 _scan = None
     for thumb in thumbs:
         thumb.unlink(missing_ok=True)
-    gone = {image_id for image_id, path in found.items() if not path.exists()}
+    gone = {image_id for image_id, path in found.items() if not path.exists()} | gone_private
     # A deleted image's star goes with it.
     with _lock:
         starred = favorites()
         if starred & gone:
             store.write(FAVORITES_FILE, sorted(starred - gone))
     return {"deleted": len(gone), "failed": len(image_ids) - len(gone)}
+
+
+_SEED = re.compile(r"(?:^|,\s*)Seed: (-?\d+)")
+
+
+def _seed_of(infotext: str) -> int | None:
+    match = _SEED.search(infotext)
+    return int(match.group(1)) if match else None
+
+
+def _move_stars(renamed: dict[str, str]) -> None:
+    """A moved image keeps its star under its new id."""
+    if not renamed:
+        return
+    with _lock:
+        starred = favorites()
+        if starred & set(renamed):
+            moved = {new for old, new in renamed.items() if old in starred}
+            store.write(FAVORITES_FILE, sorted((starred - set(renamed)) | moved))
+
+
+def make_private(image_ids: list[str]) -> dict:
+    """Encrypts images into the vault, then deletes the originals for good.
+
+    Not to the Recycle Bin, which would keep readable copies. Each image keeps its date
+    and settings; its cached thumbnail goes with it. Works while the vault is locked.
+    """
+    global _scan
+    if not private.vault.exists():
+        raise private.VaultError("Set up private mode first.", 409)
+    entries = {image["id"]: image for image in scan()}
+    renamed: dict[str, str] = {}
+    for image_id in image_ids[:MAX_DELETE]:
+        if private.vault_id(image_id) is not None:
+            continue
+        try:
+            path = resolve(image_id)
+            thumb = _thumb_path(path)
+            infotext = str((entries.get(image_id) or {}).get("infotext") or "")
+            kind = image_id.partition("/")[0]
+            new_id = private.store(path.read_bytes(), infotext, _seed_of(infotext), kind, path.stat().st_mtime)
+            path.unlink()
+            thumb.unlink(missing_ok=True)
+        except (OSError, ValueError, private.VaultError):
+            continue
+        renamed[image_id] = private.PREFIX + new_id
+    with _lock:
+        _scan = None
+    _move_stars(renamed)
+    return {"moved": len(renamed), "failed": len(image_ids) - len(renamed)}
+
+
+def _with_settings(data: bytes, infotext: str) -> bytes:
+    """A PNG with its settings text written in, as Forge saves it, when it lacks one."""
+    with Image.open(io.BytesIO(data)) as image:
+        if image.format != "PNG" or image.info.get("parameters") or not infotext:
+            return data
+        info = PngInfo()
+        info.add_text("parameters", infotext)
+        out = io.BytesIO()
+        image.save(out, "PNG", pnginfo=info)
+        return out.getvalue()
+
+
+def make_public(image_ids: list[str]) -> dict:
+    """Saves private images as normal files in Forge's output folders again, then removes
+    them from the vault. They go back to their own kind's folder and date, numbered the
+    way Forge numbers files, and never replace an existing file. Needs the vault unlocked.
+    """
+    global _scan
+    places = roots()
+    if not places:
+        raise FileNotFoundError("Forge has no output folder.")
+    renamed: dict[str, str] = {}
+    for image_id in image_ids[:MAX_DELETE]:
+        if private.vault_id(image_id) is None:
+            continue
+        try:
+            meta = private.meta(image_id)
+            data = private.image_bytes(image_id)
+            kind = str(meta.get("kind") or "txt2img")
+            name = kind if kind in places else next(iter(places))
+            root = places[name]
+            created = float(meta["created"]) if meta.get("created") is not None else time.time()
+            folder = root / time.strftime("%Y-%m-%d", time.localtime(created))
+            folder.mkdir(parents=True, exist_ok=True)
+            suffix = {"JPEG": ".jpg", "WEBP": ".webp"}.get(str(meta.get("format") or "PNG"), ".png")
+            data = _with_settings(data, str(meta.get("infotext") or ""))
+            seed = meta.get("seed")
+            number = _next_number(folder)
+            while True:
+                path = folder / f"{number:05}-{seed if seed is not None else 'image'}{suffix}"
+                try:
+                    # "x" creates the file only if it doesn't exist yet: nothing is ever overwritten.
+                    with open(path, "xb") as file:
+                        file.write(data)
+                    break
+                except FileExistsError:
+                    number += 1
+            os.utime(path, (created, created))
+            private.delete([image_id])
+        except (OSError, ValueError, private.VaultError):
+            continue
+        renamed[image_id] = f"{name}/{path.relative_to(root).as_posix()}"
+    with _lock:
+        _scan = None
+    _move_stars(renamed)
+    return {"moved": len(renamed), "failed": len(image_ids) - len(renamed)}
 
 
 # The largest upscaled image accepted, in decoded bytes.
@@ -441,3 +568,37 @@ def reveal(image_id: str) -> None:
     path = resolve(image_id)
     # Windows paths can't contain quotes, so the quoted path is always one argument.
     subprocess.Popen(f'explorer /select,"{path}"')
+
+
+def folders() -> dict[str, Path]:
+    """The folders Settings lists, by key, as Forge's own settings name them.
+
+    Outputs is the folder that holds Forge's output folders (outputs by default), or the
+    single folder when Forge saves everything in one. Upscaled images go to the extras folder.
+    """
+    from . import newmodels, store
+
+    models = newmodels.targets()
+    found = roots()
+    result = {"checkpoints": models["checkpoint"], "loras": models["lora"]}
+    if "outputs" in found:
+        result["outputs"] = result["upscaled"] = found["outputs"]
+    elif found:
+        try:
+            result["outputs"] = Path(os.path.commonpath([str(p) for p in found.values()]))
+        except ValueError:  # on different drives
+            result["outputs"] = next(iter(found.values()))
+        if "extras" in found:
+            result["upscaled"] = found["extras"]
+    result["data"] = store.DATA
+    return result
+
+
+def open_folder(key: str) -> None:
+    """Opens one of the listed folders in File Explorer. Only listed keys, never a path from the page."""
+    import subprocess
+
+    path = folders().get(key)
+    if path is None or not path.is_dir():
+        raise FileNotFoundError(key)
+    subprocess.Popen(["explorer", str(path)])
