@@ -1,4 +1,4 @@
-import { Lock, Minus, Plus, SkipForward, Square } from "lucide-react";
+import { Minus, Plus, SkipForward, Square } from "lucide-react";
 import { Tooltip } from "radix-ui";
 import { HELP } from "../../lib/help";
 import { barFraction, barPulses, progressLabel } from "../../lib/progress";
@@ -138,10 +138,13 @@ export function GenerateBar({ connected }: { connected: boolean }) {
           type="button"
           onClick={() => void generate()}
           disabled={!connected}
-          className="flex h-9 items-center gap-2 rounded-lg bg-primary px-4 text-[14px] font-medium text-on-primary hover:bg-primary-hover disabled:opacity-40"
+          // While private, a thin accent ring outside the button: a second hint that never changes its size.
+          className={`flex h-9 items-center gap-2 rounded-lg bg-primary px-4 text-[14px] font-medium text-on-primary ring-offset-2 ring-offset-surface transition-shadow duration-150 hover:bg-primary-hover disabled:opacity-40 motion-reduce:transition-none ${
+            privateOn ? "ring-1 ring-accent" : "ring-0"
+          }`}
         >
-          {privateOn && <Lock className="size-3.5" aria-label="Private" />}
           {action}
+          {privateOn && <span className="sr-only">, private</span>}
           <kbd className="font-sans text-[11px] font-normal opacity-60">Ctrl ↵</kbd>
         </button>
       </div>

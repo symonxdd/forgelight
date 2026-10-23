@@ -51,13 +51,22 @@ export function PrivateChip() {
           aria-pressed={on}
           disabled={busy}
           onClick={() => void toggle()}
-          className={`flex h-9 items-center gap-1.5 rounded-lg border px-3 text-[13px] disabled:opacity-60 ${
+          // The same weight and width either way, so switching never moves anything; only the colors fade.
+          className={`flex h-9 items-center gap-1.5 rounded-lg border px-3 text-[13px] font-medium transition-colors duration-150 disabled:opacity-60 motion-reduce:transition-none ${
             on
-              ? "border-accent/60 bg-accent/12 font-medium text-accent hover:border-accent"
+              ? "border-accent/60 bg-accent/12 text-accent hover:border-accent"
               : "border-line text-muted hover:border-line-strong hover:text-fg-strong"
           }`}
         >
-          {on ? <Lock className="size-3.5" aria-hidden /> : <LockOpen className="size-3.5" aria-hidden />}
+          {/* Both locks share one spot and cross-fade, the closed one while on. */}
+          <span className="grid size-3.5" aria-hidden>
+            <Lock
+              className={`col-start-1 row-start-1 size-3.5 transition-opacity duration-150 motion-reduce:transition-none ${on ? "opacity-100" : "opacity-0"}`}
+            />
+            <LockOpen
+              className={`col-start-1 row-start-1 size-3.5 transition-opacity duration-150 motion-reduce:transition-none ${on ? "opacity-0" : "opacity-100"}`}
+            />
+          </span>
           Private
         </button>
       </Hint>
