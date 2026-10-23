@@ -50,7 +50,7 @@ export function NewRecoveryKeyDialog({ open, onOpenChange }: { open: boolean; on
         <Dialog.Content
           onEscapeKeyDown={(event) => code !== null && event.preventDefault()}
           onPointerDownOutside={(event) => code !== null && event.preventDefault()}
-          className="fixed top-1/2 left-1/2 z-50 flex w-[min(28rem,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 flex-col gap-4 rounded-xl border border-line bg-surface p-5 text-fg shadow-xl shadow-black/30 motion-safe:animate-[fade-in_120ms_ease-out]"
+          className="fixed top-[40%] left-1/2 z-50 flex w-[min(28rem,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 flex-col gap-4 rounded-xl border border-line bg-surface p-5 text-fg shadow-xl shadow-black/30 motion-safe:animate-[fade-in_120ms_ease-out]"
         >
           <Dialog.Title className="flex items-center gap-2 text-[15px] font-semibold text-fg-strong">
             <LifeBuoy className="size-4 text-accent" aria-hidden />
