@@ -13,9 +13,13 @@ import { ViewSwitch, type LibraryView } from "./ViewSwitch";
 import { TileStar } from "./Favorites";
 import { LibraryViewer } from "./LibraryViewer";
 
+/** The prompt search. Compact by default, it widens with what is typed, up to a limit. */
 function SearchBox({ value, onChange }: { value: string; onChange: (value: string) => void }) {
   return (
-    <div className="relative max-w-[26rem] min-w-48 flex-1">
+    <div
+      className="relative max-w-full transition-[width] duration-150 motion-reduce:transition-none"
+      style={{ width: `clamp(15rem, ${value.length}ch + 4.5rem, 28rem)` }}
+    >
       <Search
         className="pointer-events-none absolute top-1/2 left-2.5 size-3.5 -translate-y-1/2 text-faint"
         aria-hidden
