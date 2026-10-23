@@ -1,8 +1,8 @@
 import { Check, ChevronRight, ExternalLink, LoaderCircle, Monitor, Power, Settings } from "lucide-react";
 import { Popover } from "radix-ui";
-import { useRef, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import { useCreateDesktopShortcut, useSetOpenOnStart, useStartup } from "../api/forgelight";
-import { openDriveSettings, removePin, setStartPrivate, useDriveEncryption, usePrivateStatus } from "../api/private";
+import { openDriveSettings, setStartPrivate, useDriveEncryption, usePrivateStatus } from "../api/private";
 import { useConnection, useOptions, useSetOptions } from "../api/queries";
 import { useSetAutoCheck, useUpdates } from "../api/updates";
 import { HELP, HELP_NOTES } from "../lib/help";
@@ -26,9 +26,8 @@ import { ChangePasswordDialog } from "./private/ChangePasswordDialog";
 import { ClearThumbnailsDialog } from "./private/ClearThumbnailsDialog";
 import { NewRecoveryKeyDialog } from "./private/NewRecoveryKeyDialog";
 import { PinDialog } from "./private/PinDialog";
-import { UnlockDialog } from "./private/UnlockDialog";
+import { RemovePinDialog } from "./private/RemovePinDialog";
 import { StopForgeDialog } from "./StopForgeDialog";
-import { useSession } from "../stores/session";
 import { Toggle } from "./Toggle";
 import { UpdateDialog } from "./updates/UpdateDialog";
 import { UpdateDot, UpdateNotice } from "./updates/UpdateNotice";
@@ -349,26 +348,8 @@ export function SettingsMenu() {
   const [passwordOpen, setPasswordOpen] = useState(false);
   const [recoveryOpen, setRecoveryOpen] = useState(false);
   const [thumbnailsOpen, setThumbnailsOpen] = useState(false);
-  const [unlocking, setUnlocking] = useState(false);
+  const [removePinOpen, setRemovePinOpen] = useState(false);
   const privateStatus = usePrivateStatus();
-  // What to do once the unlock dialog succeeds: PIN changes need private images unlocked.
-  const afterUnlock = useRef<(() => void) | null>(null);
-  const needsUnlock = (then: () => void) => {
-    if (privateStatus.data?.unlocked) return then();
-    afterUnlock.current = then;
-    setUnlocking(true);
-  };
-  const forgetPin = async () => {
-    try {
-      await removePin();
-      useSession.getState().setNotice({ tone: "info", text: "The PIN is removed." });
-    } catch (error) {
-      useSession.getState().setNotice({
-        tone: "warning",
-        text: error instanceof Error ? error.message : "The PIN could not be removed.",
-      });
-    }
-  };
   const [updateOpen, setUpdateOpen] = useState(false);
   return (
     <>
@@ -420,11 +401,11 @@ export function SettingsMenu() {
             <Privacy
               onPin={() => {
                 setOpen(false);
-                needsUnlock(() => setPinOpen(true));
+                setPinOpen(true);
               }}
               onRemovePin={() => {
                 setOpen(false);
-                needsUnlock(() => void forgetPin());
+                setRemovePinOpen(true);
               }}
               onPassword={() => {
                 setOpen(false);
@@ -432,7 +413,7 @@ export function SettingsMenu() {
               }}
               onRecoveryKey={() => {
                 setOpen(false);
-                needsUnlock(() => setRecoveryOpen(true));
+                setRecoveryOpen(true);
               }}
               onThumbnails={() => {
                 setOpen(false);
@@ -477,14 +458,7 @@ export function SettingsMenu() {
       <ChangePasswordDialog open={passwordOpen} onOpenChange={setPasswordOpen} />
       <NewRecoveryKeyDialog open={recoveryOpen} onOpenChange={setRecoveryOpen} />
       <ClearThumbnailsDialog open={thumbnailsOpen} onOpenChange={setThumbnailsOpen} />
-      <UnlockDialog
-        open={unlocking}
-        onOpenChange={setUnlocking}
-        onUnlocked={() => {
-          afterUnlock.current?.();
-          afterUnlock.current = null;
-        }}
-      />
+      <RemovePinDialog open={removePinOpen} onOpenChange={setRemovePinOpen} />
     </>
   );
 }

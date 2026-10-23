@@ -102,21 +102,33 @@ def private_mode(_request: Request, body: Any) -> dict:
     return _private_call(lambda: private.set_on(bool((body or {}).get("on"))))
 
 
-def private_unlock(_request: Request, body: Any) -> dict:
-    body = body or {}
+def _secret(body: Any) -> dict[str, str]:
+    """Exactly one of the password, the PIN or the recovery key, as {kind: value}."""
+    body = body if isinstance(body, dict) else {}
     secrets = {key: value for key in ("password", "recovery", "pin") if isinstance(value := body.get(key), str)}
     if len(secrets) != 1:
         raise HTTPException(status_code=400, detail="Send the password, the PIN or the recovery key.")
+    return secrets
+
+
+def _confirm(body: Any) -> dict[str, str] | None:
+    """The optional `confirm` secret that lets a change through while private images are locked."""
+    confirm = (body or {}).get("confirm")
+    return None if confirm is None else _secret(confirm)
+
+
+def private_unlock(_request: Request, body: Any) -> dict:
+    secrets = _secret(body)
     return _private_call(lambda: private.unlock(secrets.get("password"), secrets.get("recovery"), secrets.get("pin")))
 
 
 def private_pin(_request: Request, body: Any) -> dict:
-    pin = (body or {}).get("pin")
+    pin, confirm = (body or {}).get("pin"), _confirm(body)
     if pin is None:
-        return _private_call(private.remove_pin)
+        return _private_call(lambda: private.remove_pin(confirm))
     if not isinstance(pin, str):
         raise HTTPException(status_code=400, detail="Send the PIN.")
-    return _private_call(lambda: private.set_pin(pin))
+    return _private_call(lambda: private.set_pin(pin, confirm))
 
 
 def private_lock(_request: Request, _body: Any) -> dict:
@@ -128,15 +140,15 @@ def private_start(_request: Request, body: Any) -> dict:
 
 
 def private_password(_request: Request, body: Any) -> dict:
-    body = body or {}
-    current, new = body.get("current"), body.get("new")
-    if not isinstance(current, str) or not isinstance(new, str):
-        raise HTTPException(status_code=400, detail="Send the current and the new password.")
-    return _private_call(lambda: private.change_password(current, new))
+    new, confirm = (body or {}).get("new"), _confirm(body)
+    if not isinstance(new, str):
+        raise HTTPException(status_code=400, detail="Send the new password.")
+    return _private_call(lambda: private.change_password(new, confirm))
 
 
-def private_recovery(_request: Request, _body: Any) -> dict:
-    return _private_call(lambda: {"recoveryCode": private.new_recovery_key()})
+def private_recovery(_request: Request, body: Any) -> dict:
+    confirm = _confirm(body)
+    return _private_call(lambda: {"recoveryCode": private.new_recovery_key(confirm)})
 
 
 def private_thumbnails(_request: Request, _body: Any) -> dict:

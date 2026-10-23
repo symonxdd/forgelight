@@ -51,10 +51,11 @@ export async function setPrivateOn(on: boolean): Promise<void> {
   if (!on) await forgetPrivateImages();
 }
 
-/** Shows private images: with the password, or the recovery key instead. */
-export async function unlockPrivate(
-  secret: { password: string } | { recovery: string } | { pin: string },
-): Promise<void> {
+/** One way in: the password, the PIN or the recovery key. */
+export type PrivateSecret = { password: string } | { recovery: string } | { pin: string };
+
+/** Shows private images: with the password, the PIN or the recovery key. */
+export async function unlockPrivate(secret: PrivateSecret): Promise<void> {
   queryClient.setQueryData(PRIVATE_KEY, await request<PrivateStatus>("private/unlock", secret));
   await queryClient.invalidateQueries({ queryKey: ["library"] });
 }
@@ -85,27 +86,30 @@ async function forgetPrivateImages(): Promise<void> {
   await queryClient.invalidateQueries({ queryKey: ["library"] });
 }
 
-/** Adds a PIN or replaces it. Needs private images unlocked. */
-export async function setPin(pin: string): Promise<void> {
-  queryClient.setQueryData(PRIVATE_KEY, await request<PrivateStatus>("private/pin", { pin }));
+// The PIN, password and recovery key changes below need `confirm` while private images are
+// locked. It is checked for that one change only: private images stay locked.
+
+/** Adds a PIN or replaces it. */
+export async function setPin(pin: string, confirm?: PrivateSecret): Promise<void> {
+  queryClient.setQueryData(PRIVATE_KEY, await request<PrivateStatus>("private/pin", { pin, confirm }));
 }
 
-export async function removePin(): Promise<void> {
-  queryClient.setQueryData(PRIVATE_KEY, await request<PrivateStatus>("private/pin", { pin: null }));
+export async function removePin(confirm?: PrivateSecret): Promise<void> {
+  queryClient.setQueryData(PRIVATE_KEY, await request<PrivateStatus>("private/pin", { pin: null, confirm }));
 }
 
 export async function setStartPrivate(on: boolean): Promise<void> {
   queryClient.setQueryData(PRIVATE_KEY, await request<PrivateStatus>("private/start", { on }));
 }
 
-/** Checks the current password and sets the new one. Images are not encrypted again. */
-export async function changePassword(current: string, next: string): Promise<void> {
-  queryClient.setQueryData(PRIVATE_KEY, await request<PrivateStatus>("private/password", { current, new: next }));
+/** Sets a new password; with the recovery key as `confirm`, a forgotten one too. Images are not encrypted again. */
+export async function changePassword(next: string, confirm?: PrivateSecret): Promise<void> {
+  queryClient.setQueryData(PRIVATE_KEY, await request<PrivateStatus>("private/password", { new: next, confirm }));
 }
 
-/** A fresh recovery key, shown once; the old one stops working. Needs private images unlocked. */
-export async function newRecoveryKey(): Promise<string> {
-  return (await request<{ recoveryCode: string }>("private/recovery", {})).recoveryCode;
+/** A fresh recovery key, shown once; the old one stops working. */
+export async function newRecoveryKey(confirm?: PrivateSecret): Promise<string> {
+  return (await request<{ recoveryCode: string }>("private/recovery", { confirm })).recoveryCode;
 }
 
 /** Deletes Windows' thumbnail cache; files File Explorer is using right then are skipped. */

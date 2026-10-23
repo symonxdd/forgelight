@@ -1,17 +1,21 @@
 import { LifeBuoy, LoaderCircle } from "lucide-react";
 import { Dialog } from "radix-ui";
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { newRecoveryKey } from "../../api/private";
+import { ConfirmSecret } from "./ConfirmSecret";
+import { useConfirmSecret } from "./useConfirmSecret";
 import { RecoveryKeyBox } from "./RecoveryKeyBox";
 
 const button =
   "flex h-9 items-center gap-2 rounded-lg bg-primary px-4 text-[13px] font-medium text-on-primary hover:bg-primary-hover disabled:opacity-40";
 
 /**
- * Asks first, since the old key stops working, then shows the new key once. While it is on
+ * Asks first, since the old key stops working, then shows the new key once. While private
+ * images are locked, a way in confirms it. While it is on
  * screen, the dialog closes only with Done, so it isn't lost by a stray click.
  */
 export function NewRecoveryKeyDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
+  const confirm = useConfirmSecret();
   const [code, setCode] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -20,16 +24,19 @@ export function NewRecoveryKeyDialog({ open, onOpenChange }: { open: boolean; on
   const close = () => {
     setCode(null);
     setSaved(false);
+    confirm.reset();
     setBusy(false);
     setError(null);
     onOpenChange(false);
   };
 
-  const make = async () => {
+  const make = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!confirm.ready || busy) return;
     setBusy(true);
     setError(null);
     try {
-      setCode(await newRecoveryKey());
+      setCode(await newRecoveryKey(confirm.secret));
     } catch (failure) {
       setError(failure instanceof Error ? failure.message : "A new recovery key could not be made.");
     }
@@ -54,11 +61,11 @@ export function NewRecoveryKeyDialog({ open, onOpenChange }: { open: boolean; on
               ? "The old recovery key stops working. The new one is shown only once."
               : "If the password is ever forgotten, this key is the other way in. It is shown only now."}
           </Dialog.Description>
-          {code !== null && <RecoveryKeyBox code={code} saved={saved} onSavedChange={setSaved} />}
-          {error && <p className="text-[12.5px] text-bad">{error}</p>}
-          <div className="flex justify-end gap-2">
-            {code === null ? (
-              <>
+          {code === null ? (
+            <form onSubmit={(event) => void make(event)} className="flex flex-col gap-4">
+              <ConfirmSecret state={confirm} autoFocus />
+              {error && <p className="text-[12.5px] text-bad">{error}</p>}
+              <div className="flex justify-end gap-2">
                 <button
                   type="button"
                   onClick={close}
@@ -66,17 +73,22 @@ export function NewRecoveryKeyDialog({ open, onOpenChange }: { open: boolean; on
                 >
                   Cancel
                 </button>
-                <button type="button" disabled={busy} onClick={() => void make()} className={button}>
+                <button type="submit" disabled={!confirm.ready || busy} className={button}>
                   {busy && <LoaderCircle className="size-3.5 animate-spin" aria-hidden />}
                   Make a new key
                 </button>
-              </>
-            ) : (
-              <button type="button" disabled={!saved} onClick={close} className={button}>
-                Done
-              </button>
-            )}
-          </div>
+              </div>
+            </form>
+          ) : (
+            <>
+              <RecoveryKeyBox code={code} saved={saved} onSavedChange={setSaved} />
+              <div className="flex justify-end">
+                <button type="button" disabled={!saved} onClick={close} className={button}>
+                  Done
+                </button>
+              </div>
+            </>
+          )}
         </Dialog.Content>
       </Dialog.Portal>
     </Dialog.Root>

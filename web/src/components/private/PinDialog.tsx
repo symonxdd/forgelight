@@ -4,9 +4,11 @@ import { useState, type FormEvent } from "react";
 import { setPin } from "../../api/private";
 import { useSession } from "../../stores/session";
 import { pinReady } from "../../lib/pin";
+import { ConfirmSecret } from "./ConfirmSecret";
+import { useConfirmSecret } from "./useConfirmSecret";
 import { PinFields } from "./PinFields";
 
-/** Adds a PIN, or replaces the one there is. Opened only while private images are unlocked. */
+/** Adds a PIN, or replaces the one there is. While private images are locked, a way in confirms it first. */
 export function PinDialog({
   open,
   replacing,
@@ -16,6 +18,7 @@ export function PinDialog({
   replacing: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const confirm = useConfirmSecret();
   const [pin, setPinValue] = useState("");
   const [repeat, setRepeat] = useState("");
   const [busy, setBusy] = useState(false);
@@ -24,6 +27,7 @@ export function PinDialog({
   const close = () => {
     setPinValue("");
     setRepeat("");
+    confirm.reset();
     setError(null);
     setBusy(false);
     onOpenChange(false);
@@ -31,11 +35,11 @@ export function PinDialog({
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
-    if (!pinReady(pin, repeat) || busy) return;
+    if (!confirm.ready || !pinReady(pin, repeat) || busy) return;
     setBusy(true);
     setError(null);
     try {
-      await setPin(pin);
+      await setPin(pin, confirm.secret);
       close();
       useSession.getState().setNotice({ tone: "info", text: replacing ? "The PIN is changed." : "The PIN is set." });
     } catch (failure) {
@@ -57,7 +61,8 @@ export function PinDialog({
             <Dialog.Description className="text-[13px] leading-relaxed text-muted">
               A quicker way to unlock private images on this computer. The password can still be used instead.
             </Dialog.Description>
-            <PinFields pin={pin} repeat={repeat} onPin={setPinValue} onRepeat={setRepeat} autoFocus />
+            <ConfirmSecret state={confirm} autoFocus />
+            <PinFields pin={pin} repeat={repeat} onPin={setPinValue} onRepeat={setRepeat} autoFocus={!confirm.needed} />
             {error && <p className="text-[12.5px] text-bad">{error}</p>}
             <div className="flex justify-end gap-2">
               <button
@@ -69,7 +74,7 @@ export function PinDialog({
               </button>
               <button
                 type="submit"
-                disabled={!pinReady(pin, repeat) || busy}
+                disabled={!confirm.ready || !pinReady(pin, repeat) || busy}
                 className="flex h-9 items-center gap-2 rounded-lg bg-primary px-4 text-[13px] font-medium text-on-primary hover:bg-primary-hover disabled:opacity-40"
               >
                 {busy && <LoaderCircle className="size-3.5 animate-spin" aria-hidden />}

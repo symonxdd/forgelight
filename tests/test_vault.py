@@ -228,6 +228,13 @@ class PinTest(unittest.TestCase):
         with self.assertRaises(VaultError):
             Vault(self.root, {}).unlock(pin="2222")
 
+    def test_pin_changes_while_locked_with_a_key_from_a_slot(self) -> None:
+        self.vault.lock()
+        self.vault.set_pin("1111", self.vault.open_slot(password="correct horse"))
+        self.vault.remove_pin(self.vault.open_slot(pin="1111"))
+        self.assertFalse(self.vault.has_pin())
+        self.assertFalse(self.vault.is_unlocked())
+
 
 @unittest.skipUnless(os.name == "nt", "the vault uses Windows cryptography")
 class HelpersTest(unittest.TestCase):

@@ -42,11 +42,11 @@ To lock K, Forgelight makes a fresh one-time key pair, combines it with the vaul
 ![A password through scrypt, a PIN through the TPM chip, or a recovery key through HKDF each opens its own key slot, and any slot gives back the private key, which stays in memory](private-mode/unlocking-light.svg#gh-light-mode-only)
 ![A password through scrypt, a PIN through the TPM chip, or a recovery key through HKDF each opens its own key slot, and any slot gives back the private key, which stays in memory](private-mode/unlocking-dark.svg#gh-dark-mode-only)
 
-Each slot holds the same private key, encrypted under a different secret, the way LUKS disk encryption works. Any one slot is enough. Changing the password or the PIN, or making a new recovery key, replaces only that slot, so the images never need to be encrypted again.
+Each slot holds the same private key, encrypted under a different secret, the way LUKS disk encryption works. Any one slot is enough. Changing the password or the PIN, or making a new recovery key, replaces only that slot, so the images never need to be encrypted again. While private images are locked, such a change is confirmed with one of the three ways in. The private key it opens is used for that change only, so private images stay locked.
 
 - **Password:** required, set up first. scrypt makes checking it slow and memory-hungry on purpose, so guessing it on graphics cards stays expensive.
 - **PIN:** optional, and works on this computer only. The key that opens its slot lives inside the TPM chip and only opens with the PIN. The chip counts wrong PINs and enforces growing pauses in hardware, so a short PIN is safe.
-- **Recovery key:** a long random code shown once at setup, for when the password is forgotten. While private images are unlocked, by any of the three, **Change** under Password sets a new password without asking for the current one. A new recovery key, from the settings menu, makes the old one stop working.
+- **Recovery key:** a long random code shown once at setup, for when the password is forgotten. **Change** under Password accepts the recovery key or the PIN instead of the current password, so a forgotten password can be replaced. A new recovery key, from the settings menu, makes the old one stop working.
 
 The private key stays in memory only, until **Lock**, switching private mode off, or Forge stopping. Reloading the page keeps it unlocked.
 

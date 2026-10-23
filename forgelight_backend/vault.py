@@ -167,6 +167,12 @@ class Vault:
         return format_recovery(recovery)
 
     def unlock(self, password: str | None = None, recovery: str | None = None, pin: str | None = None) -> None:
+        private_blob = self.open_slot(password=password, recovery=recovery, pin=pin)
+        with self._lock:
+            self._state["private"] = private_blob
+
+    def open_slot(self, password: str | None = None, recovery: str | None = None, pin: str | None = None) -> bytes:
+        """The private key from one slot, without unlocking: for confirming a change while locked."""
         header = self._header()
         kind = "password" if password is not None else "pin" if pin is not None else "recovery"
         slot = next((s for s in header["slots"] if s.get("kind") == kind), None)
@@ -187,8 +193,7 @@ class Vault:
             raise VaultError(wrong, 403) from error
         except cng.CryptoError as error:
             raise VaultError(f"The PIN couldn't be checked: {error} Use the password instead.", 500) from error
-        with self._lock:
-            self._state["private"] = private_blob
+        return private_blob
 
     def lock(self) -> None:
         with self._lock:
@@ -197,19 +202,22 @@ class Vault:
     def is_unlocked(self) -> bool:
         return "private" in self._state
 
-    def _private(self) -> bytes:
-        private_blob = self._state.get("private")
+    def _private(self, key: bytes | None = None) -> bytes:
+        """The private key: `key` when one came from open_slot, else the unlocked one."""
+        private_blob = key or self._state.get("private")
         if private_blob is None:
             raise VaultError("Private images are locked.", 423)
         return private_blob
 
-    def change_password(self, new_password: str) -> None:
-        """Replaces the password slot. Needs the vault unlocked; images are not touched."""
+    # The changes below need the private key: the vault unlocked, or `key` from open_slot.
+
+    def change_password(self, new_password: str, key: bytes | None = None) -> None:
+        """Replaces the password slot. Images are not touched."""
         if len(new_password) < 8:
             raise VaultError("The password needs at least 8 characters.")
         with self._lock:
             header = self._header()
-            slot = self._password_slot(new_password, self._private())
+            slot = self._password_slot(new_password, self._private(key))
             header["slots"] = [s for s in header["slots"] if s.get("kind") != "password"] + [slot]
             self._write_header(header)
 
@@ -219,11 +227,11 @@ class Vault:
         except VaultError:
             return False
 
-    def set_pin(self, pin: str) -> None:
-        """Adds a PIN, or replaces it. Needs the vault unlocked; images are not touched."""
+    def set_pin(self, pin: str, key: bytes | None = None) -> None:
+        """Adds a PIN, or replaces it. Images are not touched."""
         check_pin(pin)
         with self._lock:
-            private_blob = self._private()
+            private_blob = self._private(key)
             header = self._header()
             header.setdefault("id", secrets.token_hex(8))
             name = f"Forgelight vault {header['id']}"
@@ -238,22 +246,22 @@ class Vault:
             header["slots"] = [s for s in header["slots"] if s.get("kind") != "pin"] + [slot]
             self._write_header(header)
 
-    def remove_pin(self) -> None:
-        """Removes the PIN slot and its key in the TPM. Needs the vault unlocked."""
+    def remove_pin(self, key: bytes | None = None) -> None:
+        """Removes the PIN slot and its key in the TPM."""
         with self._lock:
-            self._private()
+            self._private(key)
             header = self._header()
             for slot in [s for s in header["slots"] if s.get("kind") == "pin"]:
                 cng.tpm_delete(slot["key"])
             header["slots"] = [s for s in header["slots"] if s.get("kind") != "pin"]
             self._write_header(header)
 
-    def new_recovery_code(self) -> str:
+    def new_recovery_code(self, key: bytes | None = None) -> str:
         """Replaces the recovery slot, so an old written-down code stops working."""
         with self._lock:
             header = self._header()
             recovery = os.urandom(RECOVERY_BYTES)
-            slot = self._recovery_slot(recovery, self._private())
+            slot = self._recovery_slot(recovery, self._private(key))
             header["slots"] = [s for s in header["slots"] if s.get("kind") != "recovery"] + [slot]
             self._write_header(header)
         return format_recovery(recovery)

@@ -68,13 +68,14 @@ export const privateMode: GuideChapter = {
           ],
           [
             "Recovery key",
-            "Shown once at setup. Opens the vault when the password is forgotten; a new password can then be set without the old one.",
+            "Shown once at setup. Opens the vault when the password is forgotten, and can set a new password.",
           ],
         ],
       },
       points: [
         "Changing the password, the PIN or the recovery key replaces only its own copy. It is instant, and the images stay as they are.",
-        "While private images are unlocked, a new password can be set without the current one.",
+        "While private images are locked, these changes are confirmed with the password, the PIN or the recovery key, and private images stay locked afterwards.",
+        "A forgotten password is replaced with Change under Password, using the recovery key or the PIN instead of the current password.",
         "A new recovery key makes the old one stop working.",
       ],
       forgelight:

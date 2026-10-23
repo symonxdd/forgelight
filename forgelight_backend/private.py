@@ -76,16 +76,25 @@ def set_start_private(on: bool) -> dict:
     return status()
 
 
-def change_password(current: str, new: str) -> dict:
-    """Checks the current password, then replaces the password slot. Images are not touched."""
-    vault.unlock(password=current)
-    vault.change_password(new)
+def _key(confirm: dict[str, str] | None) -> bytes | None:
+    """The private key for one change while locked, from the password, PIN or recovery key
+    in `confirm`, without unlocking: private images stay hidden. None while unlocked."""
+    return None if confirm is None else vault.open_slot(**confirm)
+
+
+# Password, PIN and recovery key changes need nothing more while unlocked, since whoever is
+# at the computer can see the images anyway. While locked, they need `confirm`.
+
+
+def change_password(new: str, confirm: dict[str, str] | None = None) -> dict:
+    """Replaces the password slot; with the recovery key in `confirm`, a forgotten one too."""
+    vault.change_password(new, _key(confirm))
     return status()
 
 
-def new_recovery_key() -> str:
-    """A fresh recovery key, shown once; the old one stops working. Needs the vault unlocked."""
-    return vault.new_recovery_code()
+def new_recovery_key(confirm: dict[str, str] | None = None) -> str:
+    """A fresh recovery key, shown once; the old one stops working."""
+    return vault.new_recovery_code(_key(confirm))
 
 
 THUMBNAIL_CACHE = Path(os.environ.get("LOCALAPPDATA", "")) / "Microsoft" / "Windows" / "Explorer"
@@ -171,17 +180,19 @@ def unlock(password: str | None, recovery: str | None, pin: str | None = None) -
     return status()
 
 
-def set_pin(pin: str) -> dict:
+def set_pin(pin: str, confirm: dict[str, str] | None = None) -> dict:
+    key = _key(confirm)
     try:
-        vault.set_pin(pin)
+        vault.set_pin(pin, key)
     except cng.CryptoError as error:
         raise VaultError(f"The PIN couldn't be saved in the security chip: {error}", 500) from error
     return status()
 
 
-def remove_pin() -> dict:
+def remove_pin(confirm: dict[str, str] | None = None) -> dict:
+    key = _key(confirm)
     try:
-        vault.remove_pin()
+        vault.remove_pin(key)
     except cng.CryptoError as error:
         raise VaultError(f"The PIN couldn't be removed from the security chip: {error}", 500) from error
     return status()

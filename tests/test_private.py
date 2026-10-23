@@ -41,7 +41,7 @@ class PrivateTest(unittest.TestCase):
         self.folder = tempfile.TemporaryDirectory()
         vault_module.SCRYPT, self.real_scrypt = {"n": 2**10, "r": 8, "p": 1}, vault_module.SCRYPT
         self.vault = Vault(Path(self.folder.name) / "vault", {})
-        self.vault.create("correct horse")
+        self.recovery = self.vault.create("correct horse")
         self.vault.lock()
         patches = [
             mock.patch.object(private, "vault", self.vault),
@@ -152,18 +152,35 @@ class PrivateTest(unittest.TestCase):
             self.assertTrue(private.set_start_private(True)["startPrivate"])
         self.assertTrue(saved["start_private"])
 
-    def test_change_password_checks_the_current_one(self) -> None:
+    def test_change_password_while_locked_checks_and_stays_locked(self) -> None:
         with self.assertRaises(VaultError):
-            private.change_password("wrong horse", "new password")
-        private.change_password("correct horse", "new password")
+            private.change_password("new password")
+        with self.assertRaises(VaultError):
+            private.change_password("new password", {"password": "wrong horse"})
+        private.change_password("new password", {"password": "correct horse"})
+        self.assertFalse(self.vault.is_unlocked())
+        self.vault.unlock(password="new password")
+
+    def test_recovery_key_replaces_a_forgotten_password(self) -> None:
+        private.change_password("new password", {"recovery": self.recovery})
+        self.assertFalse(self.vault.is_unlocked())
+        self.vault.unlock(password="new password")
+
+    def test_changes_while_unlocked_need_no_secret(self) -> None:
+        self.vault.unlock(password="correct horse")
+        private.change_password("new password")
         self.vault.lock()
         self.vault.unlock(password="new password")
 
-    def test_new_recovery_key_needs_unlocked(self) -> None:
+    def test_new_recovery_key_needs_a_secret_while_locked(self) -> None:
         with self.assertRaises(VaultError):
             private.new_recovery_key()
-        self.vault.unlock(password="correct horse")
-        self.assertRegex(private.new_recovery_key(), r"^([A-Z2-7]{4}-){7}[A-Z2-7]{4}$")
+        code = private.new_recovery_key({"password": "correct horse"})
+        self.assertRegex(code, r"^([A-Z2-7]{4}-){7}[A-Z2-7]{4}$")
+        self.assertFalse(self.vault.is_unlocked())
+        with self.assertRaises(VaultError):
+            self.vault.unlock(recovery=self.recovery)
+        self.vault.unlock(recovery=code)
 
     def test_clear_thumbnails_deletes_only_the_cache(self) -> None:
         folder = Path(tempfile.mkdtemp())

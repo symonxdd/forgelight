@@ -3,23 +3,28 @@ import { Dialog } from "radix-ui";
 import { useState, type FormEvent } from "react";
 import { changePassword } from "../../api/private";
 import { useSession } from "../../stores/session";
+import { ConfirmSecret } from "./ConfirmSecret";
+import { useConfirmSecret } from "./useConfirmSecret";
 import { PasswordInput } from "./PasswordInput";
 
 const MIN_PASSWORD = 8;
 
-/** The current password, then the new one twice. Images are not encrypted again. */
+/**
+ * The new password twice, confirmed while private images are locked with the current one,
+ * or with the PIN or recovery key when it is forgotten. Images are not encrypted again.
+ */
 export function ChangePasswordDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
-  const [current, setCurrent] = useState("");
+  const confirm = useConfirmSecret("password");
   const [next, setNext] = useState("");
   const [repeat, setRepeat] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const tooShort = next.length > 0 && next.length < MIN_PASSWORD;
   const mismatch = repeat.length > 0 && repeat !== next;
-  const ready = current.length > 0 && next.length >= MIN_PASSWORD && repeat === next;
+  const ready = confirm.ready && next.length >= MIN_PASSWORD && repeat === next;
 
   const close = () => {
-    setCurrent("");
+    confirm.reset();
     setNext("");
     setRepeat("");
     setError(null);
@@ -33,7 +38,7 @@ export function ChangePasswordDialog({ open, onOpenChange }: { open: boolean; on
     setBusy(true);
     setError(null);
     try {
-      await changePassword(current, next);
+      await changePassword(next, confirm.secret);
       close();
       useSession.getState().setNotice({ tone: "info", text: "The password is changed." });
     } catch (failure) {
@@ -55,19 +60,16 @@ export function ChangePasswordDialog({ open, onOpenChange }: { open: boolean; on
             <Dialog.Description className="text-[13px] leading-relaxed text-muted">
               Private images don't need to be encrypted again, so this is instant.
             </Dialog.Description>
-            <label className="flex flex-col gap-1.5 text-[12.5px] text-fg">
-              Current password
-              <PasswordInput
-                id="password-current"
-                autoComplete="current-password"
-                autoFocus
-                value={current}
-                onChange={setCurrent}
-              />
-            </label>
+            <ConfirmSecret state={confirm} autoFocus />
             <label className="flex flex-col gap-1.5 text-[12.5px] text-fg">
               New password
-              <PasswordInput id="password-new" autoComplete="new-password" value={next} onChange={setNext} />
+              <PasswordInput
+                id="password-new"
+                autoComplete="new-password"
+                autoFocus={!confirm.needed}
+                value={next}
+                onChange={setNext}
+              />
               <span className={`text-[12px] ${tooShort ? "text-bad" : "text-faint"}`}>
                 At least {MIN_PASSWORD} characters
               </span>
