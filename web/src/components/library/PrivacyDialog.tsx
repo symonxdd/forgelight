@@ -8,8 +8,8 @@ const TEXT = {
     title: (n: string) => `Make ${n} private?`,
     body: (one: boolean) =>
       one
-        ? "It is encrypted into the vault. The original is deleted for good, not moved to the Recycle Bin. Only the private mode password shows it again."
-        : "They are encrypted into the vault. The originals are deleted for good, not moved to the Recycle Bin. Only the private mode password shows them again.",
+        ? "It is encrypted into the vault, and the original is deleted for good, without going to the Recycle Bin. From then on, only the PIN, the password or the recovery key can show it."
+        : "They are encrypted into the vault, and the originals are deleted for good, without going to the Recycle Bin. From then on, only the PIN, the password or the recovery key can show them.",
     button: "Make private",
     done: (n: string) => `${n} private now.`,
   },

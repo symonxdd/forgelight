@@ -26,7 +26,7 @@ function Choice({ checked, onClick, children }: { checked: boolean; onClick: () 
 /**
  * Which images the Library shows: all, only favorites, or only private ones. While private
  * images are locked, the Private choice carries the lock and how many are hidden, and asks
- * for the password first. It appears once private mode is set up.
+ * for the PIN or password first. It appears once private mode is set up.
  */
 export function ViewSwitch({
   view,

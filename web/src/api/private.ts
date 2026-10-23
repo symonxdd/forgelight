@@ -60,7 +60,7 @@ export async function unlockPrivate(secret: PrivateSecret): Promise<void> {
   await queryClient.invalidateQueries({ queryKey: ["library"] });
 }
 
-/** Hides private images again, until the password is entered. */
+/** Hides private images again, until the PIN, the password or the recovery key is entered. */
 export async function lockPrivate(): Promise<void> {
   queryClient.setQueryData(PRIVATE_KEY, await request<PrivateStatus>("private/lock", {}));
   await forgetPrivateImages();
