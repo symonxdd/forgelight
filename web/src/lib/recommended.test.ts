@@ -1,14 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { DEFAULT_SETTINGS } from "./txt2img";
 import { pickRemembered } from "./checkpointMemory";
-import {
-  describeSettings,
-  isApplied,
-  matchSampler,
-  notesExcerpt,
-  recommend,
-  recommendedLoraWeight,
-} from "./recommended";
+import { describeSettings, isApplied, matchSampler, noteLines, recommend, recommendedLoraWeight } from "./recommended";
 
 const samplers = ["DPM++ 2M", "DPM++ 2M SDE", "DPM++ SDE", "Euler a", "Euler", "DPM2 a", "UniPC"];
 const schedulers = ["Automatic", "Uniform", "Karras", "Exponential", "SGM Uniform", "Align Your Steps"];
@@ -174,14 +167,33 @@ describe("isApplied", () => {
   });
 });
 
-describe("notesExcerpt", () => {
-  it("keeps the lines about settings", () => {
-    const notes = "Welcome to my model!\nRecommended: Euler a, 25 steps\nCFG 4-6\nJoin my Discord";
-    expect(notesExcerpt(notes)).toEqual(["Recommended: Euler a, 25 steps", "CFG 4-6"]);
+describe("noteLines", () => {
+  it("keeps every line and marks the ones about settings", () => {
+    const notes = "Welcome to my model!\n\nRecommended: Euler a, 25 steps\n  CFG 4-6  \nJoin my Discord";
+    expect(noteLines(notes)).toEqual([
+      { text: "Welcome to my model!", settings: false, heading: false },
+      { text: "Recommended: Euler a, 25 steps", settings: true, heading: false },
+      { text: "CFG 4-6", settings: true, heading: false },
+      { text: "Join my Discord", settings: false, heading: false },
+    ]);
   });
 
-  it("falls back to the first lines", () => {
-    expect(notesExcerpt("Higher contrast\nMore detail", 1)).toEqual(["Higher contrast"]);
-    expect(notesExcerpt(undefined)).toEqual([]);
+  it("marks image sizes and leaves out divider lines", () => {
+    expect(noteLines("1024 x 1024\n____________\n896×1152 (portrait)\n- - -")).toEqual([
+      { text: "1024 x 1024", settings: true, heading: false },
+      { text: "896×1152 (portrait)", settings: true, heading: false },
+    ]);
+  });
+
+  it("treats short lines ending in a colon as headings", () => {
+    expect(
+      noteLines("Using the model:\nPlease avoid franchise tags: they were not trained.").map((l) => l.heading),
+    ).toEqual([true, false]);
+  });
+
+  it("never marks long paragraphs, and handles no notes", () => {
+    const story = `${"A story about how this model came to be. ".repeat(8)}It has many settings.`;
+    expect(noteLines(story)[0]?.settings).toBe(false);
+    expect(noteLines(undefined)).toEqual([]);
   });
 });

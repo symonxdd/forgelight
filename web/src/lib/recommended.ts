@@ -182,15 +182,29 @@ export function isApplied(settings: Partial<RememberedSettings>, current: Rememb
 const SETTINGS_WORDS =
   /\b(sampler|steps?|cfg|clip ?skip|resolution|size|hi-?res|upscal\w*|denois\w*|scheduler|schedule|karras|euler|dpm\+*|vae|recommend\w*|settings?|strength|weight)\b/i;
 
+export interface NoteLine {
+  text: string;
+  /** Talks about settings, such as sampler, steps or CFG. Long paragraphs never count. */
+  settings: boolean;
+  /** A short line ending in a colon, such as "Using the model:", which introduces what follows. */
+  heading: boolean;
+}
+
+/** An image size such as "832 x 1216" or "1024×1024". */
+const SIZE = /\b\d{3,4}\s*[x×*]\s*\d{3,4}\b/i;
+
 /**
- * The lines of a creator's description that talk about settings, so the card can show
- * the useful part of a long text. Falls back to the first lines when none do.
+ * Every line of a creator's description, marking the ones about settings for highlighting.
+ * Lines of only dashes, underscores or the like are decoration and left out.
  */
-export function notesExcerpt(notes: string | undefined, max = 8): string[] {
-  const lines = (notes ?? "")
+export function noteLines(notes: string | undefined): NoteLine[] {
+  return (notes ?? "")
     .split("\n")
     .map((line) => line.trim())
-    .filter(Boolean);
-  const relevant = lines.filter((line) => SETTINGS_WORDS.test(line) && line.length <= 300);
-  return (relevant.length > 0 ? relevant : lines.filter((line) => line.length <= 300)).slice(0, max);
+    .filter((line) => /[\p{L}\p{N}]/u.test(line))
+    .map((text) => ({
+      text,
+      settings: text.length <= 300 && (SETTINGS_WORDS.test(text) || SIZE.test(text)),
+      heading: text.length <= 60 && /[:：]$/.test(text),
+    }));
 }
