@@ -1,7 +1,8 @@
 import { Check, ChevronRight, ExternalLink, LoaderCircle, Monitor, Power, Settings } from "lucide-react";
 import { Popover } from "radix-ui";
-import { useState, type ReactNode } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import { useCreateDesktopShortcut, useSetOpenOnStart, useStartup } from "../api/forgelight";
+import { removePin, usePrivateStatus } from "../api/private";
 import { useConnection, useOptions, useSetOptions } from "../api/queries";
 import { useSetAutoCheck, useUpdates } from "../api/updates";
 import { HELP, HELP_NOTES } from "../lib/help";
@@ -20,7 +21,10 @@ import { IconButton } from "./IconButton";
 import { InfoTip } from "./InfoTip";
 import { SectionsPicker } from "./SectionsPicker";
 import { SelectMenu, type MenuOption } from "./SelectMenu";
+import { PinDialog } from "./private/PinDialog";
+import { UnlockDialog } from "./private/UnlockDialog";
 import { StopForgeDialog } from "./StopForgeDialog";
+import { useSession } from "../stores/session";
 import { Toggle } from "./Toggle";
 import { UpdateDialog } from "./updates/UpdateDialog";
 import { UpdateDot, UpdateNotice } from "./updates/UpdateNotice";
@@ -162,6 +166,32 @@ function Generating() {
   );
 }
 
+const smallButton =
+  "h-8 shrink-0 rounded-md border border-line px-2.5 text-[13px] text-fg hover:border-line-strong hover:text-fg-strong";
+
+/** Private mode's settings; shown once it is set up. */
+function Privacy({ onPin, onRemovePin }: { onPin: () => void; onRemovePin: () => void }) {
+  const status = usePrivateStatus();
+  if (!status.data?.setUp || !status.data.pinAvailable) return null;
+  const hasPin = status.data.pin;
+  return (
+    <Group title="Privacy">
+      <Row id="pin-label" label="PIN" help={HELP.pin} helpNote={HELP_NOTES.pin}>
+        <div className="flex items-center gap-1.5">
+          {hasPin && (
+            <button type="button" onClick={onRemovePin} className={smallButton}>
+              Remove
+            </button>
+          )}
+          <button type="button" onClick={onPin} className={smallButton}>
+            {hasPin ? "Change" : "Add PIN"}
+          </button>
+        </div>
+      </Row>
+    </Group>
+  );
+}
+
 function Startup({ onStopForge }: { onStopForge: () => void }) {
   const startup = useStartup();
   const setOpenOnStart = useSetOpenOnStart();
@@ -243,6 +273,27 @@ export function SettingsMenu() {
   const [open, setOpen] = useState(false);
   const [aboutOpen, setAboutOpen] = useState(false);
   const [stopOpen, setStopOpen] = useState(false);
+  const [pinOpen, setPinOpen] = useState(false);
+  const [unlocking, setUnlocking] = useState(false);
+  const privateStatus = usePrivateStatus();
+  // What to do once the unlock dialog succeeds: PIN changes need private images unlocked.
+  const afterUnlock = useRef<(() => void) | null>(null);
+  const needsUnlock = (then: () => void) => {
+    if (privateStatus.data?.unlocked) return then();
+    afterUnlock.current = then;
+    setUnlocking(true);
+  };
+  const forgetPin = async () => {
+    try {
+      await removePin();
+      useSession.getState().setNotice({ tone: "info", text: "The PIN is removed." });
+    } catch (error) {
+      useSession.getState().setNotice({
+        tone: "warning",
+        text: error instanceof Error ? error.message : "The PIN could not be removed.",
+      });
+    }
+  };
   const [updateOpen, setUpdateOpen] = useState(false);
   return (
     <>
@@ -291,6 +342,16 @@ export function SettingsMenu() {
             />
             <Appearance />
             <Generating />
+            <Privacy
+              onPin={() => {
+                setOpen(false);
+                needsUnlock(() => setPinOpen(true));
+              }}
+              onRemovePin={() => {
+                setOpen(false);
+                needsUnlock(() => void forgetPin());
+              }}
+            />
             <Startup
               onStopForge={() => {
                 setOpen(false);
@@ -325,6 +386,15 @@ export function SettingsMenu() {
       />
       <UpdateDialog open={updateOpen} onOpenChange={setUpdateOpen} />
       <StopForgeDialog open={stopOpen} onOpenChange={setStopOpen} />
+      <PinDialog open={pinOpen} replacing={privateStatus.data?.pin ?? false} onOpenChange={setPinOpen} />
+      <UnlockDialog
+        open={unlocking}
+        onOpenChange={setUnlocking}
+        onUnlocked={() => {
+          afterUnlock.current?.();
+          afterUnlock.current = null;
+        }}
+      />
     </>
   );
 }

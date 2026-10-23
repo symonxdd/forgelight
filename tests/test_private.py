@@ -46,7 +46,7 @@ class PrivateTest(unittest.TestCase):
         patches = [
             mock.patch.object(private, "vault", self.vault),
             mock.patch.object(private, "_forge_url", lambda path: f"http://forge{path}"),
-            mock.patch.dict(private._state, {"on": True, "jobs": {}, "metas": {}}),
+            mock.patch.dict(private._state, {"on": True, "jobs": {}, "metas": {}, "tpm": True}),
         ]
         for patch in patches:
             patch.start()
@@ -148,7 +148,8 @@ class PrivateTest(unittest.TestCase):
         self.vault.unlock(password="correct horse")
         private.set_on(False)
         self.assertFalse(self.vault.is_unlocked())
-        self.assertEqual(private.status(), {"setUp": True, "on": False, "unlocked": False})
+        expected = {"setUp": True, "on": False, "unlocked": False, "pin": False, "pinAvailable": True}
+        self.assertEqual(private.status(), expected)
 
 
 if __name__ == "__main__":

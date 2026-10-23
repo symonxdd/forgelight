@@ -1,9 +1,11 @@
 import { Check, Copy, LoaderCircle, Lock } from "lucide-react";
 import { Dialog } from "radix-ui";
 import { useState, type FormEvent } from "react";
-import { setPrivateOn, setUpPrivate } from "../../api/private";
+import { setPin, setPrivateOn, setUpPrivate, usePrivateStatus } from "../../api/private";
 import { useSession } from "../../stores/session";
 import { PasswordInput } from "./PasswordInput";
+import { pinReady } from "../../lib/pin";
+import { PinFields } from "./PinFields";
 
 const MIN_PASSWORD = 8;
 
@@ -78,7 +80,74 @@ function PasswordStep({ onCreated, onCancel }: { onCreated: (code: string) => vo
 }
 
 /** Step two: the recovery code, shown this once, then private mode goes on. */
-function RecoveryStep({ code, onDone }: { code: string; onDone: () => void }) {
+/** Turns private mode on at the end of setup; a failure is reported, setup still closes. */
+async function turnOnPrivate(): Promise<void> {
+  try {
+    await setPrivateOn(true);
+  } catch (failure) {
+    useSession.getState().setNotice({
+      tone: "warning",
+      text: failure instanceof Error ? failure.message : "Private mode could not be turned on.",
+    });
+  }
+}
+
+/** Step three, when the computer has a security chip: an optional PIN, then private mode goes on. */
+function PinStep({ onDone }: { onDone: () => void }) {
+  const [pin, setPinValue] = useState("");
+  const [repeat, setRepeat] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const finish = async (withPin: boolean) => {
+    setBusy(true);
+    setError(null);
+    if (withPin) {
+      try {
+        await setPin(pin);
+      } catch (failure) {
+        setError(failure instanceof Error ? failure.message : "The PIN could not be saved.");
+        setBusy(false);
+        return;
+      }
+    }
+    await turnOnPrivate();
+    onDone();
+  };
+
+  return (
+    <form
+      onSubmit={(event) => {
+        event.preventDefault();
+        if (pinReady(pin, repeat) && !busy) void finish(true);
+      }}
+      className="flex flex-col gap-4"
+    >
+      <Dialog.Description className="text-[13px] leading-relaxed text-muted">
+        A PIN is a quicker way to unlock private images on this computer. The password can still be used instead.
+      </Dialog.Description>
+      <PinFields pin={pin} repeat={repeat} onPin={setPinValue} onRepeat={setRepeat} autoFocus />
+      {error && <p className="text-[12.5px] text-bad">{error}</p>}
+      <div className="flex justify-end gap-2">
+        <button
+          type="button"
+          disabled={busy}
+          onClick={() => void finish(false)}
+          className="h-9 rounded-lg px-3 text-[13px] text-muted hover:bg-raised hover:text-fg-strong disabled:opacity-40"
+        >
+          Skip
+        </button>
+        <button type="submit" disabled={!pinReady(pin, repeat) || busy} className={primary}>
+          {busy && <LoaderCircle className="size-3.5 animate-spin" aria-hidden />}
+          <Lock className="size-3.5" aria-hidden />
+          Add PIN and turn on
+        </button>
+      </div>
+    </form>
+  );
+}
+
+function RecoveryStep({ code, pinNext, onNext }: { code: string; pinNext: boolean; onNext: () => void }) {
   const [saved, setSaved] = useState(false);
   const [copied, setCopied] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -92,17 +161,11 @@ function RecoveryStep({ code, onDone }: { code: string; onDone: () => void }) {
     }
   };
 
-  const turnOn = async () => {
+  const next = async () => {
+    if (pinNext) return onNext();
     setBusy(true);
-    try {
-      await setPrivateOn(true);
-    } catch (failure) {
-      useSession.getState().setNotice({
-        tone: "warning",
-        text: failure instanceof Error ? failure.message : "Private mode could not be turned on.",
-      });
-    }
-    onDone();
+    await turnOnPrivate();
+    onNext();
   };
 
   return (
@@ -134,9 +197,9 @@ function RecoveryStep({ code, onDone }: { code: string; onDone: () => void }) {
         I've saved it somewhere safe
       </label>
       <div className="flex justify-end">
-        <button type="button" disabled={!saved || busy} onClick={() => void turnOn()} className={primary}>
-          <Lock className="size-3.5" aria-hidden />
-          Turn on private mode
+        <button type="button" disabled={!saved || busy} onClick={() => void next()} className={primary}>
+          {!pinNext && <Lock className="size-3.5" aria-hidden />}
+          {pinNext ? "Next" : "Turn on private mode"}
         </button>
       </div>
     </div>
@@ -149,8 +212,11 @@ function RecoveryStep({ code, onDone }: { code: string; onDone: () => void }) {
  */
 export function PrivateSetupDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
   const [code, setCode] = useState<string | null>(null);
+  const [pinStep, setPinStep] = useState(false);
+  const pinAvailable = usePrivateStatus().data?.pinAvailable ?? false;
   const close = () => {
     setCode(null);
+    setPinStep(false);
     onOpenChange(false);
   };
 
@@ -165,12 +231,18 @@ export function PrivateSetupDialog({ open, onOpenChange }: { open: boolean; onOp
         >
           <Dialog.Title className="flex items-center gap-2 text-[15px] font-semibold text-fg-strong">
             <Lock className="size-4 text-accent" aria-hidden />
-            {code === null ? "Set up private mode" : "Save the recovery key"}
+            {code === null ? "Set up private mode" : pinStep ? "Add a PIN (optional)" : "Save the recovery key"}
           </Dialog.Title>
           {code === null ? (
             <PasswordStep onCreated={setCode} onCancel={close} />
+          ) : pinStep ? (
+            <PinStep onDone={close} />
           ) : (
-            <RecoveryStep code={code} onDone={close} />
+            <RecoveryStep
+              code={code}
+              pinNext={pinAvailable}
+              onNext={() => (pinAvailable ? setPinStep(true) : close())}
+            />
           )}
         </Dialog.Content>
       </Dialog.Portal>

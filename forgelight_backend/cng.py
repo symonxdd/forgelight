@@ -158,3 +158,125 @@ def ec_shared_secret(private_blob: bytes, public_blob: bytes) -> bytes:
             _bcrypt.BCryptDestroySecret(secret)
         _bcrypt.BCryptDestroyKey(private)
         _bcrypt.BCryptDestroyKey(public)
+
+
+# ---- PIN keys in the TPM (NCrypt, Microsoft Platform Crypto Provider) ------------------------
+#
+# A 2048-bit RSA key made inside the laptop's TPM security chip, usable only with its PIN. The
+# chip itself counts wrong PINs and pauses tries after too many, so a short PIN can't be guessed.
+# Encrypting needs no PIN; decrypting does. Every call is silent: Windows never shows a prompt.
+
+TPM_PROVIDER = "Microsoft Platform Crypto Provider"
+_SILENT = 0x40
+_OVERWRITE = 0x80
+_PAD_OAEP = 0x4
+_NTE_PERM = 0x80090010  # A wrong PIN.
+_NTE_BAD_KEYSET = 0x80090016  # No such key.
+_TPM_LOCKOUT = (0x80280921, 0x80280803)  # TPM_20_E_LOCKOUT, TPM_E_DEFEND_LOCK_RUNNING
+
+
+class WrongPinError(AuthenticationError):
+    """The PIN was wrong."""
+
+
+class PinLockedError(CryptoError):
+    """The TPM pauses PIN tries after too many wrong ones."""
+
+
+class _OaepInfo(ctypes.Structure):
+    _fields_ = [("pszAlgId", wintypes.LPCWSTR), ("pbLabel", ctypes.c_void_p), ("cbLabel", wintypes.ULONG)]
+
+
+_ncrypt = ctypes.WinDLL("ncrypt") if os.name == "nt" else None
+
+
+def _tpm_check(status: int) -> None:
+    status &= 0xFFFFFFFF
+    if status == _NTE_PERM:
+        raise WrongPinError("Wrong PIN.")
+    if status in _TPM_LOCKOUT:
+        raise PinLockedError("Too many wrong PINs, so the security chip pauses PIN tries for a while.")
+    if status != 0:
+        raise CryptoError(f"The security chip refused ({status:#010x}).")
+
+
+def _tpm_provider() -> ctypes.c_void_p:
+    if _ncrypt is None:
+        raise CryptoError("A PIN needs Windows.")
+    handle = ctypes.c_void_p()
+    _tpm_check(_ncrypt.NCryptOpenStorageProvider(ctypes.byref(handle), TPM_PROVIDER, 0))
+    return handle
+
+
+def _tpm_set(handle: ctypes.c_void_p, name: str, value: bytes) -> None:
+    buffer = ctypes.create_string_buffer(value, len(value))
+    _tpm_check(_ncrypt.NCryptSetProperty(handle, name, buffer, len(value), _SILENT))
+
+
+def _pin(pin: str) -> bytes:
+    return (pin + "\0").encode("utf-16-le")
+
+
+def tpm_available() -> bool:
+    try:
+        _ncrypt.NCryptFreeObject(_tpm_provider())
+        return True
+    except (CryptoError, AttributeError, OSError):
+        return False
+
+
+def tpm_create(name: str, pin: str) -> None:
+    """Makes a decrypt-only key in the TPM, replacing one with the same name."""
+    provider, key = _tpm_provider(), ctypes.c_void_p()
+    try:
+        _tpm_check(_ncrypt.NCryptCreatePersistedKey(provider, ctypes.byref(key), "RSA", name, 0, _OVERWRITE))
+        _tpm_set(key, "Length", (2048).to_bytes(4, "little"))
+        _tpm_set(key, "Key Usage", (1).to_bytes(4, "little"))  # NCRYPT_ALLOW_DECRYPT_FLAG
+        _tpm_set(key, "SmartCardPin", _pin(pin))
+        _tpm_check(_ncrypt.NCryptFinalizeKey(key, _SILENT))
+    finally:
+        if key.value:
+            _ncrypt.NCryptFreeObject(key)
+        _ncrypt.NCryptFreeObject(provider)
+
+
+def _tpm_crypt(name: str, data: bytes, pin: str | None) -> bytes:
+    provider, key = _tpm_provider(), ctypes.c_void_p()
+    try:
+        _tpm_check(_ncrypt.NCryptOpenKey(provider, ctypes.byref(key), name, 0, _SILENT))
+        if pin is not None:
+            _tpm_set(key, "SmartCardPin", _pin(pin))
+        info = _OaepInfo("SHA256", None, 0)
+        out = ctypes.create_string_buffer(512)
+        size = wintypes.DWORD()
+        fn = _ncrypt.NCryptDecrypt if pin is not None else _ncrypt.NCryptEncrypt
+        _tpm_check(fn(key, data, len(data), ctypes.byref(info), out, 512, ctypes.byref(size), _PAD_OAEP | _SILENT))
+        return out.raw[: size.value]
+    finally:
+        if key.value:
+            _ncrypt.NCryptFreeObject(key)
+        _ncrypt.NCryptFreeObject(provider)
+
+
+def tpm_encrypt(name: str, data: bytes) -> bytes:
+    return _tpm_crypt(name, data, None)
+
+
+def tpm_decrypt(name: str, pin: str, data: bytes) -> bytes:
+    return _tpm_crypt(name, data, pin)
+
+
+def tpm_delete(name: str) -> None:
+    """Removes the key; a key that is already gone counts as removed."""
+    provider, key = _tpm_provider(), ctypes.c_void_p()
+    try:
+        status = _ncrypt.NCryptOpenKey(provider, ctypes.byref(key), name, 0, _SILENT) & 0xFFFFFFFF
+        if status == _NTE_BAD_KEYSET:
+            return
+        _tpm_check(status)
+        _tpm_check(_ncrypt.NCryptDeleteKey(key, 0))
+        key.value = None  # Deleting frees the handle.
+    finally:
+        if key.value:
+            _ncrypt.NCryptFreeObject(key)
+        _ncrypt.NCryptFreeObject(provider)

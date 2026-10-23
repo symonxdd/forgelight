@@ -104,12 +104,19 @@ def private_mode(_request: Request, body: Any) -> dict:
 
 def private_unlock(_request: Request, body: Any) -> dict:
     body = body or {}
-    password, recovery = body.get("password"), body.get("recovery")
-    if not isinstance(password, str) and not isinstance(recovery, str):
-        raise HTTPException(status_code=400, detail="Send the password or the recovery key.")
-    return _private_call(lambda: private.unlock(
-        password if isinstance(password, str) else None, recovery if isinstance(recovery, str) else None
-    ))
+    secrets = {key: value for key in ("password", "recovery", "pin") if isinstance(value := body.get(key), str)}
+    if len(secrets) != 1:
+        raise HTTPException(status_code=400, detail="Send the password, the PIN or the recovery key.")
+    return _private_call(lambda: private.unlock(secrets.get("password"), secrets.get("recovery"), secrets.get("pin")))
+
+
+def private_pin(_request: Request, body: Any) -> dict:
+    pin = (body or {}).get("pin")
+    if pin is None:
+        return _private_call(private.remove_pin)
+    if not isinstance(pin, str):
+        raise HTTPException(status_code=400, detail="Send the PIN.")
+    return _private_call(lambda: private.set_pin(pin))
 
 
 def private_lock(_request: Request, _body: Any) -> dict:
@@ -326,6 +333,7 @@ ROUTES: dict[tuple[str, str], Handler] = {
     ("POST", "private/mode"): private_mode,
     ("POST", "private/unlock"): private_unlock,
     ("POST", "private/lock"): private_lock,
+    ("POST", "private/pin"): private_pin,
     ("POST", "private/generate"): private_generate,
     ("GET", "private/result"): private_result,
     ("POST", "private/add"): private_add,

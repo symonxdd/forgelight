@@ -139,6 +139,96 @@ class VaultTest(unittest.TestCase):
         self.assertNotIn("private", json.dumps(header).lower().replace("publickey", ""))
 
 
+class FakeTpm:
+    """Stands in for the TPM chip: keys by name, each opening only with its PIN."""
+
+    def __init__(self) -> None:
+        self.keys: dict[str, str] = {}
+        self.locked = False
+
+    def create(self, name: str, pin: str) -> None:
+        self.keys[name] = pin
+
+    def encrypt(self, name: str, data: bytes) -> bytes:
+        return name.encode() + b"|" + data
+
+    def decrypt(self, name: str, pin: str, data: bytes) -> bytes:
+        from forgelight_backend import cng
+
+        if self.locked:
+            raise cng.PinLockedError("Too many wrong PINs.")
+        if self.keys.get(name) != pin:
+            raise cng.WrongPinError("Wrong PIN.")
+        return data.split(b"|", 1)[1]
+
+    def delete(self, name: str) -> None:
+        self.keys.pop(name, None)
+
+
+@unittest.skipUnless(os.name == "nt", "the vault uses Windows cryptography")
+class PinTest(unittest.TestCase):
+    def setUp(self) -> None:
+        from unittest import mock
+
+        from forgelight_backend import cng
+
+        self.folder = tempfile.TemporaryDirectory()
+        self.root = Path(self.folder.name) / "vault"
+        self.real_scrypt, vault_module.SCRYPT = vault_module.SCRYPT, FAST_SCRYPT
+        self.tpm = FakeTpm()
+        for name in ("create", "encrypt", "decrypt", "delete"):
+            patch = mock.patch.object(cng, f"tpm_{name}", getattr(self.tpm, name))
+            patch.start()
+            self.addCleanup(patch.stop)
+        self.vault = Vault(self.root, {})
+        self.vault.create("correct horse")
+
+    def tearDown(self) -> None:
+        vault_module.SCRYPT = self.real_scrypt
+        self.folder.cleanup()
+
+    def test_pin_unlocks_and_password_still_works(self) -> None:
+        item = self.vault.add(b"secret", {}, b"")
+        self.vault.set_pin("482915")
+        self.assertTrue(self.vault.has_pin())
+        by_pin = Vault(self.root, {})
+        by_pin.unlock(pin="482915")
+        self.assertEqual(by_pin.image(item), b"secret")
+        Vault(self.root, {}).unlock(password="correct horse")
+
+    def test_wrong_and_locked_pin(self) -> None:
+        self.vault.set_pin("482915")
+        with self.assertRaises(VaultError) as raised:
+            Vault(self.root, {}).unlock(pin="000000")
+        self.assertEqual((raised.exception.status, str(raised.exception)), (403, "Wrong PIN."))
+        self.tpm.locked = True
+        with self.assertRaises(VaultError) as raised:
+            Vault(self.root, {}).unlock(pin="482915")
+        self.assertEqual(raised.exception.status, 429)
+        self.assertIn("Use the password instead", str(raised.exception))
+
+    def test_pin_rules_and_needs_unlocked(self) -> None:
+        for bad in ("123", "1234567890123", "12a4", "１２３４"):
+            with self.assertRaises(VaultError):
+                self.vault.set_pin(bad)
+        self.vault.lock()
+        with self.assertRaises(VaultError) as raised:
+            self.vault.set_pin("4829")
+        self.assertEqual(raised.exception.status, 423)
+
+    def test_change_and_remove(self) -> None:
+        self.vault.set_pin("1111")
+        self.vault.set_pin("2222")
+        with self.assertRaises(VaultError):
+            Vault(self.root, {}).unlock(pin="1111")
+        Vault(self.root, {}).unlock(pin="2222")
+        self.vault.remove_pin()
+        self.assertFalse(self.vault.has_pin())
+        self.assertEqual(self.tpm.keys, {})
+        with self.assertRaises(VaultError):
+            Vault(self.root, {}).unlock(pin="2222")
+
+
 @unittest.skipUnless(os.name == "nt", "the vault uses Windows cryptography")
 class HelpersTest(unittest.TestCase):
     def test_hkdf_matches_rfc5869(self) -> None:

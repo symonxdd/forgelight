@@ -13,6 +13,10 @@ export interface PrivateStatus {
   on: boolean;
   /** The private key is in memory, so private images can be shown. */
   unlocked: boolean;
+  /** A PIN is set up. */
+  pin: boolean;
+  /** This computer's security chip can hold a PIN. */
+  pinAvailable: boolean;
 }
 
 export const PRIVATE_KEY = ["private"];
@@ -39,7 +43,9 @@ export async function setPrivateOn(on: boolean): Promise<void> {
 }
 
 /** Shows private images: with the password, or the recovery key instead. */
-export async function unlockPrivate(secret: { password: string } | { recovery: string }): Promise<void> {
+export async function unlockPrivate(
+  secret: { password: string } | { recovery: string } | { pin: string },
+): Promise<void> {
   queryClient.setQueryData(PRIVATE_KEY, await request<PrivateStatus>("private/unlock", secret));
   await queryClient.invalidateQueries({ queryKey: ["library"] });
 }
@@ -68,6 +74,15 @@ async function forgetPrivateImages(): Promise<void> {
     return { images: kept, selectedId };
   });
   await queryClient.invalidateQueries({ queryKey: ["library"] });
+}
+
+/** Adds a PIN or replaces it. Needs private images unlocked. */
+export async function setPin(pin: string): Promise<void> {
+  queryClient.setQueryData(PRIVATE_KEY, await request<PrivateStatus>("private/pin", { pin }));
+}
+
+export async function removePin(): Promise<void> {
+  queryClient.setQueryData(PRIVATE_KEY, await request<PrivateStatus>("private/pin", { pin: null }));
 }
 
 /** Creates the vault; the recovery code comes back once and is never stored. */

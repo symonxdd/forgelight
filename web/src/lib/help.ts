@@ -79,6 +79,7 @@ export const HELP = {
   foundModels: "Checkpoints and LoRAs in Downloads or on the Desktop that Forge doesn't have yet.",
   privateMode:
     "New images are saved encrypted in Forgelight's vault instead of as normal files in Forge's outputs folder.",
+  pin: "A short code that unlocks private images on this computer, instead of the password.",
   recommended:
     "Settings from the example images this checkpoint's creator shared on Civitai. Nothing changes until Apply is clicked.",
 } as const;
@@ -88,6 +89,7 @@ export const HELP = {
  * how to say it, spelled with everyday words rather than phonetic symbols.
  */
 export const HELP_NOTES = {
+  pin: "Kept by the computer's security chip (TPM), which pauses tries after too many wrong PINs. The password can still be used instead.",
   findNewModels: "Only those two places, not the folders inside them. Nothing moves until Move to Forge is clicked.",
   foundModels: "Only those two places are checked, not the folders inside them. Switched off in settings.",
   recommended:

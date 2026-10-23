@@ -18,7 +18,7 @@ from typing import Any
 
 import requests
 
-from . import startup
+from . import cng, startup
 from .vault import VaultError, vault
 
 KINDS = ("txt2img", "img2img")
@@ -43,8 +43,21 @@ def is_on() -> bool:
     return bool(_state["on"])
 
 
+def pin_available() -> bool:
+    """Whether this computer has a TPM security chip that can hold a PIN key. Checked once."""
+    if "tpm" not in _state:
+        _state["tpm"] = cng.tpm_available()
+    return bool(_state["tpm"])
+
+
 def status() -> dict:
-    return {"setUp": vault.exists(), "on": is_on(), "unlocked": vault.is_unlocked()}
+    return {
+        "setUp": vault.exists(),
+        "on": is_on(),
+        "unlocked": vault.is_unlocked(),
+        "pin": vault.has_pin(),
+        "pinAvailable": pin_available(),
+    }
 
 
 def set_on(on: bool) -> dict:
@@ -57,8 +70,24 @@ def set_on(on: bool) -> dict:
     return status()
 
 
-def unlock(password: str | None, recovery: str | None) -> dict:
-    vault.unlock(password=password, recovery=recovery)
+def unlock(password: str | None, recovery: str | None, pin: str | None = None) -> dict:
+    vault.unlock(password=password, recovery=recovery, pin=pin)
+    return status()
+
+
+def set_pin(pin: str) -> dict:
+    try:
+        vault.set_pin(pin)
+    except cng.CryptoError as error:
+        raise VaultError(f"The PIN couldn't be saved in the security chip: {error}", 500) from error
+    return status()
+
+
+def remove_pin() -> dict:
+    try:
+        vault.remove_pin()
+    except cng.CryptoError as error:
+        raise VaultError(f"The PIN couldn't be removed from the security chip: {error}", 500) from error
     return status()
 
 
