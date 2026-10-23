@@ -33,13 +33,14 @@ function Message({
       role={tone === "error" ? "alert" : "status"}
       // Floats in the image's top right corner, clear of the prompt and the zoom bar. It eases
       // in, and fades out when it leaves by itself.
-      className={`flex items-center gap-2.5 rounded-xl border border-line bg-surface p-3 motion-safe:animate-[toast-in_180ms_ease-out] motion-safe:transition-opacity motion-safe:duration-200 ${
+      className={`flex items-start gap-2.5 rounded-xl border border-line bg-surface p-3 motion-safe:animate-[toast-in_180ms_ease-out] motion-safe:transition-opacity motion-safe:duration-200 ${
         fading ? "opacity-0" : ""
       }`}
     >
-      <Icon className={`size-4 shrink-0 ${ICON_COLOR[tone]}`} aria-hidden />
+      {/* The icon and the close button line up with the title, however long the text below it. */}
+      <Icon className={`mt-0.5 size-4 shrink-0 ${ICON_COLOR[tone]}`} aria-hidden />
       <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <p className="text-[13px] font-medium text-fg-strong">{title ?? TITLES[tone]}</p>
+        <p className="text-[13px] leading-5 font-medium text-fg-strong">{title ?? TITLES[tone]}</p>
         <p className={`text-[12.5px] leading-snug ${tone === "error" ? "text-bad" : "text-muted"}`}>{text}</p>
         {action && (
           <button
@@ -58,7 +59,7 @@ function Message({
         type="button"
         onClick={onDismiss}
         aria-label="Dismiss"
-        className="grid size-6 shrink-0 place-items-center rounded text-faint hover:text-fg-strong"
+        className="-mt-0.5 grid size-6 shrink-0 place-items-center rounded text-faint hover:text-fg-strong"
       >
         <X className="size-3.5" aria-hidden />
       </button>
