@@ -7,6 +7,7 @@ import { Hint } from "../Hint";
 import { InfoTip } from "../InfoTip";
 import { NumberSlider } from "./NumberSlider";
 import { SelectField } from "./SelectField";
+import { SteadyLabel } from "../SteadyLabel";
 
 const METHODS: { id: UpscaleMethod; label: string }[] = [
   { id: "enhance", label: "Enhance" },
@@ -64,10 +65,10 @@ export function UpscaleRow() {
                 aria-checked={card.method === id}
                 onClick={() => card.update({ method: id })}
                 className={`h-full rounded-[5px] px-2.5 text-[12.5px] ${
-                  card.method === id ? "bg-raised font-medium text-fg-strong" : "text-muted hover:text-fg-strong"
+                  card.method === id ? "bg-raised text-fg-strong" : "text-muted hover:text-fg-strong"
                 }`}
               >
-                {label}
+                <SteadyLabel text={label} bold={card.method === id} />
               </button>
             ))}
           </div>

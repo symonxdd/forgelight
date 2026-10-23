@@ -7,6 +7,7 @@ import { ConnectionStatus } from "./ConnectionStatus";
 import { LockButton } from "./private/LockButton";
 import { SettingsMenu } from "./SettingsMenu";
 import { ThemeSwitch } from "./ThemeSwitch";
+import { SteadyLabel } from "./SteadyLabel";
 
 const VIEWS: { id: View; label: string }[] = [
   { id: "generate", label: "Generate" },
@@ -26,10 +27,10 @@ function ViewSwitch() {
           onClick={() => setView(id)}
           aria-current={view === id ? "page" : undefined}
           className={`h-7 rounded-[5px] px-3 text-[13px] ${
-            view === id ? "bg-raised font-medium text-fg-strong" : "text-muted hover:text-fg-strong"
+            view === id ? "bg-raised text-fg-strong" : "text-muted hover:text-fg-strong"
           }`}
         >
-          {label}
+          <SteadyLabel text={label} bold={view === id} />
         </button>
       ))}
     </nav>

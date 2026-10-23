@@ -3,6 +3,7 @@ import { Dialog } from "radix-ui";
 import { useState, type ReactNode } from "react";
 import { noteLines, type NoteLine } from "../../lib/recommended";
 import { CivitaiLink } from "../CivitaiLink";
+import { SteadyLabel } from "../SteadyLabel";
 import { Toggle } from "../Toggle";
 
 function Tab({ checked, onClick, children }: { checked: boolean; onClick: () => void; children: ReactNode }) {
@@ -13,7 +14,7 @@ function Tab({ checked, onClick, children }: { checked: boolean; onClick: () => 
       aria-selected={checked}
       onClick={onClick}
       className={`flex h-full items-center rounded-[5px] px-2.5 text-[13px] whitespace-nowrap ${
-        checked ? "bg-raised font-medium text-fg-strong" : "text-muted hover:text-fg-strong"
+        checked ? "bg-raised text-fg-strong" : "text-muted hover:text-fg-strong"
       }`}
     >
       {children}
@@ -100,10 +101,10 @@ export function CreatorNotesDialog({
                   className="flex h-8 items-center gap-0.5 rounded-md border border-line bg-surface p-0.5"
                 >
                   <Tab checked={shownTab === "model"} onClick={() => setTab("model")}>
-                    About the model
+                    <SteadyLabel text="About the model" bold={shownTab === "model"} />
                   </Tab>
                   <Tab checked={shownTab === "version"} onClick={() => setTab("version")}>
-                    {versionLabel}
+                    <SteadyLabel text={versionLabel} bold={shownTab === "version"} />
                   </Tab>
                 </div>
               ) : (
