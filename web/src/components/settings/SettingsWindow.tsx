@@ -1,7 +1,9 @@
 import { Download, Folder, Info, LockKeyhole, Palette, Server, Sparkles, X, type LucideIcon } from "lucide-react";
 import { Dialog } from "radix-ui";
+import { useEffect } from "react";
 import { useUpdates } from "../../api/updates";
 import { showsNotice } from "../../lib/updates";
+import { useGuide } from "../../stores/guide";
 import { AboutPage } from "../about/AboutPage";
 import { AppearancePage } from "./AppearancePage";
 import { FoldersPage } from "./FoldersPage";
@@ -61,6 +63,14 @@ function NavItem({
 export function SettingsWindow({ page, onPage, onOpenUpdate, ...privacy }: SettingsWindowProps) {
   const updateWaiting = showsNotice(useUpdates().data);
   const current = page ?? "appearance";
+  // An info icon's "click for more" opens the guide's side panel, which this window would cover.
+  useEffect(
+    () =>
+      useGuide.subscribe((state, previous) => {
+        if (state.peek && state.peek !== previous.peek) onPage(null);
+      }),
+    [onPage],
+  );
 
   return (
     <Dialog.Root open={page !== null} onOpenChange={(open) => !open && onPage(null)}>

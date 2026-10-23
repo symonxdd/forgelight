@@ -30,11 +30,27 @@ export function Dropdown({
   );
 }
 
-/** Related settings on a card of their own, under a quiet title. */
-export function Group({ title, children }: { title?: string; children: ReactNode }) {
+/** Related settings on a card of their own, under a quiet title, which can carry an explanation. */
+export function Group({
+  title,
+  help,
+  helpNote,
+  children,
+}: {
+  title?: string;
+  /** Explains the whole group; when it starts with the title, the title is bold in it. */
+  help?: string;
+  helpNote?: string;
+  children: ReactNode;
+}) {
   return (
     <section aria-label={title} className="flex flex-col">
-      {title && <h3 className="px-1 pb-1.5 text-[12.5px] font-medium text-muted">{title}</h3>}
+      {title && (
+        <h3 className="flex items-center gap-1.5 px-1 pb-1.5 text-[12.5px] font-medium text-muted">
+          {title}
+          {help && <InfoTip topic={title} text={help} note={helpNote} side="top" boldStart={title} />}
+        </h3>
+      )}
       <div className="flex flex-col divide-y divide-line/60 rounded-lg bg-raised/60 px-3 py-0.5">{children}</div>
     </section>
   );

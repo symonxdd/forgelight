@@ -46,7 +46,7 @@ export function PrivacyPage({ onPin, onRemovePin, onPassword, onRecoveryKey, onT
   const setUp = status?.setUp ?? false;
   return (
     <Page title="Privacy">
-      <Group title="Private mode">
+      <Group title="Private mode" help={HELP.privateModeAbout} helpNote={HELP_NOTES.privateModeAbout}>
         {setUp ? (
           <>
             <Row id="start-private-label" label="Start in private mode" help={HELP.startPrivate}>

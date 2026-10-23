@@ -77,6 +77,8 @@ export const HELP = {
   foundModels: "Checkpoints and LoRAs in Downloads or on the Desktop that Forge doesn't have yet.",
   privateMode:
     "New images are saved encrypted in Forgelight's vault instead of as normal files in Forge's outputs folder.",
+  privateModeAbout:
+    "Private mode keeps new images locked away. They are saved encrypted, never as normal pictures, so only the password, the PIN or the recovery key can show them again.",
   startPrivate: "Forge starts with private mode already on, so no image is saved as a normal file by accident.",
   privatePassword: "Changes the private mode password. Images don't need to be encrypted again, so it's instant.",
   recoveryKey: "Makes a new recovery key and shows it once. The old one stops working.",
@@ -94,6 +96,8 @@ export const HELP = {
  * how to say it, spelled with everyday words rather than phonetic symbols.
  */
 export const HELP_NOTES = {
+  privateModeAbout:
+    "Switched on with the Private button beside Generate. Saving needs no password, so images can be made while private ones are locked. Existing images can be made private in the Library.",
   windowsThumbnails: "Windows makes new previews as folders are opened again. Private images never get one.",
   driveEncryption: "Turned on in Windows' BitLocker settings. Keep the recovery key it shows somewhere safe.",
   pin: "Kept by the computer's security chip (TPM), which pauses tries after too many wrong PINs. The password can still be used instead.",

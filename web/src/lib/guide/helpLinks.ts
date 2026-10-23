@@ -25,6 +25,13 @@ export const HELP_TOPICS: Partial<Record<HelpKey, string>> = {
   img2imgStrength: "settings/image-to-image",
   civitaiSite: "getting-models/civitai",
   civitai: "getting-models/civitai",
+  privateModeAbout: "private-mode/overview",
+  startPrivate: "private-mode/overview",
+  pin: "private-mode/unlocking",
+  privatePassword: "private-mode/unlocking",
+  recoveryKey: "private-mode/unlocking",
+  windowsThumbnails: "private-mode/traces",
+  driveEncryption: "private-mode/traces",
 };
 
 // Info tips receive their text, not their key; the texts are unique, so they work as keys.
