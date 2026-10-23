@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.4.0 (2026-10-24)
+
 ### 🌱 New
 
 - **Added private mode, a locked vault for images.** While the Private button beside Generate is on, new images are encrypted the moment Forge returns them and never land on the disk as normal pictures. Saving needs no password; showing them again needs the password, an optional PIN kept by the computer's security chip, or the recovery key shown once at setup. While unlocked, private images appear in the Library with a lock, and existing images can be made private, or public again, from there. The top bar always shows whether the vault is locked, and the browser tab reads "Forgelight · Unlocked" while it is open. Settings, under Privacy, holds the PIN, password and recovery key, Start in private mode, a way to clear Windows' thumbnails and the drive encryption state. A Guide chapter explains how it all works.
