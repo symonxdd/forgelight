@@ -568,3 +568,37 @@ def reveal(image_id: str) -> None:
     path = resolve(image_id)
     # Windows paths can't contain quotes, so the quoted path is always one argument.
     subprocess.Popen(f'explorer /select,"{path}"')
+
+
+def folders() -> dict[str, Path]:
+    """The folders Settings lists, by key, as Forge's own settings name them.
+
+    Outputs is the folder that holds Forge's output folders (outputs by default), or the
+    single folder when Forge saves everything in one. Upscaled images go to the extras folder.
+    """
+    from . import newmodels, store
+
+    models = newmodels.targets()
+    found = roots()
+    result = {"checkpoints": models["checkpoint"], "loras": models["lora"]}
+    if "outputs" in found:
+        result["outputs"] = result["upscaled"] = found["outputs"]
+    elif found:
+        try:
+            result["outputs"] = Path(os.path.commonpath([str(p) for p in found.values()]))
+        except ValueError:  # on different drives
+            result["outputs"] = next(iter(found.values()))
+        if "extras" in found:
+            result["upscaled"] = found["extras"]
+    result["data"] = store.DATA
+    return result
+
+
+def open_folder(key: str) -> None:
+    """Opens one of the listed folders in File Explorer. Only listed keys, never a path from the page."""
+    import subprocess
+
+    path = folders().get(key)
+    if path is None or not path.is_dir():
+        raise FileNotFoundError(key)
+    subprocess.Popen(["explorer", str(path)])

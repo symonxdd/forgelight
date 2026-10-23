@@ -13,6 +13,7 @@ import { CivitaiLink } from "../CivitaiLink";
 import { Hint } from "../Hint";
 import { InfoTip } from "../InfoTip";
 import { FoundModelsList } from "../newmodels/FoundModelsList";
+import { FolderButton } from "../FolderButton";
 import { RefreshButton } from "../RefreshButton";
 import { NumberSlider } from "./NumberSlider";
 
@@ -273,6 +274,7 @@ function LoraPicker({
               aria-label="Search LoRAs"
               className="h-8 w-full bg-transparent text-[13.5px] text-fg-strong placeholder:text-faint focus:outline-none"
             />
+            <FolderButton folder="loras" label="Open the LoRA folder" className="size-7" />
             <RefreshButton
               label="Reload LoRA list"
               busy={refresh.isPending}

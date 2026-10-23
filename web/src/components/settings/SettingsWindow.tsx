@@ -1,20 +1,22 @@
-import { Download, Info, LockKeyhole, Palette, Server, Sparkles, X, type LucideIcon } from "lucide-react";
+import { Download, Folder, Info, LockKeyhole, Palette, Server, Sparkles, X, type LucideIcon } from "lucide-react";
 import { Dialog } from "radix-ui";
 import { useUpdates } from "../../api/updates";
 import { showsNotice } from "../../lib/updates";
 import { AboutPage } from "../about/AboutPage";
 import { AppearancePage } from "./AppearancePage";
+import { FoldersPage } from "./FoldersPage";
 import { ForgePage } from "./ForgePage";
 import { GeneratingPage } from "./GeneratingPage";
 import { PrivacyPage, type PrivacyActions } from "./PrivacyPage";
 import { UpdatesPage } from "./UpdatesPage";
 
-export type SettingsPageId = "appearance" | "generating" | "privacy" | "forge" | "updates" | "about";
+export type SettingsPageId = "appearance" | "generating" | "privacy" | "folders" | "forge" | "updates" | "about";
 
 const PAGES: { id: SettingsPageId; label: string; icon: LucideIcon }[] = [
   { id: "appearance", label: "Appearance", icon: Palette },
   { id: "generating", label: "Generating", icon: Sparkles },
   { id: "privacy", label: "Privacy", icon: LockKeyhole },
+  { id: "folders", label: "Folders", icon: Folder },
   { id: "forge", label: "Forge", icon: Server },
   { id: "updates", label: "Updates", icon: Download },
 ];
@@ -96,6 +98,7 @@ export function SettingsWindow({ page, onPage, onOpenUpdate, ...privacy }: Setti
             {current === "appearance" && <AppearancePage />}
             {current === "generating" && <GeneratingPage />}
             {current === "privacy" && <PrivacyPage {...privacy} />}
+            {current === "folders" && <FoldersPage />}
             {current === "forge" && <ForgePage />}
             {current === "updates" && <UpdatesPage onOpenUpdate={onOpenUpdate} />}
             {current === "about" && <AboutPage onOpenUpdate={onOpenUpdate} />}

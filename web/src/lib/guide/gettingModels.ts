@@ -98,7 +98,10 @@ export const gettingModels: GuideChapter = {
           ["Upscaler", "webui\\models\\ESRGAN", "After a Forge restart"],
         ],
       },
-      points: ["Subfolders work, for keeping things tidy."],
+      points: [
+        "Subfolders work, for keeping things tidy.",
+        "The folder button beside the refresh button in the checkpoint and LoRA lists opens that folder in File Explorer. Settings, under Folders, lists the others.",
+      ],
       forgelight:
         "Forgelight looks in the Downloads folder and on the Desktop, not the folders inside them, for checkpoints and LoRAs that Forge doesn't have yet. It offers each one in a card beside the image and at the top of the model lists, and Move to Forge moves it into the right folder. Nothing moves without that click.",
       keywords: ["folder", "path", "install", "where", "directory", "refresh", "move", "downloads", "desktop", "new"],

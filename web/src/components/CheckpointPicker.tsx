@@ -11,6 +11,7 @@ import { Hint } from "./Hint";
 import { CivitaiLink } from "./CivitaiLink";
 import { InfoTip } from "./InfoTip";
 import { FoundModelsList } from "./newmodels/FoundModelsList";
+import { FolderButton } from "./FolderButton";
 import { RefreshButton } from "./RefreshButton";
 
 interface Row {
@@ -107,11 +108,12 @@ export function CheckpointPicker({ enabled }: { enabled: boolean }) {
             <div className="flex items-center gap-1.5 px-3.5 pt-3 pb-1.5">
               <span className="text-xs font-medium tracking-wide text-muted uppercase">Checkpoints</span>
               <InfoTip topic="checkpoints" text={HELP.checkpoint} side="right" />
+              <FolderButton folder="checkpoints" label="Open the checkpoints folder" className="ml-auto size-7" />
               <RefreshButton
                 label="Reload checkpoint list"
                 busy={refresh.isPending}
                 onClick={() => refresh.mutate()}
-                className="ml-auto size-7"
+                className="size-7"
               />
             </div>
             <ul role="listbox" aria-label="Checkpoints" className="flex flex-col overflow-y-auto px-1.5 pb-1.5">

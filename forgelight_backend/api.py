@@ -297,6 +297,18 @@ def library_thumb(request: Request, _body: Any) -> Response:
     return _image_file(request, library.thumbnail)
 
 
+def folders_list(_request: Request, _body: Any) -> list[dict]:
+    return [{"key": key, "path": str(path), "exists": path.is_dir()} for key, path in library.folders().items()]
+
+
+def folders_open(_request: Request, body: Any) -> dict:
+    try:
+        library.open_folder(str((body or {}).get("key", "")))
+    except FileNotFoundError as error:
+        raise HTTPException(status_code=404, detail="That folder doesn't exist yet.") from error
+    return {"ok": True}
+
+
 def library_reveal(_request: Request, body: Any) -> dict:
     try:
         library.reveal(str((body or {}).get("id", "")))
@@ -393,6 +405,8 @@ ROUTES: dict[tuple[str, str], Handler] = {
     ("GET", "library/image"): library_image,
     ("GET", "library/thumb"): library_thumb,
     ("POST", "library/reveal"): library_reveal,
+    ("GET", "folders"): folders_list,
+    ("POST", "folders/open"): folders_open,
     ("POST", "library/delete"): library_delete,
     ("POST", "library/make-private"): library_make_private,
     ("POST", "library/make-public"): library_make_public,

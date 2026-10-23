@@ -26,7 +26,8 @@ export function Hint({ label, children, side = "bottom" }: HintProps) {
           side={side}
           sideOffset={6}
           collisionPadding={8}
-          className="z-50 max-w-64 rounded-md bg-fg-strong px-2 py-1 text-xs text-canvas shadow-sm select-none"
+          // Long words such as file paths wrap anywhere, or they would run past the bubble.
+          className="z-50 max-w-64 rounded-md bg-fg-strong px-2 py-1 text-xs wrap-anywhere text-canvas shadow-sm select-none"
         >
           {label}
         </Tooltip.Content>
