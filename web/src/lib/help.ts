@@ -60,6 +60,10 @@ export const HELP = {
     "Controls which sections of the Generate screen are visible: LoRAs in the prompt card, and Size, Sampling and Hires fix in the left column.",
   oled: "Pure black instead of dark gray. On OLED screens black pixels are switched off, which gives deeper contrast and uses less power.",
   font: "The typeface used throughout Forgelight.",
+  vram: "VRAM: the graphics card's own memory. The checkpoint and the image being made have to fit in it. Forge keeps models there between images, so a high number is normal. When it runs out, Forge moves parts to RAM, which is slower.",
+  ram: "RAM: the computer's main memory, shared by Forge, the browser and every other open program.",
+  systemDetails:
+    "Details: the graphics card's temperature and how busy it is, the space Forge's images, the models and the private vault take, and the checkpoint most images were made with.",
   numbersAndDates:
     "Numbers and dates: how Forgelight writes numbers, dates and times. Like Windows follows the regional format set in Windows (Settings, Time and language, Language and region). Number fields accept a comma or a dot either way. Prompts are never changed.",
   openOnStart:

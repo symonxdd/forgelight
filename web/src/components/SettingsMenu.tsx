@@ -13,6 +13,7 @@ import { RemovePinDialog } from "./private/RemovePinDialog";
 import { OledRow } from "./settings/AppearancePage";
 import { Group, Row } from "./settings/parts";
 import { SettingsWindow, type SettingsPageId } from "./settings/SettingsWindow";
+import { useSettingsWindow } from "../stores/settingsWindow";
 import { StopForgeDialog } from "./StopForgeDialog";
 import { UpdateDialog } from "./updates/UpdateDialog";
 import { UpdateDot, UpdateNotice } from "./updates/UpdateNotice";
@@ -43,7 +44,8 @@ function StopForgeRow({ onStop }: { onStop: () => void }) {
  */
 export function SettingsMenu() {
   const [open, setOpen] = useState(false);
-  const [page, setPage] = useState<SettingsPageId | null>(null);
+  const page = useSettingsWindow((s) => s.page);
+  const setPage = useSettingsWindow((s) => s.setPage);
   const [stopOpen, setStopOpen] = useState(false);
   const [updateOpen, setUpdateOpen] = useState(false);
   const [pinOpen, setPinOpen] = useState(false);

@@ -1,18 +1,20 @@
-import { Download, Folder, Info, LockKeyhole, Palette, Server, Sparkles, X, type LucideIcon } from "lucide-react";
+import { Cpu, Download, Folder, Info, LockKeyhole, Palette, Server, Sparkles, X, type LucideIcon } from "lucide-react";
 import { Dialog } from "radix-ui";
 import { useEffect } from "react";
 import { useUpdates } from "../../api/updates";
 import { showsNotice } from "../../lib/updates";
 import { useGuide } from "../../stores/guide";
+import type { SettingsPageId } from "../../stores/settingsWindow";
 import { AboutPage } from "../about/AboutPage";
 import { AppearancePage } from "./AppearancePage";
 import { FoldersPage } from "./FoldersPage";
 import { ForgePage } from "./ForgePage";
 import { GeneratingPage } from "./GeneratingPage";
 import { PrivacyPage, type PrivacyActions } from "./PrivacyPage";
+import { SystemPage } from "./SystemPage";
 import { UpdatesPage } from "./UpdatesPage";
 
-export type SettingsPageId = "appearance" | "generating" | "privacy" | "folders" | "forge" | "updates" | "about";
+export type { SettingsPageId };
 
 const PAGES: { id: SettingsPageId; label: string; icon: LucideIcon }[] = [
   { id: "appearance", label: "Appearance", icon: Palette },
@@ -20,6 +22,7 @@ const PAGES: { id: SettingsPageId; label: string; icon: LucideIcon }[] = [
   { id: "privacy", label: "Privacy", icon: LockKeyhole },
   { id: "folders", label: "Folders", icon: Folder },
   { id: "forge", label: "Forge", icon: Server },
+  { id: "system", label: "System", icon: Cpu },
   { id: "updates", label: "Updates", icon: Download },
 ];
 const ABOUT = { id: "about", label: "About", icon: Info } as const;
@@ -110,6 +113,7 @@ export function SettingsWindow({ page, onPage, onOpenUpdate, ...privacy }: Setti
             {current === "privacy" && <PrivacyPage {...privacy} />}
             {current === "folders" && <FoldersPage />}
             {current === "forge" && <ForgePage />}
+            {current === "system" && <SystemPage />}
             {current === "updates" && <UpdatesPage onOpenUpdate={onOpenUpdate} />}
             {current === "about" && <AboutPage onOpenUpdate={onOpenUpdate} />}
           </div>

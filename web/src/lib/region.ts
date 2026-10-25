@@ -76,8 +76,8 @@ export async function loadRegionalFormat(): Promise<void> {
   }
 }
 
-function number(value: number, maxDecimals: number, format: Resolved): string {
-  const us = value.toLocaleString("en-US", { maximumFractionDigits: maxDecimals });
+function number(value: number, maxDecimals: number, format: Resolved, minDecimals = 0): string {
+  const us = value.toLocaleString("en-US", { minimumFractionDigits: minDecimals, maximumFractionDigits: maxDecimals });
   return us.replace(/[.,]/g, (c) => (c === "." ? format.decimal : format.group));
 }
 
@@ -86,9 +86,9 @@ function date(value: Date, options: Intl.DateTimeFormatOptions, format: Resolved
   return value.toLocaleString(format.dateLocale, clock);
 }
 
-/** "2.431", "4,1": rounded to at most `maxDecimals` places, with the chosen separators. */
-export function formatNumber(value: number, maxDecimals = 2): string {
-  return number(value, maxDecimals, current);
+/** "2.431", "4,1": rounded to at most `maxDecimals` places (at least `minDecimals`), with the chosen separators. */
+export function formatNumber(value: number, maxDecimals = 2, minDecimals = 0): string {
+  return number(value, maxDecimals, current, minDecimals);
 }
 
 /** For a number field: a fixed number of decimals and no thousands separator, "0,35". */

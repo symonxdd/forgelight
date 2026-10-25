@@ -2,6 +2,7 @@ import { Check, Copy, X } from "lucide-react";
 import { useState } from "react";
 import { parseInfotext } from "../../lib/infotext";
 import { localizeDecimal } from "../../lib/region";
+import { statsLines } from "../../lib/system";
 import { applyGenerationData } from "../../stores/applySettings";
 import type { SessionImage } from "../../stores/session";
 import { useSettings } from "../../stores/settings";
@@ -51,6 +52,7 @@ export function InfoDrawer({ image, onApplied }: { image: SessionImage; onApplie
   const setInfoOpen = useViewer((s) => s.setInfoOpen);
   const update = useSettings((s) => s.update);
   const parsed = parseInfotext(image.infotext);
+  const stats = image.stats ? statsLines(image.stats) : [];
 
   return (
     <aside aria-label="Image info" className="flex w-80 max-w-[50%] shrink-0 flex-col border-l border-line bg-surface">
@@ -69,7 +71,7 @@ export function InfoDrawer({ image, onApplied }: { image: SessionImage; onApplie
       <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto px-5 pb-5">
         <TextBlock title="Prompt" text={parsed.prompt} />
         <TextBlock title="Negative prompt" text={parsed.negativePrompt} />
-        {parsed.params.length > 0 && (
+        {parsed.params.length + stats.length > 0 && (
           <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-1.5 text-[13px]">
             {parsed.params.map(([label, value]) => (
               <div key={label} className="contents">
@@ -77,6 +79,16 @@ export function InfoDrawer({ image, onApplied }: { image: SessionImage; onApplie
                 <dd className="min-w-0 break-words text-fg-strong">{localizeDecimal(value)}</dd>
               </div>
             ))}
+            {/* Measured while the image was made, so set apart from the settings it was made with. */}
+            {stats.map(([label, value], index) => {
+              const apart = index === 0 && parsed.params.length > 0 ? "mt-1.5 border-t border-line pt-2" : "";
+              return (
+                <div key={label} className="contents">
+                  <dt className={`text-muted ${apart}`}>{label}</dt>
+                  <dd className={`min-w-0 break-words text-fg-strong tabular-nums ${apart}`}>{value}</dd>
+                </div>
+              );
+            })}
           </dl>
         )}
       </div>

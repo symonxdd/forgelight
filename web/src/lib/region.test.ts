@@ -35,6 +35,7 @@ describe("Windows set to English (Belgium)", () => {
     expect(formatNumber(2431)).toBe("2.431");
     expect(formatNumber(4.1)).toBe("4,1");
     expect(formatNumber(1234567.891)).toBe("1.234.567,89");
+    expect(formatNumber(13, 1, 1)).toBe("13,0");
     expect(formatDecimal(0.35, 2)).toBe("0,35");
     expect(formatDecimal(7, 1)).toBe("7,0");
     expect(localizeDecimal("0.35")).toBe("0,35");

@@ -31,6 +31,7 @@ ORDER = [
     "loading",
     "updates",
     "region",
+    "system",
     "api",
 ]
 

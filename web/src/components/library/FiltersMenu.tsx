@@ -1,9 +1,7 @@
 import { ChevronDown, ListFilter } from "lucide-react";
 import { Popover } from "radix-ui";
-import { useCallback, useMemo } from "react";
-import { useModels } from "../../api/forgelight";
+import { useModelLabels } from "../../hooks/useModelLabels";
 import { HELP } from "../../lib/help";
-import { displayName, tidyName } from "../../lib/modelNames";
 import { LIBRARY_BLUR_CHOICES, LIBRARY_RATINGS, parseLibraryBlur } from "../../lib/preferences";
 import { usePreferences } from "../../stores/preferences";
 import { InfoTip } from "../InfoTip";
@@ -12,16 +10,6 @@ import { SelectMenu } from "../SelectMenu";
 const ALL = "__all";
 const select =
   "h-8 w-44 rounded-md border border-line bg-canvas px-2.5 text-[13px] text-fg-strong hover:border-line-strong";
-
-/** Readable names for the checkpoints named in images, using Civitai's name when known. */
-function useModelLabels(): (name: string) => string {
-  const models = useModels();
-  const byStem = useMemo(
-    () => new Map((models.data?.checkpoints ?? []).map((m) => [m.stem, displayName(m.stem, m.civitai).name])),
-    [models.data],
-  );
-  return useCallback((name: string) => byStem.get(name) ?? tidyName(name), [byStem]);
-}
 
 function Row({ label, id, children }: { label: React.ReactNode; id: string; children: React.ReactNode }) {
   return (

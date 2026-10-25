@@ -1,6 +1,15 @@
 import { create } from "zustand";
 import type { LoadStep } from "../lib/progress";
 
+/** Measured while an image was made: from Generate to the finished image, and the most VRAM in use. */
+export interface ImageStats {
+  seconds: number;
+  /** How many images the job made in that time. */
+  images: number;
+  peakVram: number | null;
+  totalVram: number | null;
+}
+
 export interface SessionImage {
   id: string;
   /** Object URL of the PNG Forge returned. */
@@ -12,6 +21,8 @@ export interface SessionImage {
   createdAt: number;
   /** Made in private mode: saved only in the vault, and never remembered by the browser. */
   private?: boolean;
+  /** Only for images made while Forgelight was open. */
+  stats?: ImageStats;
 }
 
 export type JobPhase = "waiting" | "preparing" | "sampling";

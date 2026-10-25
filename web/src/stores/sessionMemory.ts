@@ -37,13 +37,14 @@ useSession.subscribe((state, previous) => {
   if (state.images === previous.images && state.selectedId === previous.selectedId) return;
   // Private images stay out: this storage can end up on disk unencrypted.
   const shared = state.images.filter((image) => !image.private);
-  const images: StoredImage[] = shared.map(({ id, width, height, seed, infotext, createdAt }) => ({
+  const images: StoredImage[] = shared.map(({ id, width, height, seed, infotext, createdAt, stats }) => ({
     id,
     width,
     height,
     seed,
     infotext,
     createdAt,
+    stats,
   }));
   tabStorage.setItem(SESSION_KEY, JSON.stringify({ images, selectedId: state.selectedId } satisfies StoredSession));
 });

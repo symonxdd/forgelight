@@ -1,5 +1,6 @@
 import { parseInfotext } from "./infotext";
 import type { LibraryItem } from "./library";
+import type { ImageStats } from "../stores/session";
 
 /** What a running generation needs to pick up again after the page reloads. */
 export interface PendingJob {
@@ -23,6 +24,7 @@ export interface StoredImage {
   seed: number;
   infotext: string;
   createdAt: number;
+  stats?: ImageStats;
 }
 
 export interface StoredSession {

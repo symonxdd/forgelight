@@ -5,6 +5,7 @@ import { FlameCard } from "./about/FlameCard";
 import { LogoMark } from "./Logo";
 import { ConnectionStatus } from "./ConnectionStatus";
 import { VaultStatus } from "./private/VaultStatus";
+import { VramMeter } from "./VramMeter";
 import { SettingsMenu } from "./SettingsMenu";
 import { ThemeSwitch } from "./ThemeSwitch";
 import { SteadyLabel } from "./SteadyLabel";
@@ -68,6 +69,7 @@ export function TopBar({ connection }: { connection: ConnectionState }) {
       <ViewSwitch />
       <div className="flex items-center justify-end gap-2">
         <VaultStatus />
+        <VramMeter connected={connection === "connected"} />
         <ConnectionStatus state={connection} />
         <ThemeSwitch />
         <SettingsMenu />

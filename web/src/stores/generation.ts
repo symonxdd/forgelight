@@ -3,6 +3,7 @@ import { request, type LoadingState, type ModelEntry } from "../api/forgelight";
 import type { LibraryPage } from "../api/library";
 import { addPrivateImage, privateGenerate, privateModeOn, waitForPrivateResult } from "../api/private";
 import { queryClient } from "../api/queryClient";
+import { jobStats } from "../api/system";
 import { randomTaskId } from "../lib/format";
 import { buildImg2imgRequest } from "../lib/img2img";
 import { imageUrl, seedOf } from "../lib/library";
@@ -170,8 +171,10 @@ type GenerationResult =
   PostResponse<"/sdapi/v1/txt2img"> | PostResponse<"/sdapi/v1/img2img"> | { images: string[]; info: string };
 
 /** The images of a finished generation, as Session strip entries, in generation order. */
-function sessionImages(result: GenerationResult | undefined, pending: PendingJob): SessionImage[] {
-  return parseTxt2imgResult(result?.images ?? [], result?.info ?? "").map((img) => ({
+async function sessionImages(result: GenerationResult | undefined, pending: PendingJob): Promise<SessionImage[]> {
+  const images = parseTxt2imgResult(result?.images ?? [], result?.info ?? "");
+  const stats = await jobStats(pending.startedAt, images.length);
+  return images.map((img) => ({
     id: crypto.randomUUID(),
     url: base64ToObjectUrl(img.base64),
     width: pending.width,
@@ -180,6 +183,7 @@ function sessionImages(result: GenerationResult | undefined, pending: PendingJob
     infotext: img.infotext,
     createdAt: Date.now(),
     private: pending.private,
+    stats,
   }));
 }
 
@@ -208,7 +212,7 @@ async function runGeneration(pending: PendingJob, send: () => Promise<Generation
 
   try {
     // Results arrive in generation order; the session lists newest first.
-    addImages(sessionImages(result, pending).reverse());
+    addImages((await sessionImages(result, pending)).reverse());
     // Forge saved public ones to its outputs folder too, so the Library has news.
     if (!pending.private) void queryClient.invalidateQueries({ queryKey: ["library"] });
     setJob({ status: "idle" });
@@ -284,6 +288,7 @@ async function upscale(): Promise<void> {
         infotext: saved.infotext,
         createdAt: Date.now(),
         private: pending.private,
+        stats: await jobStats(pending.startedAt, 1),
       },
     ]);
     if (!pending.private) void queryClient.invalidateQueries({ queryKey: ["library"] });
@@ -313,6 +318,7 @@ async function savedResults(job: PendingJob): Promise<SessionImage[]> {
     // A stopped batch saves fewer images, so after a few tries the ones found are all.
     if (found.length >= job.batchCount) break;
   }
+  const stats = await jobStats(job.startedAt, found.length);
   return found.map((item) => ({
     id: crypto.randomUUID(),
     url: imageUrl(item),
@@ -321,6 +327,7 @@ async function savedResults(job: PendingJob): Promise<SessionImage[]> {
     seed: seedOf(item),
     infotext: item.infotext,
     createdAt: item.mtime * 1000,
+    stats,
   }));
 }
 
@@ -362,7 +369,7 @@ function followPrivateJob(pending: PendingJob): void {
   const stopPolling = pollProgress(pending.taskId);
   void (async () => {
     try {
-      addImages(sessionImages(await waitForPrivateResult(pending.taskId), pending).reverse());
+      addImages((await sessionImages(await waitForPrivateResult(pending.taskId), pending)).reverse());
     } catch (error) {
       setNotice({ tone: "warning", text: errorMessage(error) });
     } finally {
