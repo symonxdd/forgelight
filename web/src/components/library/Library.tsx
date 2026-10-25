@@ -267,7 +267,13 @@ export function Library() {
   // Batches are always known, for the image view's strip; the grid stacks them only if wanted.
   const batches = useMemo(() => groupBatches(items), [items]);
   const batchOf = useMemo(() => new Map(batches.flatMap((b) => b.items.map((i) => [i.id, b] as const))), [batches]);
-  const groups = useMemo(() => groupByDay(stacks ? batches : singles(items)), [stacks, batches, items]);
+  const dateOrder = usePreferences((s) => s.dateOrder);
+  // The day labels are text, so they are made again when the date order changes.
+  const groups = useMemo(
+    () => groupByDay(stacks ? batches : singles(items)),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [stacks, batches, items, dateOrder],
+  );
   const latest = pages[pages.length - 1];
   const total = latest?.total ?? 0;
   const models = pages[0]?.models ?? [];

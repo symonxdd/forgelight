@@ -23,12 +23,33 @@ export const LIBRARY_STACKS_KEY = "forgelight.libraryStacks";
 export const LIBRARY_RATING_KEY = "forgelight.libraryRating";
 export const PROMPT_POSITION_KEY = "forgelight.promptPosition";
 export const FIND_NEW_MODELS_KEY = "forgelight.findNewModels";
+export const NUMBER_STYLE_KEY = "forgelight.numberStyle";
+export const DATE_ORDER_KEY = "forgelight.dateOrder";
+export const CLOCK_STYLE_KEY = "forgelight.clockStyle";
 
 /** Where the prompt card sits on the Generate screen: under the image (default) or above it. */
 export type PromptPosition = "below" | "above";
 
 export function parsePromptPosition(value: string | null): PromptPosition {
   return value === "above" ? "above" : "below";
+}
+
+/** Separators for thousands and decimals; "windows" follows Windows' regional format. */
+export type NumberStyle = "windows" | "space" | "comma" | "dot";
+/** Whether dates start with the day or the month. */
+export type DateOrder = "windows" | "day" | "month";
+export type ClockStyle = "windows" | "24" | "12";
+
+export function parseNumberStyle(value: string | null): NumberStyle {
+  return value === "space" || value === "comma" || value === "dot" ? value : "windows";
+}
+
+export function parseDateOrder(value: string | null): DateOrder {
+  return value === "day" || value === "month" ? value : "windows";
+}
+
+export function parseClockStyle(value: string | null): ClockStyle {
+  return value === "24" || value === "12" ? value : "windows";
 }
 
 /** Which Library previews are blurred until pointed at. */

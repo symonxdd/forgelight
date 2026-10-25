@@ -11,11 +11,14 @@ import { useCheckpointMemory } from "./hooks/useCheckpointMemory";
 import { useShortcuts } from "./hooks/useShortcuts";
 import { resumeAfterReload } from "./stores/generation";
 import { restoreSession } from "./stores/sessionMemory";
+import { usePreferences } from "./stores/preferences";
 import { useView } from "./stores/view";
 
 export function App() {
   const connection = useConnection();
   const view = useView((s) => s.view);
+  // Subscribed so the whole page redraws with new number and date formats.
+  usePreferences((s) => `${s.numberStyle} ${s.dateOrder} ${s.clockStyle}`);
   useCheckpointMemory(connection === "connected");
   useShortcuts();
   // After a reload: the Session strip first, then a generation that was still running.

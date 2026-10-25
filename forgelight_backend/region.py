@@ -12,8 +12,9 @@ _LOCALE_NAME_MAX_LENGTH = 85
 _LOCALE_SDECIMAL = 0x0E
 _LOCALE_STHOUSAND = 0x0F
 _LOCALE_SSHORTTIME = 0x79
+_LOCALE_SSHORTDATE = 0x1F
 
-US = {"locale": "en-US", "decimal": ".", "group": ",", "hour12": True}
+US = {"locale": "en-US", "decimal": ".", "group": ",", "hour12": True, "dayFirst": False}
 
 
 def _info(kernel32: ctypes.WinDLL, kind: int) -> str:
@@ -24,8 +25,13 @@ def _info(kernel32: ctypes.WinDLL, kind: int) -> str:
     return buffer.value
 
 
+def _day_first(pattern: str) -> bool:
+    day, month = pattern.find("d"), pattern.find("M")
+    return day != -1 and (month == -1 or day < month)
+
+
 def regional_format() -> dict:
-    """The locale name, the decimal and thousands separators, and whether times use AM/PM."""
+    """The locale name, the separators, whether times use AM/PM and whether dates start with the day."""
     try:
         kernel32 = ctypes.WinDLL("kernel32", use_last_error=True)
         name = ctypes.create_unicode_buffer(_LOCALE_NAME_MAX_LENGTH)
@@ -37,6 +43,8 @@ def regional_format() -> dict:
             "group": _info(kernel32, _LOCALE_STHOUSAND),
             # "HH:mm" is a 24-hour clock, "h:mm tt" a 12-hour one.
             "hour12": "h" in _info(kernel32, _LOCALE_SSHORTTIME),
+            # "dd/MM/yyyy" starts with the day, "M/d/yyyy" with the month.
+            "dayFirst": _day_first(_info(kernel32, _LOCALE_SSHORTDATE)),
         }
     except (AttributeError, OSError):
         return dict(US)

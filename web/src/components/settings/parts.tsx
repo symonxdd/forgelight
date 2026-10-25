@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { InfoTip } from "../InfoTip";
+import { SteadyLabel } from "../SteadyLabel";
 import { SelectMenu, type MenuOption } from "../SelectMenu";
 
 /** A compact dropdown for a settings row. */
@@ -27,6 +28,41 @@ export function Dropdown({
       aria-labelledby={labelledBy}
       className="h-8 w-40 shrink-0 rounded-md border border-line bg-surface px-2.5 text-[13px] text-fg-strong hover:border-line-strong disabled:opacity-50"
     />
+  );
+}
+
+/** A few choices side by side, all visible at once, like the screen switch in the top bar. */
+export function Segmented<T extends string>({
+  value,
+  options,
+  onChange,
+  labelledBy,
+}: {
+  value: T;
+  options: readonly { value: T; label: string }[];
+  onChange: (value: T) => void;
+  labelledBy: string;
+}) {
+  return (
+    <div role="radiogroup" aria-labelledby={labelledBy} className="flex shrink-0 rounded-md border border-line p-0.5">
+      {options.map((option) => {
+        const checked = option.value === value;
+        return (
+          <button
+            key={option.value}
+            type="button"
+            role="radio"
+            aria-checked={checked}
+            onClick={() => onChange(option.value)}
+            className={`h-7 rounded-[5px] px-3 text-[13px] whitespace-nowrap ${
+              checked ? "bg-raised text-fg-strong" : "text-muted hover:text-fg-strong"
+            }`}
+          >
+            <SteadyLabel text={option.label} bold={checked} />
+          </button>
+        );
+      })}
+    </div>
   );
 }
 

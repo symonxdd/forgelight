@@ -60,6 +60,8 @@ export const HELP = {
     "Controls which sections of the Generate screen are visible: LoRAs in the prompt card, and Size, Sampling and Hires fix in the left column.",
   oled: "Pure black instead of dark gray. On OLED screens black pixels are switched off, which gives deeper contrast and uses less power.",
   font: "The typeface used throughout Forgelight.",
+  numbersAndDates:
+    "Numbers and dates: how Forgelight writes numbers, dates and times. Like Windows follows the regional format set in Windows (Settings, Time and language, Language and region). Number fields accept a comma or a dot either way. Prompts are never changed.",
   openOnStart:
     "When Forge starts, it opens Forgelight in the browser instead of the classic Forge page. Turning this off restores Forge's own behavior.",
   desktopShortcut:

@@ -1,18 +1,24 @@
 import { create } from "zustand";
 import {
   CIVITAI_SITE_KEY,
+  CLOCK_STYLE_KEY,
+  DATE_ORDER_KEY,
   FIND_NEW_MODELS_KEY,
   FONT_KEY,
   LIBRARY_BLUR_KEY,
   LIBRARY_RATING_KEY,
   LIBRARY_STACKS_KEY,
+  NUMBER_STYLE_KEY,
   OLED_KEY,
   PROMPT_POSITION_KEY,
   THEME_KEY,
   parseCivitaiSite,
+  parseClockStyle,
+  parseDateOrder,
   parseFont,
   parseLibraryBlur,
   parseLibraryRating,
+  parseNumberStyle,
   parseOled,
   parsePromptPosition,
   parseTheme,
@@ -21,12 +27,16 @@ import {
   resolveTheme,
   writeStored,
   type CivitaiSite,
+  type ClockStyle,
+  type DateOrder,
   type FontId,
   type LibraryBlur,
   type LibraryRating,
+  type NumberStyle,
   type PromptPosition,
   type Theme,
 } from "../lib/preferences";
+import { setFormatChoices } from "../lib/region";
 
 interface PreferencesState {
   theme: Theme;
@@ -43,6 +53,9 @@ interface PreferencesState {
   promptPosition: PromptPosition;
   /** Looks for new checkpoints and LoRAs in Downloads and on the Desktop. On until switched off. */
   findNewModels: boolean;
+  numberStyle: NumberStyle;
+  dateOrder: DateOrder;
+  clockStyle: ClockStyle;
   setTheme: (theme: Theme) => void;
   setOled: (oled: boolean) => void;
   setFont: (font: FontId) => void;
@@ -52,6 +65,9 @@ interface PreferencesState {
   setLibraryStacks: (stacks: boolean) => void;
   setPromptPosition: (position: PromptPosition) => void;
   setFindNewModels: (find: boolean) => void;
+  setNumberStyle: (style: NumberStyle) => void;
+  setDateOrder: (order: DateOrder) => void;
+  setClockStyle: (style: ClockStyle) => void;
 }
 
 const systemDark = window.matchMedia("(prefers-color-scheme: dark)");
@@ -69,6 +85,9 @@ export const usePreferences = create<PreferencesState>((set) => ({
   libraryStacks: readStored(LIBRARY_STACKS_KEY) !== "false",
   promptPosition: parsePromptPosition(readStored(PROMPT_POSITION_KEY)),
   findNewModels: readStored(FIND_NEW_MODELS_KEY) !== "false",
+  numberStyle: parseNumberStyle(readStored(NUMBER_STYLE_KEY)),
+  dateOrder: parseDateOrder(readStored(DATE_ORDER_KEY)),
+  clockStyle: parseClockStyle(readStored(CLOCK_STYLE_KEY)),
   setTheme: (theme) => {
     writeStored(THEME_KEY, theme);
     set({ theme, themeChosen: true });
@@ -105,6 +124,18 @@ export const usePreferences = create<PreferencesState>((set) => ({
     writeStored(FIND_NEW_MODELS_KEY, String(findNewModels));
     set({ findNewModels });
   },
+  setNumberStyle: (numberStyle) => {
+    writeStored(NUMBER_STYLE_KEY, numberStyle);
+    set({ numberStyle });
+  },
+  setDateOrder: (dateOrder) => {
+    writeStored(DATE_ORDER_KEY, dateOrder);
+    set({ dateOrder });
+  },
+  setClockStyle: (clockStyle) => {
+    writeStored(CLOCK_STYLE_KEY, clockStyle);
+    set({ clockStyle });
+  },
 }));
 
 systemDark.addEventListener("change", (event) => {
@@ -112,7 +143,8 @@ systemDark.addEventListener("change", (event) => {
   if (!themeChosen) usePreferences.setState({ theme: resolveTheme(null, event.matches) });
 });
 
-function apply({ theme, oled, font }: PreferencesState) {
+function apply({ theme, oled, font, numberStyle, dateOrder, clockStyle }: PreferencesState) {
+  setFormatChoices({ numbers: numberStyle, dates: dateOrder, clock: clockStyle });
   const root = document.documentElement;
   const oledOn = theme === "dark" && oled === true;
   const themeChanges = root.dataset.theme !== theme || "oled" in root.dataset !== oledOn;
