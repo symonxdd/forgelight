@@ -104,6 +104,23 @@
   }
 }
 
+/*
+ * The vault lock in the top bar (VaultStatus.tsx). The shackle is one path with the same
+ * commands in both shapes, so it morphs: open lifts it and drops the right leg. It springs
+ * only while the state changes (.vault-snap), never on hover.
+ */
+.vault-shackle {
+  d: path("M7 11V7a5 5 0 0 1 10 0v4");
+}
+[data-unlocked] .vault-shackle {
+  d: path("M7 11V5.5a5 5 0 0 1 10 0v0");
+}
+@media (prefers-reduced-motion: no-preference) {
+  .vault-snap .vault-shackle {
+    transition: d 260ms cubic-bezier(0.34, 1.5, 0.64, 1);
+  }
+}
+
 /* Messages ease in: a short fade while rising a few pixels. */
 @keyframes peek-in {
   from {

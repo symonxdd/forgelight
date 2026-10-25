@@ -26,7 +26,7 @@ Private mode uses **hybrid encryption**, the scheme behind OpenPGP and age. Each
 
 While private mode is on, a lock shows on the Generate button and new images go straight into the vault. **Start in private mode**, in Settings under Privacy, turns it on at every start.
 
-Unlocked private images show in the Library among the others, marked with a lock; the All, Favorites and Private switch can show them alone. **Lock** in the top bar locks them again. **Make private** and **Make public**, in the Library's selection bar and image view, move existing images in and out of the vault.
+Unlocked private images show in the Library among the others, marked with a lock; the All, Favorites and Private switch can show them alone. The lock in the top bar locks them again. **Make private** and **Make public**, in the Library's selection bar and image view, move existing images in and out of the vault.
 
 ## 1. Saving a private image
 
@@ -48,7 +48,7 @@ Each slot holds the same private key, encrypted under a different secret, the wa
 - **PIN:** optional, and works on this computer only. The key that opens its slot lives inside the TPM chip and only opens with the PIN. The chip counts wrong PINs and enforces growing pauses in hardware, so a short PIN is safe.
 - **Recovery key:** a long random code shown once at setup, for when the password is forgotten. **Change** under Password accepts the recovery key or the PIN instead of the current password, so a forgotten password can be replaced. A new recovery key, made in Settings under Privacy, makes the old one stop working.
 
-The private key stays in memory only, until **Lock** or Forge stopping. Switching private mode off only decides where new images go and leaves the vault as it is. Reloading the page keeps it unlocked.
+The private key stays in memory only, until a click on the lock in the top bar or Forge stopping. Switching private mode off only decides where new images go and leaves the vault as it is. Reloading the page keeps it unlocked.
 
 ## 3. Viewing a private image
 
