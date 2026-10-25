@@ -2,10 +2,11 @@ import { LoaderCircle } from "lucide-react";
 import { AlertDialog } from "radix-ui";
 import { useState } from "react";
 import { clearThumbnails } from "../../api/private";
+import { formatNumber } from "../../lib/region";
 import { useSession } from "../../stores/session";
 
 function megabytes(bytes: number): string {
-  return `${Math.max(1, Math.round(bytes / 1024 ** 2)).toLocaleString("en-US")} MB`;
+  return `${formatNumber(Math.max(1, Math.round(bytes / 1024 ** 2)))} MB`;
 }
 
 /** Asks once before deleting Windows' thumbnail cache, then says what was removed. */

@@ -1,6 +1,7 @@
 import { LoaderCircle } from "lucide-react";
 import { AlertDialog } from "radix-ui";
 import { useDeleteImages } from "../../api/library";
+import { formatNumber } from "../../lib/region";
 
 interface DeleteDialogProps {
   /** The images to delete; the dialog is open while this is set. */
@@ -13,7 +14,7 @@ interface DeleteDialogProps {
 export function DeleteDialog({ ids, onClose, onDeleted }: DeleteDialogProps) {
   const remove = useDeleteImages();
   const count = ids?.length ?? 0;
-  const what = count === 1 ? "this image" : `these ${count.toLocaleString("en-US")} images`;
+  const what = count === 1 ? "this image" : `these ${formatNumber(count)} images`;
   const privateCount = ids?.filter((id) => id.startsWith("private/")).length ?? 0;
 
   return (
@@ -30,7 +31,7 @@ export function DeleteDialog({ ids, onClose, onDeleted }: DeleteDialogProps) {
         <AlertDialog.Overlay className="fixed inset-0 z-50 bg-black/50 motion-safe:animate-[fade-in_120ms_ease-out]" />
         <AlertDialog.Content className="fixed top-[40%] left-1/2 z-50 flex w-[min(26rem,calc(100vw-2rem))] -translate-x-1/2 -translate-y-1/2 flex-col gap-4 rounded-xl border border-line bg-surface p-5 text-fg shadow-xl shadow-black/30 motion-safe:animate-[fade-in_120ms_ease-out]">
           <AlertDialog.Title className="text-[15px] font-semibold text-fg-strong">
-            Delete {count === 1 ? "1 image" : `${count.toLocaleString("en-US")} images`}?
+            Delete {count === 1 ? "1 image" : `${formatNumber(count)} images`}?
           </AlertDialog.Title>
           <AlertDialog.Description className="text-[13.5px] leading-relaxed text-muted">
             {privateCount === count ? (
@@ -41,7 +42,8 @@ export function DeleteDialog({ ids, onClose, onDeleted }: DeleteDialogProps) {
             ) : privateCount > 0 ? (
               <>
                 Images from Forge's output folder go to the Windows Recycle Bin and can be restored from there.{" "}
-                {privateCount === 1 ? "The private one is" : `The ${privateCount} private ones are`} deleted for good.
+                {privateCount === 1 ? "The private one is" : `The ${formatNumber(privateCount)} private ones are`}{" "}
+                deleted for good.
               </>
             ) : (
               <>

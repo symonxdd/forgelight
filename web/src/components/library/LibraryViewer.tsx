@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef } from "react";
 import { useRevealImage } from "../../api/library";
 import { useToggleFavorite } from "../../hooks/useToggleFavorite";
 import { imageUrl, seedOf, thumbUrl, type LibraryItem } from "../../lib/library";
+import { formatDate } from "../../lib/region";
 import type { SessionImage } from "../../stores/session";
 import { useView } from "../../stores/view";
 import { useViewer } from "../../stores/viewer";
@@ -20,7 +21,7 @@ function isTyping(target: EventTarget | null): boolean {
 }
 
 function when(item: LibraryItem): string {
-  return new Date(item.mtime * 1000).toLocaleString("en-US", {
+  return formatDate(new Date(item.mtime * 1000), {
     month: "short",
     day: "numeric",
     hour: "numeric",

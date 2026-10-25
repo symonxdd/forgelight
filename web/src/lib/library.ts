@@ -1,4 +1,5 @@
 import { parseInfotext, seedFromInfotext } from "./infotext";
+import { formatDate } from "./region";
 
 /** One image in Forge's output folders, as the Library lists it. */
 export interface LibraryItem {
@@ -40,13 +41,13 @@ export function dayKey(date: Date): string {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
 }
 
-/** "Today", "Yesterday", "Wed, Oct 15", or with the year when it isn't this year. */
+/** "Today", "Yesterday", "Wed, Oct 15" (in Windows' format), or with the year when it isn't this year. */
 export function dayLabel(date: Date, now: Date): string {
   const yesterday = new Date(now);
   yesterday.setDate(now.getDate() - 1);
   if (dayKey(date) === dayKey(now)) return "Today";
   if (dayKey(date) === dayKey(yesterday)) return "Yesterday";
-  return date.toLocaleDateString("en-US", {
+  return formatDate(date, {
     weekday: "short",
     month: "short",
     day: "numeric",

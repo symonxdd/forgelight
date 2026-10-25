@@ -1,6 +1,7 @@
 import { Lock, LockOpen, Star } from "lucide-react";
 import { useState, type ReactNode } from "react";
 import { usePrivateStatus } from "../../api/private";
+import { formatNumber } from "../../lib/region";
 import { Hint } from "../Hint";
 import { SteadyLabel } from "../SteadyLabel";
 import { UnlockDialog } from "../private/UnlockDialog";
@@ -45,7 +46,7 @@ export function ViewSwitch({
   const lockedHint =
     hidden === 1
       ? "1 private image is hidden. Click to unlock."
-      : `${hidden} private images are hidden. Click to unlock.`;
+      : `${formatNumber(hidden)} private images are hidden. Click to unlock.`;
 
   return (
     <div
@@ -68,7 +69,7 @@ export function ViewSwitch({
               <SteadyLabel text="Private" bold={view === "private"} />
               {!unlocked && hidden > 0 && (
                 <span className="grid h-[18px] min-w-[18px] place-items-center rounded-full bg-raised px-1.5 text-[11px] text-fg tabular-nums">
-                  {hidden}
+                  {formatNumber(hidden)}
                 </span>
               )}
             </Choice>

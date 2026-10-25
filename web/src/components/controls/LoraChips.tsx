@@ -7,6 +7,7 @@ import { HELP, HELP_NOTES } from "../../lib/help";
 import { ARCH_LABEL, addTriggerWord, compatibility, hasTriggerWord, type Arch, type LoraSlot } from "../../lib/loras";
 import { baseModelLabel, displayName } from "../../lib/modelNames";
 import { recommendedLoraWeight } from "../../lib/recommended";
+import { formatNumber } from "../../lib/region";
 import { usePreferences } from "../../stores/preferences";
 import { useSettings } from "../../stores/settings";
 import { CivitaiLink } from "../CivitaiLink";
@@ -60,13 +61,13 @@ function SuggestedStrength({ value, current, onUse }: { value: number; current: 
   }
   return (
     <p className="-mt-1.5 flex items-center gap-2 text-[12px] text-muted">
-      The creator's example images use {value}.
+      The creator's example images use {formatNumber(value)}.
       <button
         type="button"
         onClick={onUse}
         className="h-6 rounded-md border border-line px-2 text-[12px] text-fg hover:border-line-strong hover:text-fg-strong"
       >
-        Use {value}
+        Use {formatNumber(value)}
       </button>
     </p>
   );
@@ -190,7 +191,7 @@ function LoraChip(props: LoraProps) {
   return (
     <Popover.Root>
       <Popover.Trigger
-        aria-label={`${name}, strength ${slot.weight}`}
+        aria-label={`${name}, strength ${formatNumber(slot.weight)}`}
         className={`flex h-7 max-w-60 items-center gap-1.5 rounded-md border px-2 text-[12.5px] data-[state=open]:bg-raised ${
           problem
             ? "border-bad/45 text-bad hover:border-bad/70"
@@ -203,7 +204,7 @@ function LoraChip(props: LoraProps) {
           <Layers className="size-3.5 shrink-0 text-faint" aria-hidden />
         )}
         <span className="truncate">{name}</span>
-        <span className="shrink-0 text-muted tabular-nums">{slot.weight}</span>
+        <span className="shrink-0 text-muted tabular-nums">{formatNumber(slot.weight)}</span>
       </Popover.Trigger>
       <Popover.Portal>
         <Popover.Content

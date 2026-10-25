@@ -1,5 +1,6 @@
 import { Slider } from "radix-ui";
 import { useId, useState, type KeyboardEvent } from "react";
+import { formatDecimal, parseDecimal } from "../../lib/region";
 import { LabelWithTip } from "../InfoTip";
 
 interface NumberSliderProps {
@@ -37,7 +38,7 @@ export function NumberSlider({
 
   const commit = (text: string) => {
     setDraft(null);
-    const n = Number(text.replace(",", "."));
+    const n = parseDecimal(text);
     if (!Number.isFinite(n)) return;
     const rounded = Number((Math.round(n / step) * step).toFixed(decimals(step)));
     onChange(Math.min(inputMax, Math.max(inputMin, rounded)));
@@ -69,7 +70,7 @@ export function NumberSlider({
         <input
           id={id}
           inputMode="decimal"
-          value={draft ?? value.toFixed(decimals(step))}
+          value={draft ?? formatDecimal(value, decimals(step))}
           onChange={(e) => setDraft(e.target.value)}
           onBlur={(e) => commit(e.target.value)}
           onKeyDown={onKeyDown}

@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { usePrivateStatus } from "../../api/private";
 import { useLibrary, type PrivacyMove } from "../../api/library";
 import { fileName, groupBatches, groupByDay, singles, thumbUrl, type Batch } from "../../lib/library";
+import { formatNumber } from "../../lib/region";
 import { usePreferences } from "../../stores/preferences";
 import { Hint } from "../Hint";
 import { FiltersMenu } from "./FiltersMenu";
@@ -166,9 +167,7 @@ function SelectionBar({
         aria-label="Selected images"
         className="pointer-events-auto flex items-center gap-1.5 rounded-xl border border-line-strong bg-surface py-1.5 pr-1.5 pl-4 shadow-lg shadow-black/25"
       >
-        <span className="mr-2 text-[13px] font-medium text-fg-strong tabular-nums">
-          {count.toLocaleString("en-US")} selected
-        </span>
+        <span className="mr-2 text-[13px] font-medium text-fg-strong tabular-nums">{formatNumber(count)} selected</span>
         <button
           type="button"
           onClick={onClear}
@@ -179,13 +178,13 @@ function SelectionBar({
         {publicCount > 0 && (
           <button type="button" onClick={() => onMove("private")} className={moveButton}>
             <Lock className="size-3.5" aria-hidden />
-            Make private{mixed ? ` (${publicCount})` : ""}
+            Make private{mixed ? ` (${formatNumber(publicCount)})` : ""}
           </button>
         )}
         {privateCount > 0 && (
           <button type="button" onClick={() => onMove("public")} className={moveButton}>
             <LockOpen className="size-3.5" aria-hidden />
-            Make public{mixed ? ` (${privateCount})` : ""}
+            Make public{mixed ? ` (${formatNumber(privateCount)})` : ""}
           </button>
         )}
         <button
@@ -404,7 +403,7 @@ export function Library() {
             <h2 className="sticky top-0 z-[1] flex items-baseline gap-2 bg-canvas/90 py-3 text-[13px] font-medium text-fg-strong backdrop-blur-sm">
               {group.label}
               <span className="text-[12px] font-normal text-faint tabular-nums">
-                {latest?.days[group.key] ?? group.items.length}
+                {formatNumber(latest?.days[group.key] ?? group.items.length)}
               </span>
             </h2>
             <div className="grid grid-cols-[repeat(auto-fill,minmax(10rem,1fr))] gap-2">
@@ -462,7 +461,7 @@ export function Library() {
             </Hint>
             {/* A fixed width, so a changing count ("13 images", "0 images") never shifts the controls. */}
             <span className="w-20 text-right text-[12.5px] text-muted tabular-nums">
-              {library.isPending ? "" : total === 1 ? "1 image" : `${total.toLocaleString("en-US")} images`}
+              {library.isPending ? "" : total === 1 ? "1 image" : `${formatNumber(total)} images`}
             </span>
           </div>
         </div>

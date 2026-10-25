@@ -1,6 +1,7 @@
 import { Check, Copy, X } from "lucide-react";
 import { useState } from "react";
 import { parseInfotext } from "../../lib/infotext";
+import { localizeDecimal } from "../../lib/region";
 import { applyGenerationData } from "../../stores/applySettings";
 import type { SessionImage } from "../../stores/session";
 import { useSettings } from "../../stores/settings";
@@ -73,7 +74,7 @@ export function InfoDrawer({ image, onApplied }: { image: SessionImage; onApplie
             {parsed.params.map(([label, value]) => (
               <div key={label} className="contents">
                 <dt className="text-muted">{label}</dt>
-                <dd className="min-w-0 break-words text-fg-strong">{value}</dd>
+                <dd className="min-w-0 break-words text-fg-strong">{localizeDecimal(value)}</dd>
               </div>
             ))}
           </dl>

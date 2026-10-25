@@ -1,6 +1,7 @@
 import { LoaderCircle, Lock, LockOpen } from "lucide-react";
 import { AlertDialog } from "radix-ui";
 import { useMoveImages, type PrivacyMove } from "../../api/library";
+import { formatNumber } from "../../lib/region";
 import { useSession } from "../../stores/session";
 
 const TEXT = {
@@ -37,7 +38,7 @@ export function PrivacyDialog({
 }) {
   const mutation = useMoveImages();
   const count = move?.ids.length ?? 0;
-  const amount = count === 1 ? "1 image" : `${count.toLocaleString("en-US")} images`;
+  const amount = count === 1 ? "1 image" : `${formatNumber(count)} images`;
   const text = TEXT[move?.to ?? "private"];
   const Icon = move?.to === "public" ? LockOpen : Lock;
 
@@ -78,7 +79,7 @@ export function PrivacyDialog({
                   onSuccess: ({ moved, failed }) => {
                     mutation.reset();
                     onMoved(move.ids);
-                    const n = moved === 1 ? "1 image is" : `${moved.toLocaleString("en-US")} images are`;
+                    const n = moved === 1 ? "1 image is" : `${formatNumber(moved)} images are`;
                     useSession
                       .getState()
                       .setNotice(

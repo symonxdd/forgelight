@@ -1,4 +1,5 @@
 import type { RememberedSettings } from "./checkpointMemory";
+import { formatNumber } from "./region";
 import { normalizeSize } from "./sizes";
 
 /** The settings of one example image on a model's Civitai page, as the extension keeps them. */
@@ -160,11 +161,11 @@ export function describeSettings(settings: Partial<RememberedSettings>): {
   const method = [
     sampler && scheduler && scheduler !== "Automatic" ? `${sampler} ${scheduler}` : sampler,
     steps !== undefined ? `${steps} steps` : undefined,
-    cfgScale !== undefined ? `CFG ${cfgScale}` : undefined,
+    cfgScale !== undefined ? `CFG ${formatNumber(cfgScale)}` : undefined,
   ];
   const hires = [
-    hiresScale !== undefined ? `${hiresScale}×` : undefined,
-    hiresDenoise !== undefined ? `detail ${hiresDenoise}` : undefined,
+    hiresScale !== undefined ? `${formatNumber(hiresScale)}×` : undefined,
+    hiresDenoise !== undefined ? `detail ${formatNumber(hiresDenoise)}` : undefined,
     hiresUpscaler,
   ];
   return {
