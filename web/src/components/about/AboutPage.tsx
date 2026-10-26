@@ -57,7 +57,7 @@ export function AboutPage({ onOpenUpdate }: { onOpenUpdate: () => void }) {
 
       <div className="mt-5 flex flex-col">
         <span className="text-[11px] font-medium tracking-wide text-faint uppercase">Developer</span>
-        <span className="mt-0.5 text-[15px] font-medium text-fg-strong">Symon 💛</span>
+        <span className="mt-0.5 text-[15px] font-medium text-fg-strong">symonxd 🤍</span>
       </div>
       <div className="mt-2 -mx-2 flex flex-col">
         <LinkRow href={PORTFOLIO_URL} icon={<Globe className="size-4 text-muted" aria-hidden />}>
