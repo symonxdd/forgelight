@@ -1,7 +1,6 @@
 import { ChevronDown, type LucideIcon } from "lucide-react";
 import { Collapsible } from "radix-ui";
 import type { ReactNode } from "react";
-import { Hint } from "../Hint";
 import { InfoTip } from "../InfoTip";
 
 interface SectionProps {
@@ -51,17 +50,16 @@ export function Section({
         <div className="ml-auto flex min-w-0 items-center gap-2.5">
           {!open && summary && <span className="min-w-0 truncate text-[12px] text-muted">{summary}</span>}
           {action}
-          <Hint label={open ? "Collapse" : "Expand"}>
-            <Collapsible.Trigger
-              aria-label={`${open ? "Collapse" : "Expand"} ${title}`}
-              className="group grid size-7 shrink-0 place-items-center rounded-md text-faint hover:bg-raised hover:text-fg-strong"
-            >
-              <ChevronDown
-                className="size-4 group-data-[state=open]:rotate-180 motion-safe:transition-transform motion-safe:duration-200"
-                aria-hidden
-              />
-            </Collapsible.Trigger>
-          </Hint>
+          {/* No Hint here: its tooltip trigger would replace the open state the arrow turns by. */}
+          <Collapsible.Trigger
+            aria-label={`${open ? "Collapse" : "Expand"} ${title}`}
+            className="group grid size-7 shrink-0 place-items-center rounded-md text-faint hover:bg-raised hover:text-fg-strong"
+          >
+            <ChevronDown
+              className="size-4 group-data-[state=open]:rotate-180 motion-safe:transition-transform motion-safe:duration-200"
+              aria-hidden
+            />
+          </Collapsible.Trigger>
         </div>
       </div>
       <Collapsible.Content className="collapsible overflow-hidden">

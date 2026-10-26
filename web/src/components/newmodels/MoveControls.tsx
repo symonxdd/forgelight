@@ -34,7 +34,7 @@ export function FoundMenu({ found }: { found: FoundModel }) {
       <Hint label="More">
         <DropdownMenu.Trigger
           aria-label={`More for ${found.file}`}
-          className="grid size-7 shrink-0 place-items-center rounded-md text-faint hover:bg-raised hover:text-fg-strong data-[state=open]:bg-raised"
+          className="grid size-7 shrink-0 place-items-center rounded-md text-faint hover:bg-raised hover:text-fg-strong aria-expanded:bg-raised"
         >
           <MoreHorizontal className="size-4" aria-hidden />
         </DropdownMenu.Trigger>
