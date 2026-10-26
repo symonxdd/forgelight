@@ -3,7 +3,10 @@ import type { ImageStats } from "../stores/session";
 import { request } from "./forgelight";
 
 export interface SystemVersions {
+  /** Forge's own version number, "2.0.1". */
   forge: string | null;
+  /** The short id of the Forge commit installed, "dfdcbab", for reports. */
+  forgeCommit: string | null;
   forgelight: string;
   python: string;
   torch: string;
@@ -19,7 +22,18 @@ export interface SystemOverview {
   /** A notebook, by the case type in the firmware (or a battery when that is missing). */
   portable: boolean;
   versions: SystemVersions;
-  storage: { drive: string; free: number; total: number; images: number; models: number; vault: number };
+  storage: {
+    drive: string;
+    free: number;
+    total: number;
+    images: number;
+    models: number;
+    checkpoints: number;
+    loras: number;
+    vault: number;
+    /** Null when no vault has been set up. */
+    vaultImages: number | null;
+  };
   usage: { total: number; today: number; topModel: { name: string; count: number } | null };
 }
 

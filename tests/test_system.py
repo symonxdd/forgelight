@@ -56,5 +56,14 @@ class PeakTest(unittest.TestCase):
             self.assertEqual(samples[0][1], 4)
 
 
+@unittest.skipUnless(os.name == "nt", "the extension runs on Windows")
+class ForgeVersionTest(unittest.TestCase):
+    def test_keeps_forge_part_of_the_version(self) -> None:
+        version = mock.Mock(version="2.0.1v1.10.1")
+        package = mock.Mock(forge_version=version)
+        with mock.patch.dict(sys.modules, {"modules_forge": package, "modules_forge.forge_version": version}):
+            self.assertEqual(system._forge_version(), "2.0.1")
+
+
 if __name__ == "__main__":
     unittest.main()

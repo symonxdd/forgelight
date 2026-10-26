@@ -1,11 +1,12 @@
 import { afterEach, describe, expect, it } from "vitest";
 import type { SystemOverview } from "../api/system";
 import { US_FORMAT, setRegionalFormat } from "./region";
-import { formatBytes, formatGb, gpuLabel, share, statsLines, systemReport, versionLine } from "./system";
+import { counted, formatBytes, formatGb, gpuLabel, share, statsLines, systemReport, versionLine } from "./system";
 
 const GB = 1024 ** 3;
 const VERSIONS = {
-  forge: "dfdcbab",
+  forge: "2.0.1",
+  forgeCommit: "dfdcbab",
   forgelight: "1.4.0",
   python: "3.10.6",
   torch: "2.3.1",
@@ -41,6 +42,14 @@ describe("sizes", () => {
   });
 });
 
+describe("counted", () => {
+  it("names one or many", () => {
+    expect(counted(1, "checkpoint")).toBe("1 checkpoint");
+    expect(counted(31, "LoRA")).toBe("31 LoRAs");
+    expect(counted(0, "image")).toBe("0 images");
+  });
+});
+
 describe("gpuLabel", () => {
   it("drops the maker's prefixes and marks a notebook", () => {
     expect(gpuLabel("NVIDIA GeForce RTX 2060", true)).toBe("RTX 2060 (notebook)");
@@ -52,8 +61,15 @@ describe("gpuLabel", () => {
 
 describe("versions", () => {
   it("lists what is known", () => {
-    expect(versionLine(VERSIONS)).toBe("Forge dfdcbab · Python 3.10.6 · PyTorch 2.3.1 · CUDA 12.1 · Windows 11");
-    expect(versionLine({ ...VERSIONS, forge: null, cuda: null })).toBe("Python 3.10.6 · PyTorch 2.3.1 · Windows 11");
+    expect(versionLine(VERSIONS)).toBe("Forge 2.0.1 · Python 3.10.6 · PyTorch 2.3.1 · CUDA 12.1 · Windows 11");
+    expect(versionLine({ ...VERSIONS, forge: null, forgeCommit: null, cuda: null })).toBe(
+      "Python 3.10.6 · PyTorch 2.3.1 · Windows 11",
+    );
+  });
+
+  it("adds Forge's commit for a report", () => {
+    expect(versionLine(VERSIONS, true)).toMatch(/^Forge 2\.0\.1 \(dfdcbab\) · /);
+    expect(versionLine({ ...VERSIONS, forge: null }, true)).toMatch(/^Forge dfdcbab · /);
   });
 
   it("makes a report to paste", () => {
@@ -67,7 +83,7 @@ describe("versions", () => {
     expect(systemReport(system)).toBe(
       [
         "Forgelight 1.4.0",
-        "Forge dfdcbab · Python 3.10.6 · PyTorch 2.3.1 · CUDA 12.1 · Windows 11",
+        "Forge 2.0.1 (dfdcbab) · Python 3.10.6 · PyTorch 2.3.1 · CUDA 12.1 · Windows 11",
         "RTX 2060 (notebook), 6.0 GB VRAM",
         "16.0 GB RAM",
       ].join("\n"),

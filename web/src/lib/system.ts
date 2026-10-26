@@ -29,10 +29,17 @@ export function gpuLabel(name: string | null, portable: boolean): string | null 
   return portable && !/laptop/i.test(short) ? `${short} (notebook)` : short;
 }
 
-/** "Forge dfdcbab · Python 3.10.6 · PyTorch 2.3.1 · CUDA 12.1 · Windows 11" */
-export function versionLine(versions: SystemOverview["versions"]): string {
-  const { forge, python, torch, cuda, windows } = versions;
-  return [forge && `Forge ${forge}`, `Python ${python}`, `PyTorch ${torch}`, cuda && `CUDA ${cuda}`, windows]
+/** "1 checkpoint", "31 LoRAs". */
+export function counted(count: number, word: string): string {
+  return `${formatNumber(count)} ${word}${count === 1 ? "" : "s"}`;
+}
+
+/** "Forge 2.0.1 · Python 3.10.6 · PyTorch 2.3.1 · CUDA 12.1 · Windows 11"; a report adds Forge's commit. */
+export function versionLine(versions: SystemOverview["versions"], withCommit = false): string {
+  const { forge, forgeCommit, python, torch, cuda, windows } = versions;
+  const commit = withCommit && forgeCommit;
+  const forgeName = forge && commit ? `${forge} (${commit})` : forge || commit;
+  return [forgeName && `Forge ${forgeName}`, `Python ${python}`, `PyTorch ${torch}`, cuda && `CUDA ${cuda}`, windows]
     .filter(Boolean)
     .join(" · ");
 }
@@ -42,7 +49,7 @@ export function systemReport(system: SystemOverview): string {
   const gpu = gpuLabel(system.gpu, system.portable);
   return [
     `Forgelight ${system.versions.forgelight}`,
-    versionLine(system.versions),
+    versionLine(system.versions, true),
     gpu && `${gpu}${system.vramTotal ? `, ${formatGb(system.vramTotal)} VRAM` : ""}`,
     `${formatGb(system.ramTotal)} RAM`,
   ]

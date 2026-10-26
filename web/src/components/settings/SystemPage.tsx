@@ -4,7 +4,7 @@ import { useSystemLive, useSystemOverview } from "../../api/system";
 import { useModelLabels } from "../../hooks/useModelLabels";
 import { HELP } from "../../lib/help";
 import { formatNumber } from "../../lib/region";
-import { formatBytes, formatGb, gpuLabel, share, systemReport, versionLine } from "../../lib/system";
+import { counted, formatBytes, formatGb, gpuLabel, share, systemReport, versionLine } from "../../lib/system";
 import { Hint } from "../Hint";
 import { InfoTip } from "../InfoTip";
 import { Group, Page, Row } from "./parts";
@@ -20,18 +20,20 @@ function Bar({ fill }: { fill: number }) {
   );
 }
 
-/** One of the four numbers at the top, with an optional bar. */
+/** One of the four numbers at the top, with an optional bar or a second detail line in its place. */
 function Tile({
   label,
   help,
   value,
   detail,
+  extra,
   fill,
 }: {
   label: string;
   help?: string;
   value: string;
   detail: string;
+  extra?: string;
   fill?: number;
 }) {
   return (
@@ -42,6 +44,7 @@ function Tile({
       </span>
       <span className="text-[17px] font-semibold tracking-tight text-fg-strong tabular-nums">{value}</span>
       <span className="truncate text-[12px] text-muted tabular-nums">{detail}</span>
+      {extra !== undefined && <span className="truncate text-[12px] text-muted tabular-nums">{extra}</span>}
       {fill !== undefined && <Bar fill={fill} />}
     </div>
   );
@@ -51,12 +54,13 @@ function Value({ children }: { children: ReactNode }) {
   return <span className="min-w-0 truncate text-[13px] text-fg-strong tabular-nums">{children}</span>;
 }
 
-function Amount({ label, value }: { label: string; value: string }) {
+/** A value with gray details after it: "45,6 GB · 8 checkpoints · 31 LoRAs". */
+function Detailed({ value, details }: { value: string; details: string[] }) {
   return (
-    <span className="flex min-w-0 flex-col gap-0.5">
-      <span className="truncate text-[12px] text-muted">{label}</span>
-      <span className="text-[13.5px] text-fg-strong tabular-nums">{value}</span>
-    </span>
+    <Value>
+      {value}
+      {details.length > 0 && <span className="text-muted"> · {details.join(" · ")}</span>}
+    </Value>
   );
 }
 
@@ -92,6 +96,7 @@ export function SystemPage() {
   const usage = system?.usage;
   const gpu = system ? gpuLabel(system.gpu, system.portable) : null;
   const top = usage?.topModel;
+  const vaultImages = storage?.vaultImages;
 
   return (
     <Page title="System" intro="Memory and temperature update every few seconds while this page is open.">
@@ -100,14 +105,14 @@ export function SystemPage() {
           label="VRAM"
           help={HELP.vram}
           value={now?.vram ? formatGb(now.vram.used) : WAITING}
-          detail={now?.vram ? `used of ${formatGb(now.vram.total)}` : system && !system.gpu ? "No Nvidia card" : ""}
+          detail={now?.vram ? `of ${formatGb(now.vram.total)}` : system && !system.gpu ? "No Nvidia card" : ""}
           fill={now?.vram ? share(now.vram.used, now.vram.total) : 0}
         />
         <Tile
           label="RAM"
           help={HELP.ram}
           value={now ? formatGb(now.ram.used) : WAITING}
-          detail={now ? `used of ${formatGb(now.ram.total)}` : ""}
+          detail={now ? `of ${formatGb(now.ram.total)}` : ""}
           fill={now ? share(now.ram.used, now.ram.total) : 0}
         />
         <Tile
@@ -120,6 +125,8 @@ export function SystemPage() {
           label="Images made"
           value={usage ? formatNumber(usage.total) : WAITING}
           detail={usage ? `${formatNumber(usage.today)} today` : ""}
+          // Counts private images too, as the number does; short, so a narrow tile never cuts it.
+          extra={storage ? `${formatBytes(storage.images + storage.vault)} used` : ""}
         />
       </div>
 
@@ -136,19 +143,30 @@ export function SystemPage() {
             )}
           </Value>
         </Row>
-        <div className="grid min-h-11 grid-cols-3 items-center gap-3 py-2">
-          <Amount label="Generated images" value={storage ? formatBytes(storage.images) : WAITING} />
-          <Amount label="Checkpoints and LoRAs" value={storage ? formatBytes(storage.models) : WAITING} />
-          <Amount label="Private vault" value={storage ? formatBytes(storage.vault) : WAITING} />
-        </div>
+        <Row id="system-models" label="Checkpoints and LoRAs">
+          {storage ? (
+            <Detailed
+              value={formatBytes(storage.models)}
+              details={[counted(storage.checkpoints, "checkpoint"), counted(storage.loras, "LoRA")]}
+            />
+          ) : (
+            <Value>{WAITING}</Value>
+          )}
+        </Row>
+        <Row id="system-vault" label="Private vault">
+          {!storage ? (
+            <Value>{WAITING}</Value>
+          ) : vaultImages === null || vaultImages === undefined ? (
+            <Value>Not set up</Value>
+          ) : (
+            <Detailed value={formatBytes(storage.vault)} details={[counted(vaultImages, "image")]} />
+          )}
+        </Row>
         <Row id="system-top-model" label="Most used checkpoint">
           <Value>
             {top ? (
               <>
-                {modelLabel(top.name)}{" "}
-                <span className="text-muted">
-                  · {top.count === 1 ? "1 image" : `${formatNumber(top.count)} images`}
-                </span>
+                {modelLabel(top.name)} <span className="text-muted">· {counted(top.count, "image")}</span>
               </>
             ) : usage ? (
               "None yet"

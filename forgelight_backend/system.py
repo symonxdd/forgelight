@@ -185,12 +185,22 @@ def _forge_commit() -> str | None:
     return head[:7] if re.fullmatch(r"[0-9a-f]{40}", head) else None
 
 
+def _forge_version() -> str | None:
+    """Forge's own version number, "2.0.1" from "2.0.1v1.10.1" (the part after the v is A1111's)."""
+    try:
+        from modules_forge import forge_version
+    except ImportError:
+        return None
+    return str(forge_version.version).split("v")[0] or None
+
+
 def _versions() -> dict:
     import torch
 
     build = sys.getwindowsversion().build
     return {
-        "forge": _forge_commit(),
+        "forge": _forge_version(),
+        "forgeCommit": _forge_commit(),
         "forgelight": store.version(),
         "python": platform.python_version(),
         "torch": torch.__version__.split("+")[0],
@@ -209,18 +219,23 @@ def _computer() -> dict:
             "vramTotal": vram[1] if vram else None,
             "ramTotal": _ram()[1],
             "portable": case in PORTABLE_CASES if case is not None else _has_battery(),
-            "versions": _versions(),
         }
-    return _state["computer"]
+    # Versions are cheap to read and stay out of the kept state, so a reload brings their new fields.
+    return {**_state["computer"], "versions": _versions()}
 
 
-def _folder_bytes(folder: Path, extensions: set[str] | None = None) -> int:
-    total = 0
-    if folder.is_dir():
-        for path in folder.rglob("*"):
-            if (extensions is None or path.suffix.lower() in extensions) and path.is_file():
-                total += path.stat().st_size
-    return total
+def _folder_files(folder: Path, extensions: set[str] | None = None) -> list[Path]:
+    if not folder.is_dir():
+        return []
+    return [
+        path
+        for path in folder.rglob("*")
+        if (extensions is None or path.suffix.lower() in extensions) and path.is_file()
+    ]
+
+
+def _size(paths: list[Path]) -> int:
+    return sum(path.stat().st_size for path in paths)
 
 
 def _storage(images: list[dict]) -> dict:
@@ -229,18 +244,24 @@ def _storage(images: list[dict]) -> dict:
     roots = [root for root in library.roots().values() if root.is_dir()]
     drive = (roots[0] if roots else Path.cwd()).drive or "C:"
     disk = shutil.disk_usage(drive + "\\")
-    checkpoints = sum(
-        Path(info.filename).stat().st_size
+    checkpoints = [
+        Path(info.filename)
         for info in list(sd_models.checkpoints_list.values())
         if Path(info.filename).is_file()
-    )
+    ]
+    loras = _folder_files(Path(shared.cmd_opts.lora_dir), LORA_EXTENSIONS)
+    # Each private image is two files: the image and its .meta.flv with settings and thumbnail.
+    items = _folder_files(vault.root / "items") if vault.exists() else []
     return {
         "drive": drive,
         "free": disk.free,
         "total": disk.total,
         "images": sum(image["bytes"] for image in images),
-        "models": checkpoints + _folder_bytes(Path(shared.cmd_opts.lora_dir), LORA_EXTENSIONS),
-        "vault": _folder_bytes(vault.root / "items") if vault.exists() else 0,
+        "models": _size(checkpoints) + _size(loras),
+        "checkpoints": len(checkpoints),
+        "loras": len(loras),
+        "vault": _size(items),
+        "vaultImages": sum(1 for path in items if not path.name.endswith(".meta.flv")) if vault.exists() else None,
     }
 
 
