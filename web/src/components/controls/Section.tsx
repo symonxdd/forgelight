@@ -56,7 +56,7 @@ export function Section({
             className="group grid size-7 shrink-0 place-items-center rounded-md text-faint hover:bg-raised hover:text-fg-strong"
           >
             <ChevronDown
-              className="size-4 group-data-[state=open]:rotate-180 motion-safe:transition-transform motion-safe:duration-200"
+              className="size-4 group-data-[state=open]:rotate-180 motion-safe:transition-transform motion-safe:duration-300 motion-safe:ease-[cubic-bezier(0.32,0.72,0,1)]"
               aria-hidden
             />
           </Collapsible.Trigger>

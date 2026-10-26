@@ -173,7 +173,7 @@
   }
 }
 
-/* Folding sections open and close over a fifth of a second instead of jumping. */
+/* Folding sections open and close calmly instead of jumping, in step with their arrow. */
 @keyframes collapsible-open {
   from {
     height: 0;
@@ -191,10 +191,10 @@
   }
 }
 .collapsible[data-state="open"] {
-  animation: collapsible-open 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+  animation: collapsible-open 300ms cubic-bezier(0.32, 0.72, 0, 1);
 }
 .collapsible[data-state="closed"] {
-  animation: collapsible-close 180ms cubic-bezier(0.4, 0, 1, 1);
+  animation: collapsible-close 300ms cubic-bezier(0.32, 0.72, 0, 1);
 }
 
 /* The guide's chapter lists: one closes while another opens, so both share one duration and
