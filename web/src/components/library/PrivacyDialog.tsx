@@ -82,7 +82,7 @@ export function PrivacyDialog({
                     const n = moved === 1 ? "1 image is" : `${formatNumber(moved)} images are`;
                     useSession
                       .getState()
-                      .setNotice(
+                      .showNotice(
                         failed > 0
                           ? { tone: "warning", text: `${text.done(n)} ${failed} could not be moved.` }
                           : { tone: "info", text: text.done(n) },

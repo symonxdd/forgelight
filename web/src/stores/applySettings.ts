@@ -13,7 +13,7 @@ import { useSettings } from "./settings";
  * that is installed, it is selected too, the same as picking it by hand.
  */
 export async function applyGenerationData(text: string): Promise<void> {
-  const { setNotice, job } = useSession.getState();
+  const { showNotice, job } = useSession.getState();
   const parsed = parseInfotext(text);
   const model = modelFromInfotext(parsed);
   const checkpoints = queryClient.getQueryData<Schemas["SDModelItem"][]>(["sd-models"]) ?? [];
@@ -26,16 +26,16 @@ export async function applyGenerationData(text: string): Promise<void> {
   if (switching) expectCheckpointSwitch(match.model_name);
   useSettings.getState().update(settingsFromInfotext(parsed));
 
-  if (!model.name && !model.hash) return setNotice({ tone: "info", text: "Settings applied." });
+  if (!model.name && !model.hash) return showNotice({ tone: "info", text: "Settings applied." });
   if (!match) {
-    return setNotice({
+    return showNotice({
       tone: "warning",
       text: `Settings applied. The checkpoint ${model.name ?? model.hash} isn't installed, so the current one stays selected.`,
     });
   }
-  if (current?.title === match.title) return setNotice({ tone: "info", text: "Settings applied." });
+  if (current?.title === match.title) return showNotice({ tone: "info", text: "Settings applied." });
   if (job.status === "running") {
-    return setNotice({
+    return showNotice({
       tone: "warning",
       text: `Settings applied. Switch to ${match.model_name} once the current generation finishes.`,
     });
@@ -47,5 +47,5 @@ export async function applyGenerationData(text: string): Promise<void> {
     throw error;
   }
   await queryClient.invalidateQueries({ queryKey: ["options"] });
-  setNotice({ tone: "info", text: `Settings applied and checkpoint switched to ${match.model_name}.` });
+  showNotice({ tone: "info", text: `Settings applied and checkpoint switched to ${match.model_name}.` });
 }

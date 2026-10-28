@@ -40,7 +40,7 @@ export function ChangePasswordDialog({ open, onOpenChange }: { open: boolean; on
     try {
       await changePassword(next, confirm.secret);
       close();
-      useSession.getState().setNotice({ tone: "info", text: "The password is changed." });
+      useSession.getState().showNotice({ tone: "info", text: "The password is changed." });
     } catch (failure) {
       setError(failure instanceof Error ? failure.message : "The password could not be changed.");
       setBusy(false);

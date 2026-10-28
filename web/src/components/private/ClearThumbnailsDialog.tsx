@@ -21,16 +21,16 @@ export function ClearThumbnailsDialog({
 
   const clear = async () => {
     setBusy(true);
-    const { setNotice } = useSession.getState();
+    const { showNotice } = useSession.getState();
     try {
       const { cleared, skipped, bytes } = await clearThumbnails();
       if (skipped > 0) {
-        setNotice({
+        showNotice({
           tone: "warning",
           text: `Cleared ${megabytes(bytes)}, but ${skipped} file${skipped === 1 ? " was" : "s were"} in use. Close File Explorer windows and try again.`,
         });
       } else {
-        setNotice({
+        showNotice({
           tone: "info",
           text:
             cleared > 0
@@ -39,7 +39,7 @@ export function ClearThumbnailsDialog({
         });
       }
     } catch (failure) {
-      setNotice({
+      showNotice({
         tone: "warning",
         text: failure instanceof Error ? failure.message : "The thumbnails could not be cleared.",
       });

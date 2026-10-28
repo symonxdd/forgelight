@@ -20,6 +20,7 @@
   --accent: #3f5f8a;
   --good: #2f7a52;
   --bad: #b04a3c;
+  --warn: #9a6a1f;
   --viewer: #e9e9ec;
   --primary: #1c1d20;
   --primary-hover: #2e3035;
@@ -41,6 +42,7 @@
   --accent: #8ea6c4;
   --good: #8fb5a0;
   --bad: #d29a8f;
+  --warn: #d6b67a;
   --viewer: #0f0f11;
   --primary: #d4d6da;
   --primary-hover: #e4e6e9;
@@ -121,7 +123,6 @@
   }
 }
 
-/* Messages ease in: a short fade while rising a few pixels. */
 @keyframes peek-in {
   from {
     opacity: 0;
@@ -129,14 +130,69 @@
   }
 }
 
-@keyframes toast-in {
+/*
+ * Messages (Messages.tsx). A message drops in from the top edge it sits against and lifts
+ * away the same way, while its slot opens or closes, so the messages below glide along.
+ * The thin line along its bottom is the time left before it leaves by itself.
+ */
+.toast-open {
+  animation: toast-open 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.toast-close {
+  animation: toast-close 180ms ease-in both;
+}
+.toast-drop {
+  animation: toast-drop 220ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.toast-lift {
+  animation: toast-lift 180ms ease-in both;
+}
+.toast-timer {
+  animation: toast-timer 6s linear both;
+}
+/* Without motion they still open and close at once, so the animation's end is still reported. */
+@media (prefers-reduced-motion: reduce) {
+  .toast-open,
+  .toast-close,
+  .toast-drop,
+  .toast-lift {
+    animation-duration: 1ms;
+  }
+}
+@keyframes toast-open {
   from {
-    opacity: 0;
-    transform: translateY(6px);
+    grid-template-rows: 0fr;
   }
   to {
-    opacity: 1;
-    transform: none;
+    grid-template-rows: 1fr;
+  }
+}
+@keyframes toast-close {
+  from {
+    grid-template-rows: 1fr;
+  }
+  to {
+    grid-template-rows: 0fr;
+  }
+}
+@keyframes toast-drop {
+  from {
+    opacity: 0;
+    transform: translateY(-10px) scale(0.98);
+  }
+}
+@keyframes toast-lift {
+  to {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+  }
+}
+@keyframes toast-timer {
+  from {
+    width: 100%;
+  }
+  to {
+    width: 0%;
   }
 }
 
@@ -280,6 +336,7 @@
   --color-accent: var(--accent);
   --color-good: var(--good);
   --color-bad: var(--bad);
+  --color-warn: var(--warn);
   --color-viewer: var(--viewer);
   --color-primary: var(--primary);
   --color-primary-hover: var(--primary-hover);

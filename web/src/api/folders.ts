@@ -21,7 +21,7 @@ export async function openFolder(key: FolderKey): Promise<void> {
   try {
     await request("folders/open", { key });
   } catch (error) {
-    useSession.getState().setNotice({
+    useSession.getState().showNotice({
       tone: "warning",
       text: error instanceof Error ? error.message : "The folder could not be opened.",
     });

@@ -86,7 +86,7 @@ async function turnOnPrivate(): Promise<void> {
   try {
     await setPrivateOn(true);
   } catch (failure) {
-    useSession.getState().setNotice({
+    useSession.getState().showNotice({
       tone: "warning",
       text: failure instanceof Error ? failure.message : "Private mode could not be turned on.",
     });

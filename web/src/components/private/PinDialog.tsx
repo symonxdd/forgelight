@@ -41,7 +41,7 @@ export function PinDialog({
     try {
       await setPin(pin, confirm.secret);
       close();
-      useSession.getState().setNotice({ tone: "info", text: replacing ? "The PIN is changed." : "The PIN is set." });
+      useSession.getState().showNotice({ tone: "info", text: replacing ? "The PIN is changed." : "The PIN is set." });
     } catch (failure) {
       setError(failure instanceof Error ? failure.message : "The PIN could not be saved.");
       setBusy(false);

@@ -27,7 +27,7 @@ export function RemovePinDialog({ open, onOpenChange }: { open: boolean; onOpenC
     try {
       await removePin(confirm.secret);
       close();
-      useSession.getState().setNotice({ tone: "info", text: "The PIN is removed." });
+      useSession.getState().showNotice({ tone: "info", text: "The PIN is removed." });
     } catch (failure) {
       setError(failure instanceof Error ? failure.message : "The PIN could not be removed.");
       setBusy(false);

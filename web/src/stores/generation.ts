@@ -129,8 +129,16 @@ function errorMessage(error: unknown): string {
   return friendlyError(error instanceof Error ? error.message : String(error));
 }
 
+/** Ends the job and shows why it failed; the message stays until dismissed or the next job starts. */
+function fail(message: string): void {
+  const { setJob, showNotice } = useSession.getState();
+  setJob({ status: "idle" });
+  showNotice({ tone: "error", text: message });
+}
+
 export async function generate(): Promise<void> {
   if (isRunning()) return;
+  useSession.getState().dismissErrors();
   // With an image attached for upscaling, Generate enlarges it instead.
   if (useUpscale.getState().source) return upscale();
   const settings = withInstalledLoras(currentSettings());
@@ -206,7 +214,7 @@ async function runGeneration(pending: PendingJob, send: () => Promise<Generation
     // so a reload picks it up too.
     if (!(error instanceof ForgeError)) return followJob(pending);
     clearPendingJob();
-    setJob({ status: "error", message: friendlyError(error.message) });
+    fail(friendlyError(error.message));
     return;
   }
 
@@ -217,7 +225,7 @@ async function runGeneration(pending: PendingJob, send: () => Promise<Generation
     if (!pending.private) void queryClient.invalidateQueries({ queryKey: ["library"] });
     setJob({ status: "idle" });
   } catch (error) {
-    setJob({ status: "error", message: errorMessage(error) });
+    fail(errorMessage(error));
   } finally {
     stopPolling();
     clearPendingJob();
@@ -257,7 +265,7 @@ async function upscale(): Promise<void> {
     if (!result?.image) throw new Error("Forge returned no image.");
     enlarged = result.image;
   } catch (error) {
-    setJob({ status: "error", message: errorMessage(error) });
+    fail(errorMessage(error));
     return;
   }
 
@@ -294,7 +302,7 @@ async function upscale(): Promise<void> {
     if (!pending.private) void queryClient.invalidateQueries({ queryKey: ["library"] });
     setJob({ status: "idle" });
   } catch (error) {
-    setJob({ status: "error", message: errorMessage(error) });
+    fail(errorMessage(error));
   }
 }
 
@@ -337,7 +345,7 @@ async function savedResults(job: PendingJob): Promise<SessionImage[]> {
  * connection.
  */
 function followJob(pending: PendingJob): void {
-  const { setJob, addImages, setNotice } = useSession.getState();
+  const { setJob, addImages, showNotice } = useSession.getState();
   if (pending.private) return followPrivateJob(pending);
   pollProgress(pending.taskId, (completed) => {
     clearPendingJob();
@@ -346,9 +354,9 @@ function followJob(pending: PendingJob): void {
         const images = completed ? await savedResults(pending) : [];
         addImages(images.reverse());
         if (!completed) {
-          setNotice({ tone: "warning", text: "The generation was not found in Forge. Forge may have restarted." });
+          showNotice({ tone: "warning", text: "The generation was not found in Forge. Forge may have restarted." });
         } else if (images.length === 0) {
-          setNotice({
+          showNotice({
             tone: "warning",
             text: "The generation finished, but its images weren't found in the outputs folder.",
           });
@@ -356,7 +364,7 @@ function followJob(pending: PendingJob): void {
           void queryClient.invalidateQueries({ queryKey: ["library"] });
         }
       } catch {
-        setNotice({ tone: "warning", text: "The finished images could not be shown here. They are in the Library." });
+        showNotice({ tone: "warning", text: "The finished images could not be shown here. They are in the Library." });
       }
       setJob({ status: "idle" });
     })();
@@ -365,13 +373,13 @@ function followJob(pending: PendingJob): void {
 
 /** The same for a private generation: the extension holds its reply until the page asks. */
 function followPrivateJob(pending: PendingJob): void {
-  const { setJob, addImages, setNotice } = useSession.getState();
+  const { setJob, addImages, showNotice } = useSession.getState();
   const stopPolling = pollProgress(pending.taskId);
   void (async () => {
     try {
       addImages((await sessionImages(await waitForPrivateResult(pending.taskId), pending)).reverse());
     } catch (error) {
-      setNotice({ tone: "warning", text: errorMessage(error) });
+      showNotice({ tone: "warning", text: errorMessage(error) });
     } finally {
       stopPolling();
       clearPendingJob();
@@ -399,9 +407,4 @@ export async function interrupt(): Promise<void> {
 export async function skip(): Promise<void> {
   if (!isRunning()) return;
   await forgePost("/sdapi/v1/skip").catch(() => undefined);
-}
-
-export function dismissError(): void {
-  const { job, setJob } = useSession.getState();
-  if (job.status === "error") setJob({ status: "idle" });
 }

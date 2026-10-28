@@ -72,7 +72,7 @@ export function RecommendedSection() {
     if (!recommendation) return;
     const before = pickRemembered(useSettings.getState());
     update(recommendation.settings);
-    useSession.getState().setNotice({
+    useSession.getState().showNotice({
       tone: "info",
       text: `Applied the recommended settings for ${name}.`,
       action: { label: "Undo", run: () => useSettings.getState().update(before) },

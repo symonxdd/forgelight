@@ -24,7 +24,7 @@ export function PrivateChip() {
     try {
       await setPrivateOn(!on);
     } catch (error) {
-      useSession.getState().setNotice({
+      useSession.getState().showNotice({
         tone: "warning",
         text: error instanceof Error ? error.message : "Private mode could not be switched.",
       });

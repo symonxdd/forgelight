@@ -63,7 +63,7 @@ function blobToDataUrl(blob: Blob): Promise<string> {
  * are filled in, as Enhance redraws with them, and the card starts from the Hires fix values.
  */
 export async function attachUpscale(image: { url: string; infotext: string; name: string }): Promise<void> {
-  const { setNotice } = useSession.getState();
+  const { showNotice } = useSession.getState();
   let source: UpscaleSource;
   try {
     const response = await fetch(image.url);
@@ -80,7 +80,7 @@ export async function attachUpscale(image: { url: string; infotext: string; name
     };
     bitmap.close();
   } catch {
-    setNotice({ tone: "warning", text: "Couldn't load that image." });
+    showNotice({ tone: "warning", text: "Couldn't load that image." });
     return;
   }
   removeStartImage();

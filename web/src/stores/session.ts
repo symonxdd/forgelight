@@ -49,17 +49,24 @@ export type Job =
       stopping: boolean;
       /** Forge is enlarging an image with an upscaler, which reports no progress. */
       enlarging: boolean;
-    }
-  | { status: "error"; message: string };
+    };
 
 export interface Notice {
-  tone: "info" | "warning";
-  /** A short heading; by default "Done" or "Heads up", after the tone. */
-  title?: string;
+  tone: "info" | "warning" | "error";
   text: string;
   /** One optional button, such as "Undo". */
   action?: { label: string; run: () => void };
 }
+
+export interface ShownNotice extends Notice {
+  id: number;
+  /** On its way out: it stays in the list until its closing animation ends. */
+  leaving: boolean;
+}
+
+/** Messages shown at once; a newer one sends the oldest away. */
+const MAX_NOTICES = 3;
+let lastNoticeId = 0;
 
 /** Keeps memory bounded on a long session; older images remain in Forge's outputs folder. */
 const MAX_SESSION_IMAGES = 200;
@@ -72,9 +79,15 @@ interface SessionState {
   job: Job;
   /** The last live preview, shown beneath the finished image while it fades in. */
   handoff: { imageId: string; previewUrl: string } | null;
-  /** A short message under the settings panel, such as "Settings applied." */
-  notice: Notice | null;
-  setNotice: (notice: Notice | null) => void;
+  /** Short messages in the top right corner, such as "Settings applied.", newest first. */
+  notices: ShownNotice[];
+  showNotice: (notice: Notice) => void;
+  /** Starts a message's closing animation. */
+  dismissNotice: (id: number) => void;
+  /** Closes every error, when a new job starts. */
+  dismissErrors: () => void;
+  /** Takes a message out once its closing animation ended. */
+  removeNotice: (id: number) => void;
   addImages: (images: SessionImage[]) => void;
   select: (id: string | null) => void;
   clearView: () => void;
@@ -88,8 +101,23 @@ export const useSession = create<SessionState>((set, get) => ({
   cleared: false,
   job: { status: "idle" },
   handoff: null,
-  notice: null,
-  setNotice: (notice) => set({ notice }),
+  notices: [],
+  showNotice: (notice) =>
+    set(({ notices }) => {
+      // The same message again replaces its older copy instead of stacking up.
+      const older = notices.map((n) => (n.text === notice.text ? { ...n, leaving: true } : n));
+      let staying = 0;
+      return {
+        notices: [{ ...notice, id: ++lastNoticeId, leaving: false }, ...older].map((n) =>
+          n.leaving || ++staying <= MAX_NOTICES ? n : { ...n, leaving: true },
+        ),
+      };
+    }),
+  dismissNotice: (id) =>
+    set(({ notices }) => ({ notices: notices.map((n) => (n.id === id ? { ...n, leaving: true } : n)) })),
+  dismissErrors: () =>
+    set(({ notices }) => ({ notices: notices.map((n) => (n.tone === "error" ? { ...n, leaving: true } : n)) })),
+  removeNotice: (id) => set(({ notices }) => ({ notices: notices.filter((n) => n.id !== id) })),
   addImages: (added) => {
     if (added.length === 0) return;
     const { images, job } = get();

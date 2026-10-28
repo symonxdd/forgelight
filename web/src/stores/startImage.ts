@@ -96,7 +96,7 @@ export async function attachStartImage(blob: Blob, confirmation?: string): Promi
   try {
     image = await toPng(blob);
   } catch {
-    session.setNotice({ tone: "warning", text: unreadableMessage(blob) });
+    session.showNotice({ tone: "warning", text: unreadableMessage(blob) });
     return;
   }
   const previous = useStartImage.getState();
@@ -110,7 +110,7 @@ export async function attachStartImage(blob: Blob, confirmation?: string): Promi
   });
   settings.update(fitted);
   if (confirmation) {
-    session.setNotice({
+    session.showNotice({
       tone: "info",
       text: confirmation,
       action: {
@@ -138,6 +138,6 @@ export async function startFromImage(url: string): Promise<void> {
     if (!response.ok) throw new Error(String(response.status));
     await attachStartImage(await response.blob());
   } catch {
-    useSession.getState().setNotice({ tone: "warning", text: "Couldn't load that image." });
+    useSession.getState().showNotice({ tone: "warning", text: "Couldn't load that image." });
   }
 }

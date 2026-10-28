@@ -102,7 +102,7 @@ export function checkpointChanged(key: string, name: string): void {
     memory.lastCheckpoint !== null && memory.enabled ? settingsToLoad(memory.byCheckpoint[key], current, keep) : null;
   if (!load) return save(key);
   useSettings.getState().update(load);
-  useSession.getState().setNotice({
+  useSession.getState().showNotice({
     tone: "info",
     text: `Restored the Size, Sampling and Hires fix last used with ${name}.`,
     action: { label: "Undo", run: () => useSettings.getState().update(current) },

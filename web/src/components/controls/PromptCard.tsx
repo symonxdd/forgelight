@@ -44,7 +44,7 @@ function ClearButton({ id, field, label }: { id: string; field: Field; label: st
   const clear = () => {
     const previous = useSettings.getState()[field];
     useSettings.getState().update({ [field]: "" });
-    useSession.getState().setNotice({
+    useSession.getState().showNotice({
       tone: "info",
       text: `${label} cleared.`,
       action: { label: "Undo", run: () => useSettings.getState().update({ [field]: previous }) },
