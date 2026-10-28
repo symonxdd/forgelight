@@ -165,7 +165,7 @@ function SelectionBar({
   const moveButton =
     "flex h-8 items-center gap-1.5 rounded-md border border-line px-3 text-[13px] text-fg hover:border-line-strong hover:text-fg-strong";
   return (
-    <div className="pointer-events-none absolute inset-x-0 bottom-5 z-10 flex justify-center px-4">
+    <div className="pointer-events-none absolute inset-x-0 top-3 z-10 flex justify-center px-4">
       <div
         role="toolbar"
         aria-label="Selected images"
@@ -477,19 +477,22 @@ export function Library() {
         </div>
       </div>
       <div className="relative flex min-h-0 flex-1 flex-col">
-        <div className={`min-h-0 flex-1 overflow-y-auto ${selectedCount > 0 ? "pb-20" : ""}`}>{body}</div>
+        <div className="min-h-0 flex-1 overflow-y-auto">{body}</div>
+        {/* Floats just under the toolbar, over the pictures, so nothing moves when selecting starts. */}
+        {selectedCount > 0 && openIndex === -1 && (
+          <SelectionBar
+            count={selectedCount}
+            publicCount={privateStatus.data?.setUp ? selectedPublic.length : 0}
+            privateCount={selectedPrivate.length}
+            onClear={clearSelection}
+            onMove={(to) =>
+              setPendingMove({ ids: to === "private" ? selectedPublic : selectedPrivate, to, next: null })
+            }
+            onDelete={() => setPendingDelete({ ids: [...selected], next: null })}
+          />
+        )}
         <FloatingMessages />
       </div>
-      {selectedCount > 0 && openIndex === -1 && (
-        <SelectionBar
-          count={selectedCount}
-          publicCount={privateStatus.data?.setUp ? selectedPublic.length : 0}
-          privateCount={selectedPrivate.length}
-          onClear={clearSelection}
-          onMove={(to) => setPendingMove({ ids: to === "private" ? selectedPublic : selectedPrivate, to, next: null })}
-          onDelete={() => setPendingDelete({ ids: [...selected], next: null })}
-        />
-      )}
       {openIndex !== -1 && (
         <LibraryViewer
           items={items}
