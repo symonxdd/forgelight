@@ -105,9 +105,9 @@ function Tile({ batch, selected, selecting, onOpen, onToggle }: TileProps) {
             blurred ? "motion-safe:duration-[120ms] motion-safe:ease-out" : "motion-safe:duration-200"
           } ${
             selected
-              ? `scale-[0.86] rounded-md ${blurred ? "blur-lg group-hover:blur-none group-has-[:focus-visible]:blur-none" : ""}`
+              ? `scale-[0.86] rounded-md ${blurred ? "blur-md group-hover:blur-none group-has-[:focus-visible]:blur-none" : ""}`
               : blurred
-                ? "scale-110 blur-xl group-hover:blur-none group-has-[:focus-visible]:blur-none"
+                ? "scale-110 blur-lg group-hover:blur-none group-has-[:focus-visible]:blur-none"
                 : "group-hover:brightness-110"
           }`}
         />
