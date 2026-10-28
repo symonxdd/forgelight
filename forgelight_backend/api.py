@@ -11,7 +11,7 @@ from typing import Any, Callable
 from fastapi import HTTPException, Request
 from fastapi.responses import FileResponse, Response
 
-from . import library, loading, models, newmodels, private, startup, updates
+from . import library, loading, models, newmodels, private, region, startup, system, updates
 from .vault import VaultError, vault
 from .security import require_own_page, require_same_origin
 from .store import ROOT, version
@@ -39,6 +39,26 @@ def status(_request: Request, _body: Any) -> dict:
         "built": (PAGE / "index.html").is_file(),
         "api_enabled": bool(cmd_opts.api),
     }
+
+
+def regional_format(_request: Request, _body: Any) -> dict:
+    return region.regional_format()
+
+
+def system_overview(_request: Request, _body: Any) -> dict:
+    return system.overview()
+
+
+def system_live(_request: Request, _body: Any) -> dict:
+    return system.live()
+
+
+def system_peak(request: Request, _body: Any) -> dict:
+    try:
+        since = float(request.query_params.get("since", ""))
+    except ValueError as error:
+        raise HTTPException(status_code=400, detail="Send when the generation started.") from error
+    return system.peak(since)
 
 
 def list_models(_request: Request, _body: Any) -> dict:
@@ -371,6 +391,10 @@ def library_delete(_request: Request, body: Any) -> dict:
 
 ROUTES: dict[tuple[str, str], Handler] = {
     ("GET", "status"): status,
+    ("GET", "region"): regional_format,
+    ("GET", "system"): system_overview,
+    ("GET", "system/live"): system_live,
+    ("GET", "system/peak"): system_peak,
     ("GET", "models"): list_models,
     ("GET", "new-models"): new_models,
     ("POST", "new-models/move"): new_models_move,

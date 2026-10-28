@@ -30,6 +30,8 @@ ORDER = [
     "library",
     "loading",
     "updates",
+    "region",
+    "system",
     "api",
 ]
 
