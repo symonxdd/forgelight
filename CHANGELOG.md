@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 1.5.0 (2026-10-29)
+
 ### 🌱 New
 
 - **Added a System page with a VRAM meter.** Settings > System shows video memory (VRAM), memory (RAM), free disk space and the number of images made, then the graphics card with its temperature and load, the space taken by images, models and the private vault, the most used checkpoint, and the versions of Forge and Forgelight with a Copy button. A small meter in the top bar shows the VRAM in use and opens the page. Image info on the Generate screen shows how long new images took and the highest VRAM use while they were made.
