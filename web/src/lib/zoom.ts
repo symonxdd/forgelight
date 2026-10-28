@@ -29,3 +29,22 @@ export function zoomAt(view: View, nextScale: number, px: number, py: number): V
   const ratio = scale / view.scale;
   return { scale, x: px - (px - view.x) * ratio, y: py - (py - view.y) * ratio };
 }
+
+/**
+ * Like `zoomAt`, but a cursor beside the image anchors on the nearest point of the image's edge,
+ * so zooming with the cursor in the empty space around it never slides the image away.
+ */
+export function zoomOnImage(
+  view: View,
+  nextScale: number,
+  px: number,
+  py: number,
+  imageW: number,
+  imageH: number,
+): View {
+  const halfW = (imageW * view.scale) / 2;
+  const halfH = (imageH * view.scale) / 2;
+  const ax = Math.min(view.x + halfW, Math.max(view.x - halfW, px));
+  const ay = Math.min(view.y + halfH, Math.max(view.y - halfH, py));
+  return zoomAt(view, nextScale, ax, ay);
+}

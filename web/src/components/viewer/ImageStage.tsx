@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { fitScale as computeFit, zoomAt, type View } from "../../lib/zoom";
+import { fitScale as computeFit, zoomOnImage, type View } from "../../lib/zoom";
 import { currentScale, useViewer } from "../../stores/viewer";
 
 interface ImageStageProps {
@@ -64,11 +64,11 @@ export function ImageStage({
       const rect = element.getBoundingClientRect();
       const px = event.clientX - rect.left - rect.width / 2;
       const py = event.clientY - rect.top - rect.height / 2;
-      state.setView(zoomAt(current, current.scale * Math.exp(-event.deltaY * 0.0015), px, py));
+      state.setView(zoomOnImage(current, current.scale * Math.exp(-event.deltaY * 0.0015), px, py, width, height));
     };
     element.addEventListener("wheel", onWheel, { passive: false });
     return () => element.removeEventListener("wheel", onWheel);
-  }, []);
+  }, [width, height]);
 
   const onPointerDown = (event: React.PointerEvent) => {
     if (event.button !== 0) return;
@@ -108,7 +108,7 @@ export function ImageStage({
     const rect = event.currentTarget.getBoundingClientRect();
     const px = event.clientX - rect.left - rect.width / 2;
     const py = event.clientY - rect.top - rect.height / 2;
-    state.setView(zoomAt({ scale: state.fitScale, x: 0, y: 0 }, 1, px, py));
+    state.setView(zoomOnImage({ scale: state.fitScale, x: 0, y: 0 }, 1, px, py, width, height));
   };
 
   const imageStyle = {
