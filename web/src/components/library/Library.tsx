@@ -99,11 +99,15 @@ function Tile({ batch, selected, selecting, onOpen, onToggle }: TileProps) {
           draggable={false}
           // A blurred preview clears while pointed at, or reached with the keyboard. Focus
           // left behind by a mouse click doesn't count, so the blur returns once the pointer leaves.
-          className={`size-full object-cover object-top motion-safe:transition-[filter,scale,border-radius] motion-safe:duration-200 ${
+          // The slight zoom hides the blur's soft edges and stays put on hover, so only the blur moves,
+          // quickly and easing out, so the picture is mostly clear right away.
+          className={`size-full object-cover object-top motion-safe:transition-[filter,scale,border-radius] ${
+            blurred ? "motion-safe:duration-[120ms] motion-safe:ease-out" : "motion-safe:duration-200"
+          } ${
             selected
               ? `scale-[0.86] rounded-md ${blurred ? "blur-lg group-hover:blur-none group-has-[:focus-visible]:blur-none" : ""}`
               : blurred
-                ? "scale-110 blur-xl group-hover:scale-100 group-hover:blur-none group-has-[:focus-visible]:scale-100 group-has-[:focus-visible]:blur-none"
+                ? "scale-110 blur-xl group-hover:blur-none group-has-[:focus-visible]:blur-none"
                 : "group-hover:brightness-110"
           }`}
         />
