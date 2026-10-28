@@ -2,6 +2,24 @@
 
 ## Unreleased
 
+### 🌱 New
+
+- **Added a System page with a VRAM meter.** Settings > System shows video memory (VRAM), memory (RAM), free disk space and the number of images made, then the graphics card with its temperature and load, the space taken by images, models and the private vault, the most used checkpoint, and the versions of Forge and Forgelight with a Copy button. A small meter in the top bar shows the VRAM in use and opens the page. Image info on the Generate screen shows how long new images took and the highest VRAM use while they were made.
+- Numbers and dates now follow the Windows regional format: the decimal and thousands separators, day or month first, and the 12 or 24-hour clock. Numbers, Dates and Clock switches in Settings > Appearance choose differently. Prompts, creator's notes and Guide texts keep their own dots.
+
+### 🩹 Fixed
+
+- Zooming with the mouse wheel or a double-click in the space beside the image no longer slides the image away from the cursor.
+- Dragging the image right after a double-click pans it again, instead of starting to drag the picture away.
+- The arrows on the settings column's cards now turn as the cards open and close.
+
+### 🌿 Improved
+
+- Reworked the notices in the top right corner: one line each with a colored icon and Undo beside the text, no title. Up to three stack, newest on top. They drop in from above, and a thin line shows when a confirmation will leave, waiting while pointed at. Generation errors appear in the same stack.
+- The vault status in the top bar is now a lock icon: gray and closed while locked, open on a soft tint while unlocked. Its shackle springs when the state changes, replacing the "Locked" notice.
+- In the Library, the selection bar sits at the top under the toolbar, and blurred previews are less blurred and clear faster when pointed at.
+- The settings column's cards fold open and closed more calmly.
+
 ## 1.4.0 (2026-10-24)
 
 ### 🌱 New
