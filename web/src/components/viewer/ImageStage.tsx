@@ -72,6 +72,9 @@ export function ImageStage({
 
   const onPointerDown = (event: React.PointerEvent) => {
     if (event.button !== 0) return;
+    // A leftover selection (a double-click selects too) would turn the drag into Chrome's own
+    // drag and drop, which cancels the pan.
+    window.getSelection()?.removeAllRanges();
     event.currentTarget.setPointerCapture(event.pointerId);
     drag.current = { startX: event.clientX, startY: event.clientY, view: { scale, ...offset } };
   };
@@ -129,7 +132,8 @@ export function ImageStage({
       onPointerUp={onPointerUp}
       onPointerCancel={onPointerUp}
       onDoubleClick={onDoubleClick}
-      className={`absolute inset-0 overflow-hidden ${dragging ? "cursor-grabbing" : "cursor-grab"}`}
+      onDragStart={(event) => event.preventDefault()}
+      className={`absolute inset-0 overflow-hidden select-none ${dragging ? "cursor-grabbing" : "cursor-grab"}`}
     >
       {underlay && showUnderlay && <img src={underlay} alt="" aria-hidden className={imageClass} style={imageStyle} />}
       <img
